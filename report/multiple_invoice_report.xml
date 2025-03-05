@@ -2,7 +2,7 @@
 
     <template id="report_multiple_invoice_new">
 
-        <t t-call="base_accounting_kit.new_external_layout">
+        <t t-call="base_accounting_kit_16.new_external_layout">
             <t t-set="o" t-value="o.with_context(lang=lang)" />
 
                 <t t-set="address">
@@ -239,7 +239,7 @@
                 <t t-if="o._get_name_invoice_report() == 'account.report_invoice_document'"
                     t-call="account.report_invoice_document" t-lang="lang"/>
                 <t t-foreach="mi_ids" t-as="mi">
-                    <t t-call="base_accounting_kit.report_multiple_invoice_new" t-lang="lang"/>
+                    <t t-call="base_accounting_kit_16.report_multiple_invoice_new" t-lang="lang"/>
                 </t>
 
             </t>
@@ -251,8 +251,8 @@
         <field name="name">Multiple Invoice Copies</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit.report_multiple_invoice</field>
-        <field name="report_file">base_accounting_kit.report_multiple_invoice</field>
+        <field name="report_name">base_accounting_kit_16.report_multiple_invoice</field>
+        <field name="report_file">base_accounting_kit_16.report_multiple_invoice</field>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
     </record>

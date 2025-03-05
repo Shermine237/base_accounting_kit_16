@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="base_accounting_kit.standard">
+    <template id="base_accounting_kit_16.standard">
         <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
             <div class="row">
                 <div class="col-3 mb4">
@@ -100,7 +100,7 @@
         </div>
     </template>
 
-    <template id="base_accounting_kit.boxed">
+    <template id="base_accounting_kit_16.boxed">
         <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
             <div class="o_boxed_header">
             <div class="row mb8">
@@ -169,6 +169,7 @@
                     <li t-if="company.vat" class="list-inline-item"><t t-esc="company.country_id.vat_label or 'Tax ID'"/>: <span t-field="company.vat"/></li>
                 </ul>
                 <div t-field="company.report_footer"/>
+
 <!--Footer-->
                 <t t-if="mi_type == 'text'">
                     <t t-if="txt_position == 'footer'">
@@ -194,7 +195,7 @@
 
     </template>
 
-    <template id="base_accounting_kit.clean">
+    <template id="base_accounting_kit_16.clean">
         <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
             <div class="o_clean_header">
             <div class="row">
@@ -295,7 +296,7 @@
         </div>
     </template>
 
-    <template id="base_accounting_kit.background">
+    <template id="base_accounting_kit_16.background">
         <div t-attf-class="o_company_#{company.id}_layout header" t-att-style="report_header_style">
             <div class="o_background_header">
             <div class="float-right">
@@ -382,7 +383,7 @@
 
     <template id="multiple_invoice_wizard_preview">
         <t t-call="web.html_preview_container">
-           <t t-call="base_accounting_kit.new_external_layout">
+           <t t-call="base_accounting_kit_16.new_external_layout">
                     <t t-if="mi_type == 'text'">
                         <t t-if="txt_position == 'body'">
                             <div t-if="body_txt_position == 'tr'"  style="font-size:25px; text-align:right;">
@@ -545,7 +546,7 @@
         </t>
 
         <t t-if="layout" t-call="{{layout}}"><t t-raw="0"/></t>
-        <t t-else="else" t-call="base_accounting_kit.standard"><t t-raw="0"/></t>
+        <t t-else="else" t-call="base_accounting_kit_16.standard"><t t-raw="0"/></t>
 
     </template>
 

@@ -27,7 +27,7 @@ from odoo.exceptions import UserError
 
 
 class ReportGeneralLedger(models.AbstractModel):
-    _name = 'report.base_accounting_kit.report_general_ledger'
+    _name = 'report.base_accounting_kit_16.report_general_ledger'
     _description = 'General Ledger Report'
 
     def _get_account_move_entry(self, accounts, init_balance, sortby,

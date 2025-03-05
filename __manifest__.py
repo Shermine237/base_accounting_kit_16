@@ -21,8 +21,8 @@
 #############################################################################
 
 {
-    'name': 'Odoo 14 Full Accounting Kit',
-    'version': '14.0.3.13.14',
+    'name': 'Odoo 16 Full Accounting Kit',
+    'version': '16.0.1.0.0',
     'category': 'Accounting',
     'live_test_url': 'https://www.youtube.com/watch?v=peAp2Tx_XIs',
     'summary': """ Asset and Budget Management,
@@ -32,18 +32,18 @@
     'description': """
                     AccountingKit, Fullaccounting, Odoo accounting, Odooaccounting, all in one accounting,
                     allinoneaccounting, accounting, 
-                    Odoo 14 Accounting,Accounting Reports, Odoo 14 Accounting 
+                    Odoo 16 Accounting, Accounting Reports, Odoo 16 Accounting 
                     PDF Reports, Asset Management, Budget Management, 
                     Customer Credit Limit, Recurring Payment,
                     PDC Management, Customer Follow-up,
-                    Lock Dates into Odoo 14 Community Edition, 
-                    Odoo Accounting,Odoo 14 Accounting Reports,Odoo 14,, 
+                    Lock Dates into Odoo 16 Community Edition, 
+                    Odoo Accounting, Odoo 16 Accounting Reports, Odoo 16, 
                     Full Accounting, Complete Accounting, 
-                    Odoo Community Accounting, Accounting for odoo 14, 
+                    Odoo Community Accounting, Accounting for Odoo 16, 
                     Full Accounting Package, 
-                    Financial Reports, Financial Report for Odoo 14,
+                    Financial Reports, Financial Report for Odoo 16,
                     Reconciliation Widget,
-                    Reconciliation Widget For Odoo14,
+                    Reconciliation Widget For Odoo16,
                     Payments Matching
                     """,
     'author': 'Cybrosys Techno Solutions, Odoo SA',
