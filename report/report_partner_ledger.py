@@ -27,7 +27,7 @@ from odoo.exceptions import UserError
 
 
 class ReportPartnerLedger(models.AbstractModel):
-    _name = 'report.base_accounting_kit_16.report_partnerledger'
+    _name = 'report.base_accounting_kit.report_partnerledger'
     _description = 'Partner Ledger Report'
 
     def _lines(self, data, partner):

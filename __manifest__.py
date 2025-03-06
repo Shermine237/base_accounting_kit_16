@@ -21,8 +21,8 @@
 #############################################################################
 
 {
-    'name': 'Odoo 16 Full Accounting Kit',
-    'version': '16.0.1.0.0',
+    'name': 'Odoo 14 Full Accounting Kit',
+    'version': '14.0.3.13.14',
     'category': 'Accounting',
     'live_test_url': 'https://www.youtube.com/watch?v=peAp2Tx_XIs',
     'summary': """ Asset and Budget Management,
@@ -32,38 +32,32 @@
     'description': """
                     AccountingKit, Fullaccounting, Odoo accounting, Odooaccounting, all in one accounting,
                     allinoneaccounting, accounting, 
-                    Odoo 16 Accounting, Accounting Reports, Odoo 16 Accounting 
+                    Odoo 14 Accounting,Accounting Reports, Odoo 14 Accounting 
                     PDF Reports, Asset Management, Budget Management, 
                     Customer Credit Limit, Recurring Payment,
                     PDC Management, Customer Follow-up,
-                    Lock Dates into Odoo 16 Community Edition, 
-                    Odoo Accounting, Odoo 16 Accounting Reports, Odoo 16, 
+                    Lock Dates into Odoo 14 Community Edition, 
+                    Odoo Accounting,Odoo 14 Accounting Reports,Odoo 14,, 
                     Full Accounting, Complete Accounting, 
-                    Odoo Community Accounting, Accounting for Odoo 16, 
+                    Odoo Community Accounting, Accounting for odoo 14, 
                     Full Accounting Package, 
-                    Financial Reports, Financial Report for Odoo 16,
+                    Financial Reports, Financial Report for Odoo 14,
                     Reconciliation Widget,
-                    Reconciliation Widget For Odoo16,
+                    Reconciliation Widget For Odoo14,
                     Payments Matching
                     """,
     'author': 'Cybrosys Techno Solutions, Odoo SA',
     'website': "https://www.cybrosys.com",
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
-    'depends': [
-        'base',
-        'account',
-        'sale',
-        'account_check_printing',
-        'base_account_budget',
-        'web',
-    ],
+    'depends': ['base', 'account', 'sale', 'account_check_printing', 'base_account_budget'],
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
         'data/account_pdc_data.xml',
+        # 'data/followup_levels.xml',
         'data/account_asset_data.xml',
         'data/recurring_entry_cron.xml',
         'data/multiple_invoice_data.xml',
@@ -77,6 +71,8 @@
         'views/account_payment_view.xml',
         'views/res_config_view.xml',
         'views/recurring_payments_view.xml',
+        # 'views/account_followup.xml',
+        # 'views/followup_report.xml',
         'wizard/asset_depreciation_confirmation_wizard_views.xml',
         'wizard/asset_modify_views.xml',
         'views/account_asset_views.xml',
@@ -114,14 +110,10 @@
         'report/multiple_invoice_layouts.xml',
         'report/multiple_invoice_report.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'base_accounting_kit_16/static/src/scss/account_asset.scss',
-            'base_accounting_kit_16/static/src/js/account_asset.js',
-            'base_accounting_kit_16/static/src/xml/template.xml',
-            'base_accounting_kit_16/static/src/xml/payment_matching.xml',
-        ],
-    },
+    'qweb': [
+        'static/src/xml/template.xml',
+        'static/src/xml/payment_matching.xml'
+    ],
     'license': 'LGPL-3',
     'images': ['static/description/banner.gif'],
     'installable': True,
