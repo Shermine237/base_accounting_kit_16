@@ -42,12 +42,12 @@
         <field name="view_id" ref="cash_flow_report_view"/>
         <field name="target">new</field>
         <field name="context"
-               eval="{'default_account_report_id':ref('base_accounting_kit.account_financial_report_cash_flow0')}"/>
+               eval="{'default_account_report_id':ref('base_accounting_kit_16.account_financial_report_cash_flow0')}"/>
     </record>
     <menuitem id="menu_account_cash_flow_report"
               name="Cash Flow Statement"
               sequence="5"
               action="action_cash_flow_report"
-              parent="base_accounting_kit.account_reports_generic_statements"/>
+              parent="base_accounting_kit_16.account_reports_generic_statements"/>
 
 </odoo>

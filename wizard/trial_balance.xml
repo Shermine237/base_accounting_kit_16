@@ -30,6 +30,6 @@
               name="Trial Balance"
               sequence="7"
               action="action_account_balance_menu"
-              parent="base_accounting_kit.account_reports_audit"/>
+              parent="base_accounting_kit_16.account_reports_audit"/>
 
 </odoo>

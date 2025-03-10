@@ -29,7 +29,7 @@
               name="Journals Audit"
               sequence="9"
               action="action_account_print_journal_menu"
-              parent="base_accounting_kit.account_reports_audit"
+              parent="base_accounting_kit_16.account_reports_audit"
               groups="account.group_account_manager,account.group_account_user"/>
 
 </odoo>

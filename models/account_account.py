@@ -29,7 +29,7 @@ class CashFlow(models.Model):
     _inherit = 'account.account'
 
     def get_cash_flow_ids(self):
-        cash_flow_id = self.env.ref('base_accounting_kit.account_financial_report_cash_flow0')
+        cash_flow_id = self.env.ref('base_accounting_kit_16.account_financial_report_cash_flow0')
         if cash_flow_id:
             return [('parent_id.id', '=', cash_flow_id.id)]
 

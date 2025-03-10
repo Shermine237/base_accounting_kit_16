@@ -130,9 +130,9 @@ class AccountPayment(models.Model):
         """ supered function to set effective date """
         res = super(AccountPayment, self)._prepare_payment_moves()
         inbound_pdc_id = self.env.ref(
-            'base_accounting_kit.account_payment_method_pdc_in').id
+            'base_accounting_kit_16.account_payment_method_pdc_in').id
         outbound_pdc_id = self.env.ref(
-            'base_accounting_kit.account_payment_method_pdc_out').id
+            'base_accounting_kit_16.account_payment_method_pdc_out').id
         if self.payment_method_id.id == inbound_pdc_id or \
                 self.payment_method_id.id == outbound_pdc_id \
                 and self.effective_date:

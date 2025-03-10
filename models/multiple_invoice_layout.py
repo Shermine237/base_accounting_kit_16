@@ -68,7 +68,7 @@ class MultipleInvoiceLayout(models.TransientModel):
                 layout = self._get_layout_for_preview()
                 ir_ui_view = wizard.env['ir.ui.view']
                 wizard.preview = ir_ui_view._render_template(
-                    'base_accounting_kit.multiple_invoice_wizard_preview',
+                    'base_accounting_kit_16.multiple_invoice_wizard_preview',
                     {'company': wizard.company_id, 'preview_css': preview_css,
                      'layout': layout,
                      'mi_type': self.multiple_invoice_type,
@@ -76,7 +76,7 @@ class MultipleInvoiceLayout(models.TransientModel):
                      'body_txt_position': self.body_text_position,
                      'txt_align': self.text_align,
                      'mi': self.env.ref(
-                         'base_accounting_kit.multiple_invoice_sample_name')
+                         'base_accounting_kit_16.multiple_invoice_sample_name')
                      })
             else:
                 wizard.preview = False
@@ -132,16 +132,16 @@ class MultipleInvoiceLayout(models.TransientModel):
 
     def _get_layout_for_preview(self):
         if self.layout == 'web.external_layout_boxed':
-            new_layout = 'base_accounting_kit.boxed'
+            new_layout = 'base_accounting_kit_16.boxed'
 
         elif self.layout == 'web.external_layout_clean':
-            new_layout = 'base_accounting_kit.clean'
+            new_layout = 'base_accounting_kit_16.clean'
 
         elif self.layout == 'web.external_layout_background':
-            new_layout = 'base_accounting_kit.background'
+            new_layout = 'base_accounting_kit_16.background'
 
         else:
-            new_layout = 'base_accounting_kit.standard'
+            new_layout = 'base_accounting_kit_16.standard'
 
         return new_layout
 

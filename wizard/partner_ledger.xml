@@ -28,6 +28,6 @@
 
     <menuitem name="Partner Ledger"
               id="menu_partner_ledger" sequence="1"
-              parent="base_accounting_kit.account_reports_partner"
+              parent="base_accounting_kit_16.account_reports_partner"
               action="action_partner_leadger"/>
 </odoo>
