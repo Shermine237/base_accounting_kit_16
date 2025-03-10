@@ -7,9 +7,13 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <field name="property_account_expense_id" position="after">
-                <field name="asset_category_id"
+                <field name="asset_profile_id"
                     domain="[('type', '=', 'purchase')]"
                     context="{'default_type': 'purchase'}"
+                    groups="account.group_account_user"/>
+                <field name="deferred_revenue_profile_id"
+                    domain="[('type', '=', 'sale')]"
+                    context="{'default_type': 'sale'}"
                     groups="account.group_account_user"/>
             </field>
         </field>

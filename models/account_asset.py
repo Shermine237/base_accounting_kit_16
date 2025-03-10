@@ -31,9 +31,9 @@ from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF
 from odoo.tools import float_compare, float_is_zero
 
 
-class AccountAssetCategory(models.Model):
-    _name = 'account.asset.category'
-    _description = 'Asset category'
+class AccountAssetProfile(models.Model):
+    _name = 'account.asset.profile'
+    _description = 'Asset Profile'
 
     active = fields.Boolean(default=True)
     name = fields.Char(required=True, index=True, string="Asset Type")
@@ -80,9 +80,9 @@ class AccountAssetCategory(models.Model):
     prorata = fields.Boolean(string='Prorata Temporis',
                              help='Indicates that the first depreciation entry for this asset have to be done from the purchase date instead of the first of January')
     open_asset = fields.Boolean(string='Auto-confirm Assets',
-                                help="Check this if you want to automatically confirm the assets of this category when created by invoices.")
+                                help="Check this if you want to automatically confirm the assets of this profile when created by invoices.")
     group_entries = fields.Boolean(string='Group Journal Entries',
-                                   help="Check this if you want to group the generated entries by categories.")
+                                   help="Check this if you want to group the generated entries by profiles.")
     type = fields.Selection([('sale', 'Sale: Revenue Recognition'),
                              ('purchase', 'Purchase: Asset')], required=True,
                             index=True, default='purchase')
@@ -131,7 +131,7 @@ class AccountAssetAsset(models.Model):
                                  states={'draft': [('readonly', False)]},
                                  default=lambda self: self.env.company)
     note = fields.Text()
-    category_id = fields.Many2one('account.asset.category', string='Category',
+    profile_id = fields.Many2one('account.asset.profile', string='Profile',
                                   required=True, change_default=True,
                                   readonly=True,
                                   states={'draft': [('readonly', False)]})
@@ -166,8 +166,9 @@ class AccountAssetAsset(models.Model):
     method_end = fields.Date(string='Ending Date', readonly=True,
                              states={'draft': [('readonly', False)]})
     method_progress_factor = fields.Float(string='Degressive Factor',
-                                          readonly=True, default=0.3, states={
-            'draft': [('readonly', False)]})
+                                         readonly=True,
+                                         states={'draft': [('readonly', False)]},
+                                         default=0.3)
     value_residual = fields.Float(compute='_amount_residual',
                                   digits=0, string='Residual Value')
     method_time = fields.Selection(
@@ -192,7 +193,7 @@ class AccountAssetAsset(models.Model):
     invoice_id = fields.Many2one('account.move', string='Invoice',
                                  states={'draft': [('readonly', False)]},
                                  copy=False)
-    type = fields.Selection(related="category_id.type", string='Type',
+    type = fields.Selection(related="profile_id.type", string='Type',
                             required=True)
 
     def unlink(self):
@@ -228,7 +229,7 @@ class AccountAssetAsset(models.Model):
 
     @api.model
     def compute_generated_entries(self, date, asset_type=None):
-        # Entries generated : one by grouped category and one by asset from ungrouped category
+        # Entries generated : one by grouped profile and one by asset from ungrouped profile
         created_move_ids = []
         type_domain = []
         if asset_type:
@@ -236,15 +237,15 @@ class AccountAssetAsset(models.Model):
 
         ungrouped_assets = self.env['account.asset.asset'].search(
             type_domain + [('state', '=', 'open'),
-                           ('category_id.group_entries', '=', False)])
+                           ('profile_id.group_entries', '=', False)])
         created_move_ids += ungrouped_assets._compute_entries(date,
                                                               group_entries=False)
 
-        for grouped_category in self.env['account.asset.category'].search(
+        for grouped_profile in self.env['account.asset.profile'].search(
                 type_domain + [('group_entries', '=', True)]):
             assets = self.env['account.asset.asset'].search(
                 [('state', '=', 'open'),
-                 ('category_id', '=', grouped_category.id)])
+                 ('profile_id', '=', grouped_profile.id)])
             created_move_ids += assets._compute_entries(date,
                                                         group_entries=True)
         return created_move_ids
@@ -532,26 +533,26 @@ class AccountAssetAsset(models.Model):
             raise ValidationError(_(
                 'Prorata temporis can be applied only for time method "number of depreciations".'))
 
-    @api.onchange('category_id')
-    def onchange_category_id(self):
-        vals = self.onchange_category_id_values(self.category_id.id)
+    @api.onchange('profile_id')
+    def onchange_profile_id(self):
+        vals = self.onchange_profile_id_values(self.profile_id.id)
         # We cannot use 'write' on an object that doesn't exist yet
         if vals:
             for k, v in vals['value'].items():
                 setattr(self, k, v)
 
-    def onchange_category_id_values(self, category_id):
-        if category_id:
-            category = self.env['account.asset.category'].browse(category_id)
+    def onchange_profile_id_values(self, profile_id):
+        if profile_id:
+            profile = self.env['account.asset.profile'].browse(profile_id)
             return {
                 'value': {
-                    'method': category.method,
-                    'method_number': category.method_number,
-                    'method_time': category.method_time,
-                    'method_period': category.method_period,
-                    'method_progress_factor': category.method_progress_factor,
-                    'method_end': category.method_end,
-                    'prorata': category.prorata,
+                    'method': profile.method,
+                    'method_number': profile.method_number,
+                    'method_time': profile.method_time,
+                    'method_period': profile.method_period,
+                    'method_progress_factor': profile.method_progress_factor,
+                    'method_end': profile.method_end,
+                    'prorata': profile.prorata,
                 }
             }
 
@@ -643,7 +644,7 @@ class AccountAssetDepreciationLine(models.Model):
             raise UserError(_(
                 'This depreciation is already linked to a journal entry! Please post or delete it.'))
         for line in self:
-            category_id = line.asset_id.category_id
+            profile_id = line.asset_id.profile_id
             depreciation_date = self.env.context.get(
                 'depreciation_date') or line.depreciation_date or fields.Date.context_today(
                 self)
@@ -657,34 +658,34 @@ class AccountAssetDepreciationLine(models.Model):
                 line.asset_id.partner_id)
             move_line_1 = {
                 'name': asset_name,
-                'account_id': category_id.account_depreciation_id.id,
+                'account_id': profile_id.account_depreciation_id.id,
                 'debit': 0.0 if float_compare(amount, 0.0,
                                               precision_digits=prec) > 0 else -amount,
                 'credit': amount if float_compare(amount, 0.0,
                                                   precision_digits=prec) > 0 else 0.0,
-                'journal_id': category_id.journal_id.id,
+                'journal_id': profile_id.journal_id.id,
                 'partner_id': partner.id,
-                'analytic_account_id': category_id.account_analytic_id.id if category_id.type == 'sale' else False,
+                'analytic_account_id': profile_id.account_analytic_id.id if profile_id.type == 'sale' else False,
                 'currency_id': company_currency != current_currency and current_currency.id or False,
                 'amount_currency': company_currency != current_currency and - 1.0 * line.amount or 0.0,
             }
             move_line_2 = {
                 'name': asset_name,
-                'account_id': category_id.account_depreciation_expense_id.id,
+                'account_id': profile_id.account_depreciation_expense_id.id,
                 'credit': 0.0 if float_compare(amount, 0.0,
                                                precision_digits=prec) > 0 else -amount,
                 'debit': amount if float_compare(amount, 0.0,
                                                  precision_digits=prec) > 0 else 0.0,
-                'journal_id': category_id.journal_id.id,
+                'journal_id': profile_id.journal_id.id,
                 'partner_id': partner.id,
-                'analytic_account_id': category_id.account_analytic_id.id if category_id.type == 'purchase' else False,
+                'analytic_account_id': profile_id.account_analytic_id.id if profile_id.type == 'purchase' else False,
                 'currency_id': company_currency != current_currency and current_currency.id or False,
                 'amount_currency': company_currency != current_currency and line.amount or 0.0,
             }
             move_vals = {
                 'ref': line.asset_id.code,
                 'date': depreciation_date or False,
-                'journal_id': category_id.journal_id.id,
+                'journal_id': profile_id.journal_id.id,
                 'line_ids': [(0, 0, move_line_1), (0, 0, move_line_2)],
             }
             move = self.env['account.move'].create(move_vals)
@@ -694,7 +695,7 @@ class AccountAssetDepreciationLine(models.Model):
         if post_move and created_moves:
             created_moves.filtered(lambda m: any(
                 m.asset_depreciation_ids.mapped(
-                    'asset_id.category_id.open_asset'))).post()
+                    'asset_id.profile_id.open_asset'))).post()
         return [x.id for x in created_moves]
 
     def create_grouped_move(self, post_move=True):
@@ -702,38 +703,38 @@ class AccountAssetDepreciationLine(models.Model):
             return []
 
         created_moves = self.env['account.move']
-        category_id = self[
-            0].asset_id.category_id  # we can suppose that all lines have the same category
-        depreciation_date = self.env.context.get(
-            'depreciation_date') or fields.Date.context_today(self)
-        amount = 0.0
+        prec = self.env['decimal.precision'].precision_get('Account')
+        if self.mapped('move_id'):
+            raise UserError(_(
+                'This depreciation is already linked to a journal entry! Please post or delete it.'))
         for line in self:
             # Sum amount of all depreciation lines
             company_currency = line.asset_id.company_id.currency_id
             current_currency = line.asset_id.currency_id
-            amount += current_currency.compute(line.amount, company_currency)
+            amount = current_currency.with_context(
+                date=line.depreciation_date).compute(line.amount, company_currency)
 
-        name = category_id.name + _(' (grouped)')
+        name = line.asset_id.profile_id.name + _(' (grouped)')
         move_line_1 = {
             'name': name,
-            'account_id': category_id.account_depreciation_id.id,
+            'account_id': line.asset_id.profile_id.account_depreciation_id.id,
             'debit': 0.0,
             'credit': amount,
-            'journal_id': category_id.journal_id.id,
-            'analytic_account_id': category_id.account_analytic_id.id if category_id.type == 'sale' else False,
+            'journal_id': line.asset_id.profile_id.journal_id.id,
+            'analytic_account_id': line.asset_id.profile_id.account_analytic_id.id if line.asset_id.profile_id.type == 'sale' else False,
         }
         move_line_2 = {
             'name': name,
-            'account_id': category_id.account_depreciation_expense_id.id,
+            'account_id': line.asset_id.profile_id.account_depreciation_expense_id.id,
             'credit': 0.0,
             'debit': amount,
-            'journal_id': category_id.journal_id.id,
-            'analytic_account_id': category_id.account_analytic_id.id if category_id.type == 'purchase' else False,
+            'journal_id': line.asset_id.profile_id.journal_id.id,
+            'analytic_account_id': line.asset_id.profile_id.account_analytic_id.id if line.asset_id.profile_id.type == 'purchase' else False,
         }
         move_vals = {
-            'ref': category_id.name,
-            'date': depreciation_date or False,
-            'journal_id': category_id.journal_id.id,
+            'ref': line.asset_id.profile_id.name,
+            'date': line.depreciation_date or False,
+            'journal_id': line.asset_id.profile_id.journal_id.id,
             'line_ids': [(0, 0, move_line_1), (0, 0, move_line_2)],
         }
         move = self.env['account.move'].create(move_vals)
@@ -792,7 +793,7 @@ class AccountAssetDepreciationLine(models.Model):
     def unlink(self):
         for record in self:
             if record.move_check:
-                if record.asset_id.category_id.type == 'purchase':
+                if record.asset_id.profile_id.type == 'purchase':
                     msg = _("You cannot delete posted depreciation lines.")
                 else:
                     msg = _("You cannot delete posted installment lines.")

@@ -13,7 +13,7 @@ class AssetAssetReport(models.Model):
     date = fields.Date(readonly=True)
     depreciation_date = fields.Date(string='Depreciation Date', readonly=True)
     asset_id = fields.Many2one('account.asset.asset', string='Asset', readonly=True)
-    asset_category_id = fields.Many2one('account.asset.category', string='Asset category', readonly=True)
+    asset_profile_id = fields.Many2one('account.asset.profile', string='Asset Profile', readonly=True)
     partner_id = fields.Many2one('res.partner', string='Partner', readonly=True)
     state = fields.Selection([('draft', 'Draft'), ('open', 'Running'), ('close', 'Close')], string='Status', readonly=True)
     depreciation_value = fields.Float(string='Amount of Depreciation Lines', readonly=True)
@@ -51,7 +51,7 @@ class AssetAssetReport(models.Model):
                       END) as unposted_value,
                     dl.asset_id as asset_id,
                     dl.move_check as move_check,
-                    a.category_id as asset_category_id,
+                    a.profile_id as asset_profile_id,
                     a.partner_id as partner_id,
                     a.state as state,
                     count(dl.*) as installment_nbr,
@@ -63,6 +63,7 @@ class AssetAssetReport(models.Model):
                 where a.active is true 
                 group by
                     dl.amount,dl.asset_id,dl.depreciation_date,dl.name,
-                    a.date, dl.move_check, a.state, a.category_id, a.partner_id, a.company_id,
+                    a.date, dl.move_check, a.state, a.profile_id, a.partner_id, a.company_id,
                     a.value, a.id, a.salvage_value, dlmin.id
-        )""")
+        )
+        """)

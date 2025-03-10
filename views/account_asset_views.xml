@@ -2,14 +2,14 @@
 <odoo>
 
     <!--
-        Asset Category
+        Asset Profile
      -->
 
-    <record model="ir.ui.view" id="view_account_asset_category_form">
-        <field name="name">account.asset.category.form</field>
-        <field name="model">account.asset.category</field>
+    <record model="ir.ui.view" id="view_account_asset_profile_form">
+        <field name="name">account.asset.profile.form</field>
+        <field name="model">account.asset.profile</field>
         <field name="arch" type="xml">
-            <form string="Asset category">
+            <form string="Asset Profile">
                 <sheet>
                     <group>
                         <div class="oe_title">
@@ -67,9 +67,9 @@
         </field>
     </record>
 
-    <record id="view_account_asset_asset_category_kanban" model="ir.ui.view">
-        <field name="name">account.asset.category.kanban</field>
-        <field name="model">account.asset.category</field>
+    <record id="view_account_asset_profile_kanban" model="ir.ui.view">
+        <field name="name">account.asset.profile.kanban</field>
+        <field name="model">account.asset.profile</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
                 <field name="name"/>
@@ -94,11 +94,11 @@
         </field>
     </record>
 
-    <record model="ir.ui.view" id="view_account_asset_category_tree">
-        <field name="name">account.asset.category.tree</field>
-        <field name="model">account.asset.category</field>
+    <record model="ir.ui.view" id="view_account_asset_profile_tree">
+        <field name="name">account.asset.profile.tree</field>
+        <field name="model">account.asset.profile</field>
         <field name="arch" type="xml">
-            <tree string="Asset category">
+            <tree string="Asset Profile">
                 <field name="name"/>
                 <field name="journal_id"/>
                 <field name="method"/>
@@ -107,14 +107,14 @@
         </field>
     </record>
 
-    <record model="ir.ui.view" id="view_account_asset_category_search">
-        <field name="name">account.asset.category.search</field>
-        <field name="model">account.asset.category</field>
+    <record model="ir.ui.view" id="view_account_asset_profile_search">
+        <field name="name">account.asset.profile.search</field>
+        <field name="model">account.asset.profile</field>
         <field name="arch" type="xml">
-            <search string="Search Asset Category">
+            <search string="Search Asset Profile">
                 <filter name="type" string="Sales" domain="[('type','=', 'sale')]" help="Deferred Revenues"/>
                 <filter name="type" string="Purchase" domain="[('type','=', 'purchase')]" help="Assets"/>
-                <field name="name" string="Category"/>
+                <field name="name" string="Profile"/>
                 <field name="journal_id"/>
                 <group expand="0" string="Group By...">
                     <filter name="type" string="Type" domain="[]" context="{'group_by':'type'}"/>
@@ -150,7 +150,7 @@
                     </div>
                     <group>
                         <group>
-                            <field name="category_id" domain="[('type', '=', 'purchase')]" context="{'default_type': 'purchase'}" help="Category of asset"/>
+                            <field name="profile_id" domain="[('type', '=', 'purchase')]" context="{'default_type': 'purchase'}" help="Profile of asset"/>
                             <field name="code"/>
                             <field name="date" help="Date of asset"/>
                             <field name="type" invisible="1"/>
@@ -226,27 +226,27 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
                 <field name="name"/>
-                <field name="category_id"/>
+                <field name="profile_id"/>
                 <field name="date"/>
                 <field name="state"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
                             <div class="row mb4">
-                                <div class="col-xs-6">
-                                    <strong><span><t t-esc="record.name.value"/></span></strong>
+                                <div class="col-6">
+                                    <strong><t t-esc="record.name.value"/></strong>
                                 </div>
-                                <div class="col-xs-6 pull-right text-right">
+                                <div class="col-6 text-right">
                                     <strong><t t-esc="record.date.value"/></strong>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-xs-6 text-muted">
-                                    <span><t t-esc="record.category_id.value"/></span>
+                                <div class="col-6">
+                                    <span><t t-esc="record.profile_id.value"/></span>
                                 </div>
-                                <div class="col-xs-6">
-                                    <span class="pull-right text-right">
-                                        <field name="state" widget="label_selection" options="{'classes': {'draft': 'primary', 'open': 'success', 'close': 'default'}}"/>
+                                <div class="col-6">
+                                    <span class="float-right text-right">
+                                        <field name="state" widget="label_selection" options="{'classes': {'draft': 'default', 'open': 'success'}}"/>
                                     </span>
                                 </div>
                             </div>
@@ -257,51 +257,20 @@
         </field>
     </record>
 
-    <record model="ir.ui.view" id="view_account_asset_asset_purchase_tree">
-        <field name="name">account.asset.asset.purchase.tree</field>
-        <field name="model">account.asset.asset</field>
-        <field name="arch" type="xml">
-            <tree string="Assets" decoration-info="(state == 'draft')" decoration-muted="(state == 'close')">
-                <field name="name"/>
-                <field name="category_id"/>
-                <field name="date"/>
-                <field name="partner_id" string="Vendor"/>
-                <field name="value"/>
-                <field name="value_residual" widget="monetary"/>
-                <field name="currency_id" groups="base.group_multi_currency"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-                <field name="state"/>
-            </tree>
-        </field>
+    <record model="ir.actions.act_window" id="action_account_asset_asset_list_normal_purchase">
+        <field name="name">Asset Types</field>
+        <field name="res_model">account.asset.profile</field>
+        <field name="domain">[('type', '=', 'purchase')]</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{'default_type': 'purchase'}</field>
     </record>
-
-    <record id="view_account_asset_search" model="ir.ui.view">
-        <field name="name">account.asset.asset.search</field>
-        <field name="model">account.asset.asset</field>
-        <field name="arch" type="xml">
-            <search string="Asset Account">
-                <field name="name" string="Asset"/>
-                <field name="date"/>
-                <filter name="state" string="Current" domain="[('state','in', ('draft','open'))]" help="Assets in draft and open states"/>
-                <filter name="state" string="Closed" domain="[('state','=', 'close')]" help="Assets in closed state"/>
-                <field name="category_id"/>
-                <field name="partner_id" filter_domain="[('partner_id','child_of',self)]"/>
-                <group expand="0" string="Group By...">
-                        <filter name="date" string="Month" domain="[]" context="{'group_by':'date'}"/>
-                        <filter name="category_id" string="Category" domain="[]" context="{'group_by':'category_id'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-
 
     <record model="ir.actions.act_window" id="action_account_asset_asset_form">
         <field name="name">Assets</field>
         <field name="res_model">account.asset.asset</field>
         <field name="view_mode">tree,kanban,form</field>
         <field name="view_id" ref="view_account_asset_asset_purchase_tree"/>
-        <field name="domain">[('category_id.type', '=', 'purchase')]</field>
+        <field name="domain">[('profile_id.type', '=', 'purchase')]</field>
     </record>
 
     <menuitem parent="account.menu_finance_entries_management" id="menu_action_account_asset_asset_form" action="action_account_asset_asset_form" sequence="101" groups="account.group_account_user"/>
@@ -313,7 +282,7 @@
 
     <record model="ir.actions.act_window" id="action_account_asset_asset_list_normal_purchase">
         <field name="name">Asset Types</field>
-        <field name="res_model">account.asset.category</field>
+        <field name="res_model">account.asset.profile</field>
         <field name="domain">[('type', '=', 'purchase')]</field>
         <field name="view_mode">tree,kanban,form</field>
         <field name="context">{'default_type': 'purchase'}</field>
