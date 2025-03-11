@@ -25,5 +25,46 @@
                   name="Partner Reports" parent="account.menu_finance_reports"/>
         <menuitem id="account_reports_audit" sequence="4"
                   name="Audit Reports" parent="account.menu_finance_reports"/>
+        
+        <!-- Financial Reports Menu -->
+        <menuitem id="menu_finance_reports"
+                  name="Financial Reports"
+                  parent="account.menu_finance"
+                  sequence="5"/>
+
+        <!-- Balance Sheet -->
+        <menuitem id="menu_account_report_bs"
+                  name="Balance Sheet"
+                  parent="menu_finance_reports"
+                  action="action_account_report_bs"
+                  sequence="1"/>
+
+        <!-- Profit and Loss -->
+        <menuitem id="menu_account_report_pl"
+                  name="Profit and Loss"
+                  parent="menu_finance_reports"
+                  action="action_account_report_pl"
+                  sequence="2"/>
+
+        <!-- Actions -->
+        <record id="action_account_report_bs" model="ir.actions.act_window">
+            <field name="name">Balance Sheet</field>
+            <field name="res_model">financial.report</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context" eval="{
+                'default_account_report_id': ref('account_financial_report_bs'),
+            }"/>
+        </record>
+
+        <record id="action_account_report_pl" model="ir.actions.act_window">
+            <field name="name">Profit and Loss</field>
+            <field name="res_model">financial.report</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context" eval="{
+                'default_account_report_id': ref('account_financial_report_pl'),
+            }"/>
+        </record>
     </data>
 </odoo>

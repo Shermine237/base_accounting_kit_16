@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Rapports racine -->
+        <record id="root_report_bs" model="account.report">
+            <field name="name">Balance Sheet</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_account_type" eval="True"/>
+            <field name="filter_comparison" eval="True"/>
+        </record>
+
+        <record id="root_report_pl" model="account.report">
+            <field name="name">Profit and Loss</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_account_type" eval="True"/>
+            <field name="filter_comparison" eval="True"/>
+            <field name="filter_analytic_groupby" eval="True"/>
+        </record>
+
+        <record id="root_report_cf" model="account.report">
+            <field name="name">Cash Flow Statement</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+        </record>
+
+        <record id="root_report_gl" model="account.report">
+            <field name="name">General Ledger</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_account_type" eval="True"/>
+            <field name="filter_comparison" eval="True"/>
+        </record>
+
+        <record id="root_report_pl" model="account.report">
+            <field name="name">Partner Ledger</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_partner" eval="True"/>
+            <field name="filter_account_type" eval="True"/>
+        </record>
+
+        <record id="root_report_tb" model="account.report">
+            <field name="name">Trial Balance</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_account_type" eval="True"/>
+            <field name="filter_comparison" eval="True"/>
+        </record>
+
+        <record id="root_report_ar" model="account.report">
+            <field name="name">Aged Receivable</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_partner" eval="True"/>
+        </record>
+
+        <record id="root_report_ap" model="account.report">
+            <field name="name">Aged Payable</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="filter_unfold_all" eval="True"/>
+            <field name="filter_journals" eval="True"/>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_partner" eval="True"/>
+        </record>
+    </data>
+</odoo>

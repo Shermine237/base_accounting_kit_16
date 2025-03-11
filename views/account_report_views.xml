@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Tree View -->
+        <record id="view_account_report_tree" model="ir.ui.view">
+            <field name="name">account.report.tree</field>
+            <field name="model">account.report</field>
+            <field name="arch" type="xml">
+                <tree string="Financial Reports">
+                    <field name="name"/>
+                    <field name="root_report_id"/>
+                    <field name="parent_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_account_report_form" model="ir.ui.view">
+            <field name="name">account.report.form</field>
+            <field name="model">account.report</field>
+            <field name="arch" type="xml">
+                <form string="Financial Report">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="root_report_id"/>
+                                <field name="parent_id"/>
+                            </group>
+                            <group string="Standard Filters">
+                                <field name="filter_date_range"/>
+                                <field name="filter_unfold_all"/>
+                                <field name="filter_journals"/>
+                                <field name="filter_multi_company"/>
+                            </group>
+                            <group string="Specific Filters">
+                                <field name="filter_partner"/>
+                                <field name="filter_account_type"/>
+                                <field name="filter_comparison"/>
+                                <field name="filter_analytic_groupby"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Children Reports" name="children_reports">
+                                <field name="children_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="filter_date_range"/>
+                                        <field name="filter_unfold_all"/>
+                                        <field name="filter_journals"/>
+                                        <field name="filter_multi_company"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_account_report_search" model="ir.ui.view">
+            <field name="name">account.report.search</field>
+            <field name="model">account.report</field>
+            <field name="arch" type="xml">
+                <search string="Financial Reports">
+                    <field name="name"/>
+                    <field name="root_report_id"/>
+                    <field name="parent_id"/>
+                    <separator/>
+                    <filter string="Root Reports" name="root_reports" domain="[('root_report_id', '=', False)]"/>
+                    <filter string="Child Reports" name="child_reports" domain="[('parent_id', '!=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Root Report" name="group_by_root" domain="[]" context="{'group_by': 'root_report_id'}"/>
+                        <filter string="Parent Report" name="group_by_parent" domain="[]" context="{'group_by': 'parent_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_account_report" model="ir.actions.act_window">
+            <field name="name">Financial Reports</field>
+            <field name="res_model">account.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_account_report_search"/>
+            <field name="context">{'search_default_root_reports': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first financial report
+                </p>
+                <p>
+                    Financial reports help you analyze your company's financial data.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_account_report"
+                  name="Financial Reports Configuration"
+                  parent="account.menu_finance_configuration"
+                  action="action_account_report"
+                  sequence="50"/>
+    </data>
+</odoo>

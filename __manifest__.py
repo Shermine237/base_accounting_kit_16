@@ -53,7 +53,6 @@
     'depends': [
         'base',
         'account',
-        'account_reports',
         'sale',
         'account_check_printing',
         'base_account_budget_16'
@@ -61,6 +60,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
+        'data/account_report_data.xml',
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
         'data/account_pdc_data.xml',
@@ -77,6 +77,7 @@
         'views/account_payment_view.xml',
         'views/res_config_view.xml',
         'views/recurring_payments_view.xml',
+        'views/account_report_views.xml',
         'wizard/asset_depreciation_confirmation_wizard_views.xml',
         'wizard/asset_modify_views.xml',
         'views/account_asset_views.xml',
@@ -86,6 +87,7 @@
         'views/payment_matching.xml',
         'views/multiple_invoice_layout_view.xml',
         'views/multiple_invoice_form.xml',
+        'views/account_financial_report_views.xml',
         'wizard/financial_report.xml',
         'wizard/general_ledger.xml',
         'wizard/partner_ledger.xml',

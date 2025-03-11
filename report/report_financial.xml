@@ -1,88 +1,113 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="report_financial">
         <t t-call="web.html_container">
             <t t-call="web.internal_layout">
                 <div class="page">
-                    <h2 class="text-center mb32">
-                        <t t-esc="data['account_report_id'][1]"/>
-                    </h2>
-
+                    <!-- En-tête du rapport -->
+                    <h2 t-esc="data['form']['account_report_id'][1]" class="text-center"/>
                     <div class="row mt32 mb32">
                         <div class="col-4">
-                            <strong>Target Moves:</strong>
-                            <p>
-                                <span t-if="data['target_move'] == 'all'" class="text-muted">All Entries</span>
-                                <span t-if="data['target_move'] == 'posted'" class="text-muted">All Posted Entries</span>
-                            </p>
-                        </div>
-                        <div class="col-4">
-                            <p>
-                                <t t-if="data['date_from']">
-                                    <strong>Date from:</strong>
-                                    <span class="text-muted ml-2" t-esc="data['date_from']"/>
-                                    <br/>
-                                </t>
-                                <t t-if="data['date_to']">
-                                    <strong>Date to:</strong>
-                                    <span class="text-muted ml-2" t-esc="data['date_to']"/>
-                                </t>
-                            </p>
-                        </div>
-                        <div class="col-4">
                             <strong>Company:</strong>
-                            <p class="text-muted" t-esc="data['company_id'][1]"/>
+                            <p t-esc="res_company.name"/>
+                        </div>
+                        <div class="col-4">
+                            <strong>Target Moves:</strong>
+                            <p t-if="data['form']['target_move'] == 'all'">All Entries</p>
+                            <p t-if="data['form']['target_move'] == 'posted'">All Posted Entries</p>
+                        </div>
+                        <div class="col-4">
+                            <strong>Date Range:</strong>
+                            <p>
+                                <span t-esc="data['form']['date_from']" t-options='{"widget": "date"}'/>
+                                to
+                                <span t-esc="data['form']['date_to']" t-options='{"widget": "date"}'/>
+                            </p>
                         </div>
                     </div>
 
+                    <!-- Tableau des données -->
                     <table class="table table-sm">
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th t-if="data['debit_credit']" class="text-right">Debit</th>
-                                <th t-if="data['debit_credit']" class="text-right">Credit</th>
+                                <th t-if="data['form'].get('debit_credit')" class="text-right">Debit</th>
+                                <th t-if="data['form'].get('debit_credit')" class="text-right">Credit</th>
                                 <th class="text-right">Balance</th>
-                                <th t-if="data['enable_filter']" class="text-right">Previous Period</th>
+                                <th t-if="data['form']['enable_filter']" class="text-right">
+                                    <t t-if="data['form']['filter_cmp'] == 'filter_date'">
+                                        Balance
+                                        <br/>
+                                        <span t-esc="data['form']['date_from_cmp']" t-options='{"widget": "date"}'/>
+                                        -
+                                        <span t-esc="data['form']['date_to_cmp']" t-options='{"widget": "date"}'/>
+                                    </t>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr t-foreach="lines" t-as="line">
-                                <t t-set="style" t-value="'font-weight: ' + ('normal' if line.get('unfoldable', False) else 'bold')"/>
-                                <td>
-                                    <span t-if="line.get('unfoldable', False)" class="text-muted" t-esc="'    ' * line.get('level', 0)"/>
-                                    <span t-att-style="style" t-esc="line.get('name')"/>
-                                </td>
-                                <td t-if="data['debit_credit']" class="text-right" style="white-space: nowrap;">
-                                    <span t-att-style="style" t-esc="line.get('columns')[0].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                </td>
-                                <td t-if="data['debit_credit']" class="text-right" style="white-space: nowrap;">
-                                    <span t-att-style="style" t-esc="line.get('columns')[1].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                </td>
-                                <td class="text-right" style="white-space: nowrap;">
-                                    <span t-att-style="style" t-esc="line.get('columns')[-1].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                </td>
-                                <td t-if="data['enable_filter']" class="text-right" style="white-space: nowrap;">
-                                    <span t-att-style="style" t-esc="line.get('columns')[-2].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="row justify-content-end">
-                        <div class="col-4">
-                            <table class="table table-sm">
-                                <tr class="border-black">
-                                    <td><strong>Total</strong></td>
+                            <t t-foreach="data['form']['report_lines']" t-as="line">
+                                <tr t-att-class="'font-weight-bold' if line.get('level') == 1 else ''">
+                                    <!-- Nom avec indentation selon le niveau -->
+                                    <td>
+                                        <span t-att-style="'margin-left: ' + str(line['level'] * 20) + 'px;'">
+                                            <t t-esc="line['name']"/>
+                                        </span>
+                                    </td>
+                                    <!-- Colonnes de débit/crédit si activées -->
+                                    <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                        <t t-esc="line.get('debit', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                    <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                        <t t-esc="line.get('credit', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                    <!-- Solde -->
                                     <td class="text-right">
-                                        <span t-esc="sum(line.get('columns')[-1].get('no_format', 0.0) for line in lines if not line.get('unfoldable', False))"
-                                              t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                        <t t-esc="line['balance']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                    <!-- Colonne de comparaison si activée -->
+                                    <td t-if="data['form']['enable_filter']" class="text-right">
+                                        <t t-esc="line.get('comparison', {}).get('balance', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
                                     </td>
                                 </tr>
-                            </table>
-                        </div>
-                    </div>
+                            </t>
+                        </tbody>
+                        <!-- Totaux -->
+                        <tfoot>
+                            <tr class="border-black font-weight-bold">
+                                <td>Total</td>
+                                <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                    <t t-esc="sum(line.get('debit', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
+                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                </td>
+                                <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                    <t t-esc="sum(line.get('credit', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
+                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                </td>
+                                <td class="text-right">
+                                    <t t-esc="sum(line['balance'] for line in data['form']['report_lines'] if line.get('level') == 1)"
+                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                </td>
+                                <td t-if="data['form']['enable_filter']" class="text-right">
+                                    <t t-esc="sum(line.get('comparison', {}).get('balance', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
+                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </t>
         </t>
     </template>
+
+    <!-- Action de rapport -->
+    <record id="action_report_financial" model="ir.actions.report">
+        <field name="name">Financial Report</field>
+        <field name="model">financial.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">base_accounting_kit_16.report_financial</field>
+        <field name="report_file">base_accounting_kit_16.report_financial</field>
+        <field name="binding_model_id" ref="model_financial_report"/>
+        <field name="binding_type">report</field>
+    </record>
 </odoo>
