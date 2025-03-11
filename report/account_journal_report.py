@@ -3,7 +3,7 @@
 #
 #    Cybrosys Technologies Pvt. Ltd.
 #
-#    Copyright (C) 2019-TODAY Cybrosys Technologies(<https://www.cybrosys.com>).
+#    Copyright (C) 2019-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
 #    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
 #
 #    You can modify it under the terms of the GNU LESSER
@@ -19,20 +19,18 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
-from . import account_report_common
-from . import account_journal_report
-from . import account_report_common_partner
-from . import general_ledger_report
-from . import account_report_common_account
-from . import report_partner_ledger
-from . import report_tax
-from . import report_trial_balance
-from . import report_aged_partner
-from . import report_journal_audit
-from . import report_financial
-from . import cash_flow_report
-from . import account_bank_book
-from . import account_cash_book
-from . import account_day_book
-from . import account_asset_report
-from . import multiple_invoice_report
+
+from odoo import fields, models
+
+
+class AccountCommonJournalReport(models.TransientModel):
+    _name = 'account.common.journal.report'
+    _description = 'Common Journal Report'
+    _inherit = "account.common.report"
+
+    amount_currency = fields.Boolean('With Currency',
+                                   help="Print Report with the currency column")
+
+    def pre_print_report(self, data):
+        data['form'].update(self.read(['amount_currency'])[0])
+        return super().pre_print_report(data)
