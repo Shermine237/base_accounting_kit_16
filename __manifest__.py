@@ -54,7 +54,6 @@
         'base',
         'account',
         'account_reports',
-        'report_xlsx',
         'sale',
         'account_check_printing',
         'base_account_budget_16'
