@@ -4,7 +4,7 @@ from odoo.exceptions import UserError
 import io
 import xlsxwriter
 
-class ReportFinancial(models.AbstractModel):
+class ReportFinancial(models.Model):
     _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Reports'
     _inherit = 'account.report'

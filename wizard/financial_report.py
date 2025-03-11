@@ -30,7 +30,7 @@ class AccountFinancialReportWizard(models.TransientModel):
         ('pl', 'Profit and Loss'),
         ('cf', 'Cash Flow Statement'),
         ('gl', 'General Ledger'),
-        ('pl', 'Partner Ledger'),
+        ('ptl', 'Partner Ledger'),
         ('tb', 'Trial Balance'),
         ('ar', 'Aged Receivable'),
         ('ap', 'Aged Payable')
@@ -47,7 +47,7 @@ class AccountFinancialReportWizard(models.TransientModel):
             elif 'cash' in self.account_report_id.name.lower():
                 self.report_type = 'cf'
             elif 'partner' in self.account_report_id.name.lower():
-                self.report_type = 'pl'
+                self.report_type = 'ptl'
             elif 'general' in self.account_report_id.name.lower():
                 self.report_type = 'gl'
             elif 'trial' in self.account_report_id.name.lower():
