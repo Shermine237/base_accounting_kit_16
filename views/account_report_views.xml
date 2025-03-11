@@ -1,105 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <!-- Tree View -->
-        <record id="view_account_report_tree" model="ir.ui.view">
-            <field name="name">account.report.tree</field>
-            <field name="model">account.report</field>
-            <field name="arch" type="xml">
-                <tree string="Financial Reports">
-                    <field name="name"/>
-                    <field name="root_report_id"/>
-                    <field name="parent_id"/>
-                </tree>
-            </field>
-        </record>
+    <!-- Configuration des rapports financiers standards -->
+    <record id="action_account_report_bs" model="ir.actions.client">
+        <field name="name">Balance Sheet</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.balance_sheet')}"/>
+    </record>
 
-        <!-- Form View -->
-        <record id="view_account_report_form" model="ir.ui.view">
-            <field name="name">account.report.form</field>
-            <field name="model">account.report</field>
-            <field name="arch" type="xml">
-                <form string="Financial Report">
-                    <sheet>
+    <record id="action_account_report_pl" model="ir.actions.client">
+        <field name="name">Profit and Loss</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.profit_and_loss')}"/>
+    </record>
+
+    <record id="action_account_report_cf" model="ir.actions.client">
+        <field name="name">Cash Flow Statement</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.cash_flow')}"/>
+    </record>
+
+    <record id="action_account_report_partner_ledger" model="ir.actions.client">
+        <field name="name">Partner Ledger</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.partner_ledger')}"/>
+    </record>
+
+    <record id="action_account_report_general_ledger" model="ir.actions.client">
+        <field name="name">General Ledger</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.general_ledger')}"/>
+    </record>
+
+    <record id="action_account_report_trial_balance" model="ir.actions.client">
+        <field name="name">Trial Balance</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.trial_balance')}"/>
+    </record>
+
+    <record id="action_account_report_aged_receivable" model="ir.actions.client">
+        <field name="name">Aged Receivable</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.aged_receivable')}"/>
+    </record>
+
+    <record id="action_account_report_aged_payable" model="ir.actions.client">
+        <field name="name">Aged Payable</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.aged_payable')}"/>
+    </record>
+
+    <!-- Menu items -->
+    <menuitem id="menu_finance_reports_accounting"
+        name="Accounting Reports"
+        parent="account.menu_finance_reports"
+        sequence="5"/>
+
+    <menuitem id="menu_account_report_bs"
+        name="Balance Sheet"
+        action="action_account_report_bs"
+        parent="menu_finance_reports_accounting"
+        sequence="10"/>
+
+    <menuitem id="menu_account_report_pl"
+        name="Profit and Loss"
+        action="action_account_report_pl"
+        parent="menu_finance_reports_accounting"
+        sequence="20"/>
+
+    <menuitem id="menu_account_report_cf"
+        name="Cash Flow Statement"
+        action="action_account_report_cf"
+        parent="menu_finance_reports_accounting"
+        sequence="30"/>
+
+    <menuitem id="menu_account_report_partner_ledger"
+        name="Partner Ledger"
+        action="action_account_report_partner_ledger"
+        parent="menu_finance_reports_accounting"
+        sequence="40"/>
+
+    <menuitem id="menu_account_report_general_ledger"
+        name="General Ledger"
+        action="action_account_report_general_ledger"
+        parent="menu_finance_reports_accounting"
+        sequence="50"/>
+
+    <menuitem id="menu_account_report_trial_balance"
+        name="Trial Balance"
+        action="action_account_report_trial_balance"
+        parent="menu_finance_reports_accounting"
+        sequence="60"/>
+
+    <menuitem id="menu_account_report_aged"
+        name="Aged Reports"
+        parent="menu_finance_reports_accounting"
+        sequence="70"/>
+
+    <menuitem id="menu_account_report_aged_receivable"
+        name="Aged Receivable"
+        action="action_account_report_aged_receivable"
+        parent="menu_account_report_aged"
+        sequence="10"/>
+
+    <menuitem id="menu_account_report_aged_payable"
+        name="Aged Payable"
+        action="action_account_report_aged_payable"
+        parent="menu_account_report_aged"
+        sequence="20"/>
+
+    <!-- Configuration des filtres standards -->
+    <record id="view_account_report_search" model="ir.ui.view">
+        <field name="name">account.report.search</field>
+        <field name="model">account.report</field>
+        <field name="arch" type="xml">
+            <search string="Financial Reports">
+                <field name="name"/>
+                <filter string="Date Range" name="filter_date_range"/>
+                <filter string="Unfold All" name="filter_unfold_all"/>
+                <filter string="Journals" name="filter_journals"/>
+                <filter string="Companies" name="filter_multi_company" groups="base.group_multi_company"/>
+                <separator/>
+                <filter string="Analytic Groups" name="filter_analytic_groupby" 
+                    domain="[('root_report_id', '=', ref('account_reports.profit_and_loss'))]"/>
+                <filter string="Partners" name="filter_partner"
+                    domain="[('root_report_id', 'in', (ref('account_reports.partner_ledger'),ref('account_reports.aged_receivable'),ref('account_reports.aged_payable')))]"/>
+                <filter string="Account Types" name="filter_account_type"
+                    domain="[('root_report_id', 'in', (ref('account_reports.partner_ledger'),ref('account_reports.general_ledger'),ref('account_reports.trial_balance')))]"/>
+                <filter string="Comparison" name="filter_comparison"
+                    domain="[('root_report_id', 'in', (ref('account_reports.general_ledger'),ref('account_reports.trial_balance')))]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_account_report_tree" model="ir.ui.view">
+        <field name="name">account.report.tree</field>
+        <field name="model">account.report</field>
+        <field name="arch" type="xml">
+            <tree string="Financial Reports">
+                <field name="name"/>
+                <field name="root_report_id"/>
+                <field name="parent_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_account_report_form" model="ir.ui.view">
+        <field name="name">account.report.form</field>
+        <field name="model">account.report</field>
+        <field name="arch" type="xml">
+            <form string="Financial Report">
+                <sheet>
+                    <group>
                         <group>
-                            <group>
-                                <field name="name"/>
-                                <field name="root_report_id"/>
-                                <field name="parent_id"/>
-                            </group>
-                            <group string="Standard Filters">
-                                <field name="filter_date_range"/>
-                                <field name="filter_unfold_all"/>
-                                <field name="filter_journals"/>
-                                <field name="filter_multi_company"/>
-                            </group>
-                            <group string="Specific Filters">
-                                <field name="filter_partner"/>
-                                <field name="filter_account_type"/>
-                                <field name="filter_comparison"/>
-                                <field name="filter_analytic_groupby"/>
-                            </group>
+                            <field name="name"/>
+                            <field name="root_report_id"/>
+                            <field name="parent_id"/>
                         </group>
-                        <notebook>
-                            <page string="Children Reports" name="children_reports">
-                                <field name="children_ids">
-                                    <tree editable="bottom">
-                                        <field name="name"/>
-                                        <field name="filter_date_range"/>
-                                        <field name="filter_unfold_all"/>
-                                        <field name="filter_journals"/>
-                                        <field name="filter_multi_company"/>
-                                    </tree>
-                                </field>
-                            </page>
-                        </notebook>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-
-        <!-- Search View -->
-        <record id="view_account_report_search" model="ir.ui.view">
-            <field name="name">account.report.search</field>
-            <field name="model">account.report</field>
-            <field name="arch" type="xml">
-                <search string="Financial Reports">
-                    <field name="name"/>
-                    <field name="root_report_id"/>
-                    <field name="parent_id"/>
-                    <separator/>
-                    <filter string="Root Reports" name="root_reports" domain="[('root_report_id', '=', False)]"/>
-                    <filter string="Child Reports" name="child_reports" domain="[('parent_id', '!=', False)]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Root Report" name="group_by_root" domain="[]" context="{'group_by': 'root_report_id'}"/>
-                        <filter string="Parent Report" name="group_by_parent" domain="[]" context="{'group_by': 'parent_id'}"/>
+                        <group string="Standard Filters">
+                            <field name="filter_date_range"/>
+                            <field name="filter_unfold_all"/>
+                            <field name="filter_journals"/>
+                            <field name="filter_multi_company"/>
+                        </group>
+                        <group string="Specific Filters">
+                            <field name="filter_partner"/>
+                            <field name="filter_account_type"/>
+                            <field name="filter_comparison"/>
+                            <field name="filter_analytic_groupby"/>
+                        </group>
                     </group>
-                </search>
-            </field>
-        </record>
+                    <notebook>
+                        <page string="Children Reports" name="children_reports">
+                            <field name="children_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="filter_date_range"/>
+                                    <field name="filter_unfold_all"/>
+                                    <field name="filter_journals"/>
+                                    <field name="filter_multi_company"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
 
-        <!-- Action -->
-        <record id="action_account_report" model="ir.actions.act_window">
-            <field name="name">Financial Reports</field>
-            <field name="res_model">account.report</field>
-            <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="view_account_report_search"/>
-            <field name="context">{'search_default_root_reports': 1}</field>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    Create your first financial report
-                </p>
-                <p>
-                    Financial reports help you analyze your company's financial data.
-                </p>
-            </field>
-        </record>
+    <!-- Action -->
+    <record id="action_account_report" model="ir.actions.act_window">
+        <field name="name">Financial Reports</field>
+        <field name="res_model">account.report</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_account_report_search"/>
+        <field name="context">{'search_default_root_reports': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first financial report
+            </p>
+            <p>
+                Financial reports help you analyze your company's financial data.
+            </p>
+        </field>
+    </record>
 
-        <!-- Menu -->
-        <menuitem id="menu_account_report"
-                  name="Financial Reports Configuration"
-                  parent="account.menu_finance_configuration"
-                  action="action_account_report"
-                  sequence="50"/>
-    </data>
+    <!-- Menu -->
+    <menuitem id="menu_account_report"
+              name="Financial Reports Configuration"
+              parent="account.menu_finance_configuration"
+              action="action_account_report"
+              sequence="50"/>
 </odoo>

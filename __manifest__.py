@@ -1,25 +1,4 @@
 # -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2020-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
-
 {
     'name': 'Odoo 16 Full Accounting Kit',
     'version': '16.0.2.0.0',
@@ -53,9 +32,12 @@
     'depends': [
         'base',
         'account',
+        'account_reports',
         'sale',
         'account_check_printing',
-        'base_account_budget_16'
+        'base_account_budget_16',
+        'product',
+        'purchase',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -66,6 +48,9 @@
         'data/account_asset_data.xml',
         'data/recurring_entry_cron.xml',
         'data/multiple_invoice_data.xml',
+        'wizard/financial_report.xml',
+        'report/report_financial.xml',
+        'views/account_report_views.xml',
         'views/assets.xml',
         'views/dashboard_views.xml',
         'views/reports_config_view.xml',
@@ -76,7 +61,6 @@
         'views/account_payment_view.xml',
         'views/res_config_view.xml',
         'views/recurring_payments_view.xml',
-        'views/account_report_views.xml',
         'wizard/asset_depreciation_confirmation_wizard_views.xml',
         'wizard/asset_modify_views.xml',
         'views/account_asset_views.xml',
@@ -86,7 +70,6 @@
         'views/payment_matching.xml',
         'views/multiple_invoice_layout_view.xml',
         'views/multiple_invoice_form.xml',
-        'wizard/financial_report.xml',
         'wizard/general_ledger.xml',
         'wizard/partner_ledger.xml',
         'wizard/tax_report.xml',
@@ -98,8 +81,6 @@
         'wizard/account_bank_book_wizard_view.xml',
         'wizard/account_cash_book_wizard_view.xml',
         'wizard/account_day_book_wizard_view.xml',
-        'report/report_financial.xml',
-        'report/general_ledger_report.xml',
         'report/report_journal_audit.xml',
         'report/report_aged_partner.xml',
         'report/report_trial_balance.xml',
@@ -116,8 +97,13 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'base_accounting_kit_16/static/src/css/account_report.css',
+            'base_accounting_kit_16/static/src/js/account_report.js',
             'base_accounting_kit_16/static/src/js/payment_matching.js',
             'base_accounting_kit_16/static/src/xml/payment_matching.xml',
+        ],
+        'web.report_assets_common': [
+            'base_accounting_kit_16/static/src/css/report_styles.css',
         ],
     },
     'license': 'LGPL-3',

@@ -1,28 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
-class ReportFinancial(models.AbstractModel):
-    _name = 'report.base_accounting_kit_16.report_financial'
-    _description = 'Financial Report'
+class AccountReport(models.Model):
     _inherit = 'account.report'
-
-    @api.model
-    def _get_report_values(self, docids, data=None):
-        """Prépare les valeurs pour le rendu du rapport"""
-        if not data.get('form'):
-            raise ValueError('No data provided')
-
-        report = self.env['financial.report'].browse(docids[0])
-        company = self.env.company
-
-        return {
-            'doc_ids': docids,
-            'doc_model': 'financial.report',
-            'data': data,
-            'docs': report,
-            'res_company': company,
-        }
 
     @api.model
     def _get_financial_report_pdf_lines(self, options):
@@ -216,3 +198,37 @@ class ReportFinancial(models.AbstractModel):
             
         amount = sum(self.env['account.move.line'].search(domain).mapped('balance'))
         return amount
+
+
+class ReportFinancial(models.AbstractModel):
+    _name = 'report.base_accounting_kit_16.report_financial'
+    _description = 'Financial Report'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        """Prépare les valeurs pour le rapport QWeb"""
+        if not data.get('form'):
+            raise UserError('Form content is missing, this report cannot be printed.')
+
+        report = self.env['account.report'].browse(data['form']['account_report_id'][0])
+        company = self.env['res.company'].browse(data['form']['company_id'][0])
+
+        # Calcul des totaux
+        lines = report._get_financial_report_pdf_lines(data['form'])
+        sum_debit = sum(line.get('debit', 0.0) for line in lines if line.get('level') == 1)
+        sum_credit = sum(line.get('credit', 0.0) for line in lines if line.get('level') == 1)
+        sum_balance = sum(line.get('balance', 0.0) for line in lines if line.get('level') == 1)
+        sum_balance_cmp = sum(line.get('balance_cmp', 0.0) for line in lines if line.get('level') == 1)
+
+        return {
+            'doc_ids': docids,
+            'doc_model': 'account.report',
+            'data': data,
+            'docs': report,
+            'lines': lines,
+            'sum_debit': sum_debit,
+            'sum_credit': sum_credit,
+            'sum_balance': sum_balance,
+            'sum_balance_cmp': sum_balance_cmp,
+            'company': company,
+        }

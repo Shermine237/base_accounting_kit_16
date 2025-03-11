@@ -10,13 +10,13 @@
                             <h2><t t-esc="docs.name"/></h2>
                             <div class="row">
                                 <div class="col-6">
-                                    <strong>Company:</strong> <t t-esc="res_company.name"/>
+                                    <strong>Company:</strong> <t t-esc="company.name"/>
                                 </div>
                                 <div class="col-6 text-right">
-                                    <div t-if="data['form']['date_from']">
+                                    <div t-if="data['form'].get('date_from')">
                                         <strong>Date from:</strong> <t t-esc="data['form']['date_from']"/>
                                     </div>
-                                    <div t-if="data['form']['date_to']">
+                                    <div t-if="data['form'].get('date_to')">
                                         <strong>Date to:</strong> <t t-esc="data['form']['date_to']"/>
                                     </div>
                                     <div>
@@ -45,7 +45,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="get_account_lines(data['form'])" t-as="line">
+                            <t t-foreach="lines" t-as="line">
                                 <!-- Ligne de compte -->
                                 <tr t-att-style="'padding-left: ' + str(line.get('level', 0) * 20) + 'px;'">
                                     <td t-att-style="'padding-left: ' + str(line.get('level', 0) * 20) + 'px;'">
@@ -54,16 +54,16 @@
                                         </span>
                                     </td>
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td class="text-right">
-                                        <t t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td t-if="data['form'].get('enable_filter')" class="text-right">
-                                        <t t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                 </tr>
                             </t>
@@ -77,16 +77,16 @@
                                 <tr class="border-black font-weight-bold">
                                     <td>Total</td>
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="sum_debit" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="sum_debit" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="sum_credit" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="sum_credit" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td class="text-right">
-                                        <t t-esc="sum_balance" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="sum_balance" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                     <td t-if="data['form'].get('enable_filter')" class="text-right">
-                                        <t t-esc="sum_balance_cmp" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        <t t-esc="sum_balance_cmp" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
                                     </td>
                                 </tr>
                             </table>
