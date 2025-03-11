@@ -1,7 +1,158 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+import io
+import xlsxwriter
 
+class ReportFinancial(models.AbstractModel):
+    _name = 'report.base_accounting_kit_16.report_financial'
+    _description = 'Financial Reports'
+    _inherit = 'account.report'
+
+    def _get_report_values(self, docids, data=None):
+        """Génère les valeurs pour le rapport PDF"""
+        if not data.get('form'):
+            raise UserError(_("Form content is missing, this report cannot be printed."))
+
+        data['computed'] = {}
+        obj_account = self.env['account.financial.report'].browse(data['form']['account_report_id'][0])
+        
+        # Récupération des lignes du rapport
+        lines = self._get_financial_report_pdf_lines(data.get('form', {}))
+        
+        return {
+            'doc_ids': docids,
+            'doc_model': 'account.financial.report',
+            'data': data['form'],
+            'docs': obj_account,
+            'lines': lines,
+        }
+
+    def _get_financial_report_pdf_lines(self, options):
+        """Génère les lignes pour le rapport PDF"""
+        lines = []
+        report_type = options.get('report_type', 'bs')
+        
+        # Récupération des données selon le type de rapport
+        if report_type == 'bs':
+            lines = self._get_balance_sheet_lines(options)
+        elif report_type == 'pl':
+            lines = self._get_profit_loss_lines(options)
+        elif report_type == 'cf':
+            lines = self._get_cash_flow_lines(options)
+        elif report_type == 'gl':
+            lines = self._get_general_ledger_lines(options)
+        elif report_type == 'pl':
+            lines = self._get_partner_ledger_lines(options)
+        elif report_type == 'tb':
+            lines = self._get_trial_balance_lines(options)
+        elif report_type == 'ar':
+            lines = self._get_aged_receivable_lines(options)
+        elif report_type == 'ap':
+            lines = self._get_aged_payable_lines(options)
+        
+        return lines
+
+    def _get_balance_sheet_lines(self, options):
+        """Génère les lignes du bilan"""
+        lines = []
+        accounts = self.env['account.account'].search([
+            ('company_id', 'in', self.env.companies.ids),
+            ('internal_type', 'in', ['asset', 'liability', 'equity'])
+        ])
+        
+        for account in accounts:
+            # Calcul des soldes
+            domain = self._get_domain(account, options)
+            balance = sum(self.env['account.move.line'].search(domain).mapped('balance'))
+            
+            # Création de la ligne
+            lines.append({
+                'id': account.id,
+                'name': account.name,
+                'code': account.code,
+                'level': 1,
+                'unfoldable': False,
+                'unfolded': True,
+                'columns': [
+                    {'name': balance, 'class': 'number'},
+                ],
+            })
+            
+        return lines
+
+    def _get_domain(self, account, options):
+        """Construit le domaine de recherche selon les options"""
+        domain = [
+            ('account_id', '=', account.id),
+            ('company_id', 'in', self.env.companies.ids),
+        ]
+        
+        # Filtre de date
+        if options.get('date'):
+            domain += [
+                ('date', '>=', options['date'].get('date_from')),
+                ('date', '<=', options['date'].get('date_to')),
+            ]
+            
+        # Filtre des journaux
+        if options.get('journals'):
+            domain += [('journal_id', 'in', options['journals'])]
+            
+        return domain
+
+    def get_xlsx(self, options, response=None):
+        """Export Excel utilisant les fonctionnalités standard d'Odoo"""
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        sheet = workbook.add_worksheet(self._description)
+
+        # Styles
+        title_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'font_size': 12,
+            'border': 1,
+            'bg_color': '#F2F2F2'
+        })
+        header_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'border': 1,
+            'bg_color': '#D9D9D9'
+        })
+        cell_style = workbook.add_format({
+            'align': 'left',
+            'border': 1
+        })
+        number_style = workbook.add_format({
+            'align': 'right',
+            'border': 1,
+            'num_format': '#,##0.00'
+        })
+
+        # En-tête
+        sheet.merge_range('A1:D1', self._description, title_style)
+        headers = ['Code', 'Account', 'Debit', 'Credit', 'Balance']
+        for col, header in enumerate(headers):
+            sheet.write(1, col, header, header_style)
+
+        # Données
+        lines = self._get_financial_report_pdf_lines(options)
+        row = 2
+        for line in lines:
+            sheet.write(row, 0, line.get('code', ''), cell_style)
+            sheet.write(row, 1, line.get('name', ''), cell_style)
+            for col, column in enumerate(line.get('columns', [])):
+                sheet.write(row, col + 2, column.get('name', 0), number_style)
+            row += 1
+
+        workbook.close()
+        output.seek(0)
+        response.stream.write(output.read())
+        output.close()
+
+        return response
 
 class AccountReport(models.Model):
     _inherit = 'account.report'
@@ -198,160 +349,3 @@ class AccountReport(models.Model):
             
         amount = sum(self.env['account.move.line'].search(domain).mapped('balance'))
         return amount
-
-
-class ReportFinancial(models.AbstractModel):
-    _name = 'report.base_accounting_kit_16.report_financial'
-    _description = 'Financial Reports'
-    _inherit = 'report.report_xlsx.abstract'
-
-    def _get_account_move_entry(self, accounts, init_balance, sortby, display_account):
-        cr = self.env.cr
-        MoveLine = self.env['account.move.line']
-        move_lines = {x: [] for x in accounts.ids}
-
-        # Prepare initial balances
-        if init_balance:
-            init_tables, init_where_clause, init_where_params = MoveLine.with_context(
-                date_from=self.env.context.get('date_from'),
-                date_to=False,
-                initial_bal=True
-            )._query_get()
-            init_wheres = [""]
-            if init_where_clause.strip():
-                init_wheres.append(init_where_clause.strip())
-            init_filters = " AND ".join(init_wheres)
-            filters = init_filters.replace('account_move_line__move_id', 'm').replace('account_move_line', 'l')
-            
-            sql = ("""
-                SELECT 0 AS lid, l.account_id AS account_id, '' AS ldate, '' AS lcode, 
-                       NULL AS amount_currency, '' AS lref, 'Initial Balance' AS lname, 
-                       COALESCE(SUM(l.debit),0.0) AS debit, 
-                       COALESCE(SUM(l.credit),0.0) AS credit, 
-                       COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance, 
-                       '' AS lpartner_id,
-                       '' AS move_name, '' AS mmove_id, '' AS currency_code,
-                       NULL AS currency_id,
-                       '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,
-                       '' AS partner_name
-                FROM account_move_line l
-                LEFT JOIN account_move m ON (l.move_id=m.id)
-                LEFT JOIN res_currency c ON (l.currency_id=c.id)
-                LEFT JOIN res_partner p ON (l.partner_id=p.id)
-                LEFT JOIN account_move i ON (m.id =i.id)
-                WHERE l.account_id IN %s""" + filters + ' GROUP BY l.account_id')
-            params = (tuple(accounts.ids),) + tuple(init_where_params)
-            cr.execute(sql, params)
-            for row in cr.dictfetchall():
-                move_lines[row.pop('account_id')].append(row)
-
-        sql_sort = {'date': 'l.date, l.move_id', 'journal_partner': 'j.code, p.name, l.move_id'}
-        sql_sort_by = sql_sort.get(sortby) or sql_sort['date']
-        sql = ("""
-            SELECT l.id AS lid, l.account_id AS account_id, l.date AS ldate, j.code AS lcode,
-                   l.currency_id, l.amount_currency, l.ref AS lref, l.name AS lname,
-                   COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit,
-                   COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) AS balance,
-                   m.name AS move_name, c.symbol AS currency_code, p.name AS partner_name
-            FROM account_move_line l
-            JOIN account_move m ON (l.move_id=m.id)
-            LEFT JOIN res_currency c ON (l.currency_id=c.id)
-            LEFT JOIN res_partner p ON (l.partner_id=p.id)
-            JOIN account_journal j ON (l.journal_id=j.id)
-            JOIN account_account acc ON (l.account_id = acc.id)
-            WHERE l.account_id IN %s """ + self.env.context.get('compute_sql_where', '') + """
-            GROUP BY l.id, l.account_id, l.date, j.code, l.currency_id, l.amount_currency, l.ref, l.name, m.name,
-                     c.symbol, p.name ORDER BY """ + sql_sort_by)
-        params = (tuple(accounts.ids),) + tuple(self.env.context.get('compute_params', []))
-        cr.execute(sql, params)
-
-        for row in cr.dictfetchall():
-            balance = 0
-            for line in move_lines.get(row['account_id']):
-                balance += line['debit'] - line['credit']
-            row['balance'] += balance
-            move_lines[row.pop('account_id')].append(row)
-
-        # Calculate the debit, credit and balance for Accounts
-        account_res = []
-        for account in accounts:
-            currency = account.currency_id and account.currency_id or account.company_id.currency_id
-            res = {'code': account.code, 'name': account.name, 'debit': 0.0, 'credit': 0.0, 'balance': 0.0,
-                   'type': account.internal_type, 'level': account.level, 'currency_id': currency.id}
-            for line in move_lines.get(account.id):
-                res['debit'] += line['debit']
-                res['credit'] += line['credit']
-                res['balance'] = line['balance']
-            if display_account == 'all':
-                account_res.append(res)
-            if display_account == 'movement' and res.get('move_lines'):
-                account_res.append(res)
-            if display_account == 'not_zero' and not currency.is_zero(res['balance']):
-                account_res.append(res)
-        return account_res
-
-    @api.model
-    def _get_report_values(self, docids, data=None):
-        if not data.get('form'):
-            raise UserError(_("Form content is missing, this report cannot be printed."))
-
-        self.model = self.env.context.get('active_model')
-        docs = self.env[self.model].browse(self.env.context.get('active_ids', []))
-        display_account = data['form'].get('display_account')
-        accounts = docs if self.model == 'account.account' else self.env['account.account'].search([])
-        account_res = self.with_context(data['form'].get('used_context'))._get_account_move_entry(accounts, True, 'date', display_account)
-
-        return {
-            'doc_ids': self.ids,
-            'doc_model': self.model,
-            'data': data['form'],
-            'docs': docs,
-            'time': datetime,
-            'Accounts': account_res,
-        }
-
-    def generate_xlsx_report(self, workbook, data, objs):
-        sheet = workbook.add_worksheet()
-        format1 = workbook.add_format({'font_size': 14, 'bottom': True, 'right': True, 'left': True, 'top': True,
-                                     'align': 'center', 'bold': True, 'bg_color': '#E0E0E0'})
-        format2 = workbook.add_format({'font_size': 12, 'align': 'left', 'bold': True})
-        format3 = workbook.add_format({'font_size': 12, 'align': 'right', 'bold': True})
-        format4 = workbook.add_format({'font_size': 10, 'align': 'left'})
-        format5 = workbook.add_format({'font_size': 10, 'align': 'right'})
-        format6 = workbook.add_format({'font_size': 10, 'align': 'center'})
-        format7 = workbook.add_format({'font_size': 10, 'align': 'left', 'bold': True})
-        format8 = workbook.add_format({'font_size': 10, 'align': 'right', 'bold': True})
-
-        sheet.set_column('A:A', 15)
-        sheet.set_column('B:B', 40)
-        sheet.set_column('C:E', 15)
-
-        year = data['form']['date_from'].year
-        sheet.merge_range('A1:E1', f'Financial Report {year}', format1)
-
-        y_offset = 2
-        if data['form']['enable_filter']:
-            y_offset = 3
-            sheet.write(y_offset, 0, '', format2)
-            sheet.write(y_offset, 1, 'Balance', format2)
-            sheet.write(y_offset, 2, data['form']['label_filter'], format2)
-
-        # Report headers
-        sheet.write(y_offset + 1, 0, _('Code'), format2)
-        sheet.write(y_offset + 1, 1, _('Account'), format2)
-        sheet.write(y_offset + 1, 2, _('Debit'), format3)
-        sheet.write(y_offset + 1, 3, _('Credit'), format3)
-        sheet.write(y_offset + 1, 4, _('Balance'), format3)
-
-        accounts = self.env['account.account'].search([])
-        account_res = self.with_context(data['form'].get('used_context'))._get_account_move_entry(
-            accounts, True, 'date', data['form']['display_account'])
-
-        if account_res:
-            for account in account_res:
-                y_offset += 1
-                sheet.write(y_offset, 0, account['code'], format4)
-                sheet.write(y_offset, 1, account['name'], format4)
-                sheet.write(y_offset, 2, account['debit'], format5)
-                sheet.write(y_offset, 3, account['credit'], format5)
-                sheet.write(y_offset, 4, account['balance'], format5)

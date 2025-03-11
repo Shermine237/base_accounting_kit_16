@@ -1,166 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Template principal -->
     <template id="report_financial">
         <t t-call="web.html_container">
-            <t t-call="web.internal_layout">
-                <!-- En-tête du rapport -->
-                <div class="financial-report-header">
-                    <h2><t t-esc="data.get('report_name', 'Financial Report')"/></h2>
-                    <div class="company-info">
-                        <span t-field="user.company_id.name"/>
-                        <span t-if="user.company_id.vat"> - VAT: <span t-field="user.company_id.vat"/></span>
-                    </div>
-                    <div class="filter-info">
-                        <div>
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2 t-esc="docs.name" class="text-center"/>
+                    
+                    <!-- En-tête du rapport -->
+                    <div class="row mt32 mb32">
+                        <div class="col-3">
+                            <strong>Company:</strong>
+                            <p t-esc="res_company.name"/>
+                        </div>
+                        <div class="col-3">
                             <strong>Date Range:</strong>
-                            <span t-esc="data['date_from']" t-options='{"widget": "date"}'/>
-                            to
-                            <span t-esc="data['date_to']" t-options='{"widget": "date"}'/>
+                            <p>
+                                <span t-esc="data['date_from']"/> - 
+                                <span t-esc="data['date_to']"/>
+                            </p>
                         </div>
-                        <div>
+                        <div class="col-3">
                             <strong>Target Moves:</strong>
-                            <span t-if="data['target_move'] == 'posted'">All Posted Entries</span>
-                            <span t-if="data['target_move'] == 'all'">All Entries</span>
+                            <p t-esc="data['target_move']"/>
                         </div>
                     </div>
-                </div>
 
-                <!-- Structure du tableau -->
-                <table class="financial-report-table">
-                    <thead>
-                        <tr>
-                            <th>Account</th>
-                            <t t-if="data.get('debit_credit')">
+                    <!-- Tableau des données -->
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
                                 <th class="text-right">Debit</th>
                                 <th class="text-right">Credit</th>
-                            </t>
-                            <th class="text-right">Balance</th>
-                            <t t-if="data.get('enable_filter')">
-                                <th class="text-right"><t t-esc="data.get('label_filter', 'Previous Period')"/></th>
-                            </t>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <t t-foreach="Accounts" t-as="account">
-                            <tr t-att-class="'level-' + str(account.get('level', 1))">
-                                <td>
-                                    <span style="padding-left: 20px" t-att-style="'padding-left: ' + str(account.get('level', 1) * 20) + 'px'">
-                                        <t t-if="account.get('code')">
-                                            <span t-esc="account['code']"/> - 
-                                        </t>
-                                        <span t-esc="account['name']"/>
-                                    </span>
-                                </td>
-                                <t t-if="data.get('debit_credit')">
-                                    <td class="text-right">
-                                        <span class="monetary" t-esc="account['debit']" 
-                                              t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span class="monetary" t-esc="account['credit']"
-                                              t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                    </td>
-                                </t>
-                                <td class="text-right">
-                                    <span t-att-class="'monetary ' + ('positive' if account['balance'] >= 0 else 'negative')"
-                                          t-esc="account['balance']"
-                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                </td>
-                                <t t-if="data.get('enable_filter')">
-                                    <td class="text-right">
-                                        <span t-att-class="'monetary ' + ('positive' if account.get('balance_cmp', 0) >= 0 else 'negative')"
-                                              t-esc="account.get('balance_cmp', 0.0)"
-                                              t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                    </td>
-                                </t>
+                                <th class="text-right">Balance</th>
                             </tr>
-                        </t>
-                    </tbody>
-                    <!-- Totaux et résumé -->
-                    <tfoot>
-                        <tr class="financial-report-totals">
-                            <td>
-                                <strong>Total</strong>
-                            </td>
-                            <t t-if="data.get('debit_credit')">
-                                <td class="text-right">
-                                    <strong class="monetary" t-esc="sum([a['debit'] for a in Accounts])"
-                                            t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                </td>
-                                <td class="text-right">
-                                    <strong class="monetary" t-esc="sum([a['credit'] for a in Accounts])"
-                                            t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                </td>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="lines" t-as="line">
+                                <tr>
+                                    <td>
+                                        <span t-att-style="'margin-left: %dpx' % (line['level'] * 10)"
+                                              t-esc="line['name']"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="line['columns'][0]['name']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="line['columns'][1]['name']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="line['columns'][2]['name']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </tr>
                             </t>
-                            <td class="text-right">
-                                <strong t-att-class="'monetary ' + ('positive' if sum([a['balance'] for a in Accounts]) >= 0 else 'negative')"
-                                        t-esc="sum([a['balance'] for a in Accounts])"
-                                        t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                            </td>
-                            <t t-if="data.get('enable_filter')">
-                                <td class="text-right">
-                                    <strong t-att-class="'monetary ' + ('positive' if sum([a.get('balance_cmp', 0) for a in Accounts]) >= 0 else 'negative')"
-                                            t-esc="sum([a.get('balance_cmp', 0) for a in Accounts])"
-                                            t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
-                                </td>
-                            </t>
-                        </tr>
-                    </tfoot>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </t>
         </t>
     </template>
 
-    <!-- Templates PDF spécifiques pour chaque type de rapport -->
-    <template id="bs_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Balance Sheet', **data}"/>
-        </t>
-    </template>
-
-    <template id="pl_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Profit and Loss', **data}"/>
-        </t>
-    </template>
-
-    <template id="cf_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Cash Flow Statement', **data}"/>
-        </t>
-    </template>
-
-    <template id="partner_ledger_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Partner Ledger', **data}"/>
-        </t>
-    </template>
-
-    <template id="general_ledger_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'General Ledger', **data}"/>
-        </t>
-    </template>
-
-    <template id="trial_balance_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Trial Balance', **data}"/>
-        </t>
-    </template>
-
-    <template id="aged_receivable_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Aged Receivable', **data}"/>
-        </t>
-    </template>
-
-    <template id="aged_payable_report_pdf">
-        <t t-call="base_accounting_kit_16.report_financial">
-            <t t-set="data" t-value="{'report_name': 'Aged Payable', **data}"/>
-        </t>
-    </template>
-
-    <!-- Actions de rapport -->
+    <!-- Actions de rapport PDF -->
     <record id="action_report_financial_pdf" model="ir.actions.report">
         <field name="name">Financial Report</field>
         <field name="model">account.financial.report.wizard</field>
@@ -171,67 +75,32 @@
         <field name="binding_type">report</field>
     </record>
 
-    <record id="action_bs_report_pdf" model="ir.actions.report">
-        <field name="name">Balance Sheet</field>
+    <!-- Actions d'export Excel -->
+    <record id="action_report_financial_excel" model="ir.actions.report">
+        <field name="name">Financial Report (Excel)</field>
         <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.bs_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.bs_report_pdf</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">base_accounting_kit_16.report_financial</field>
+        <field name="report_file">base_accounting_kit_16.report_financial</field>
+        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
+        <field name="binding_type">report</field>
     </record>
 
-    <record id="action_pl_report_pdf" model="ir.actions.report">
-        <field name="name">Profit and Loss</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.pl_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.pl_report_pdf</field>
-    </record>
+    <!-- Actions de menu -->
+    <menuitem id="menu_financial_reports"
+              name="Financial Reports"
+              parent="account.menu_finance_reports"
+              sequence="5"/>
 
-    <record id="action_cf_report_pdf" model="ir.actions.report">
-        <field name="name">Cash Flow Statement</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.cf_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.cf_report_pdf</field>
-    </record>
+    <menuitem id="menu_financial_reports_pdf"
+              name="Financial Report (PDF)"
+              parent="menu_financial_reports"
+              action="action_report_financial_pdf"
+              sequence="1"/>
 
-    <record id="action_partner_ledger_report_pdf" model="ir.actions.report">
-        <field name="name">Partner Ledger</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.partner_ledger_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.partner_ledger_report_pdf</field>
-    </record>
-
-    <record id="action_general_ledger_report_pdf" model="ir.actions.report">
-        <field name="name">General Ledger</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.general_ledger_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.general_ledger_report_pdf</field>
-    </record>
-
-    <record id="action_trial_balance_report_pdf" model="ir.actions.report">
-        <field name="name">Trial Balance</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.trial_balance_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.trial_balance_report_pdf</field>
-    </record>
-
-    <record id="action_aged_receivable_report_pdf" model="ir.actions.report">
-        <field name="name">Aged Receivable</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.aged_receivable_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.aged_receivable_report_pdf</field>
-    </record>
-
-    <record id="action_aged_payable_report_pdf" model="ir.actions.report">
-        <field name="name">Aged Payable</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.aged_payable_report_pdf</field>
-        <field name="report_file">base_accounting_kit_16.aged_payable_report_pdf</field>
-    </record>
+    <menuitem id="menu_financial_reports_excel"
+              name="Financial Report (Excel)"
+              parent="menu_financial_reports"
+              action="action_report_financial_excel"
+              sequence="2"/>
 </odoo>

@@ -38,3 +38,4 @@ access_multiple_invoice_layout,multiple_invoice_layout,model_multiple_invoice_la
 
 access_account_report_user,account.report.user,model_account_report,account.group_account_user,1,0,0,0
 access_account_report_manager,account.report.manager,model_account_report,account.group_account_manager,1,1,1,1
+access_account_report_accountant,account.report.accountant,model_account_report,account.group_account_user,1,1,1,1

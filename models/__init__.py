@@ -38,3 +38,4 @@ from . import multiple_invoice
 from . import multiple_invoice_layout
 from . import account_report
 from . import report_financial
+from . import report_financial_xlsx

@@ -1,195 +1,180 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
-
+from odoo.exceptions import UserError
+import io
+import xlsxwriter
 
 class AccountReport(models.Model):
-    _name = "account.report"
-    _description = "Account Report"
+    _inherit = 'account.report'
+    _description = 'Financial Reports'
 
-    name = fields.Char(string='Report Name', required=True, translate=True)
-    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
-    parent_id = fields.Many2one('account.report', string='Parent Report')
-    children_ids = fields.One2many('account.report', 'parent_id', string='Children Reports')
-    
-    # Filtres standards
-    filter_date_range = fields.Boolean(string='Date Range Filter', default=True)
-    filter_unfold_all = fields.Boolean(string='Unfold All Filter', default=True)
-    filter_journals = fields.Boolean(string='Journals Filter', default=True)
-    filter_multi_company = fields.Boolean(string='Multi-company Filter', default=True)
-    
+    # Types de rapports disponibles
+    report_type = fields.Selection([
+        ('bs', 'Balance Sheet'),
+        ('pl', 'Profit and Loss'),
+        ('cf', 'Cash Flow Statement'),
+        ('gl', 'General Ledger'),
+        ('pl', 'Partner Ledger'),
+        ('tb', 'Trial Balance'),
+        ('ar', 'Aged Receivable'),
+        ('ap', 'Aged Payable')
+    ], string='Report Type', required=True)
+
+    # Filtres communs
+    filter_date_range = fields.Boolean('Date Range Filter', default=True)
+    filter_unfold_all = fields.Boolean('Unfold All', default=True)
+    filter_journals = fields.Boolean('Journals Filter', default=True)
+    filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
+
     # Filtres spécifiques
-    filter_partner = fields.Boolean(string='Partner Filter')
-    filter_account_type = fields.Boolean(string='Account Type Filter')
-    filter_comparison = fields.Boolean(string='Comparison Filter')
-    filter_analytic_groupby = fields.Boolean(string='Analytic Groupby Filter')
+    filter_analytic_groupby = fields.Boolean('Analytic Groupby', default=False)
+    filter_partner = fields.Boolean('Partner Filter', default=False)
+    filter_account_type = fields.Boolean('Account Type Filter', default=False)
+    filter_comparison = fields.Boolean('Comparison Filter', default=False)
 
-    @api.model
-    def _get_financial_report_lines(self, options):
-        """Méthode pour générer les lignes du rapport financier"""
-        self.ensure_one()
-        lines = []
-        
-        # Logique pour générer les lignes selon le type de rapport
-        if self.name == 'Balance Sheet':
-            lines.extend(self._get_balance_sheet_lines(options))
-        elif self.name == 'Profit and Loss':
-            lines.extend(self._get_profit_loss_lines(options))
-        elif self.name == 'Cash Flow Statement':
-            lines.extend(self._get_cash_flow_lines(options))
-        
-        return lines
+    @api.onchange('report_type')
+    def _onchange_report_type(self):
+        """Active les filtres spécifiques selon le type de rapport"""
+        self.filter_analytic_groupby = self.report_type == 'pl'
+        self.filter_partner = self.report_type in ['pl', 'ar', 'ap']
+        self.filter_account_type = self.report_type in ['pl', 'gl', 'tb']
+        self.filter_comparison = self.report_type in ['gl', 'tb']
 
-    def _get_balance_sheet_lines(self, options):
-        """Génère les lignes pour le bilan"""
-        lines = []
-        # Actifs
-        assets = {
-            'name': _('Assets'),
-            'level': 1,
-            'columns': self._get_balance_columns(account_type='asset', options=options),
-        }
-        lines.append(assets)
-        
-        # Passifs
-        liabilities = {
-            'name': _('Liabilities'),
-            'level': 1,
-            'columns': self._get_balance_columns(account_type='liability', options=options),
-        }
-        lines.append(liabilities)
-        
-        return lines
+    def get_xlsx(self, options, response=None):
+        """Export Excel utilisant les fonctionnalités standard d'Odoo"""
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        sheet = workbook.add_worksheet(self.name)
 
-    def _get_profit_loss_lines(self, options):
-        """Génère les lignes pour le compte de résultat"""
-        lines = []
-        # Revenus
-        income = {
-            'name': _('Income'),
-            'level': 1,
-            'columns': self._get_balance_columns(account_type='income', options=options),
-        }
-        lines.append(income)
-        
-        # Dépenses
-        expense = {
-            'name': _('Expenses'),
-            'level': 1,
-            'columns': self._get_balance_columns(account_type='expense', options=options),
-        }
-        lines.append(expense)
-        
-        return lines
-
-    def _get_cash_flow_lines(self, options):
-        """Génère les lignes pour le tableau des flux de trésorerie"""
-        lines = []
-        # Flux opérationnels
-        operating = {
-            'name': _('Operating Activities'),
-            'level': 1,
-            'columns': self._get_cash_flow_columns('operating', options),
-        }
-        lines.append(operating)
-        
-        # Flux d'investissement
-        investing = {
-            'name': _('Investing Activities'),
-            'level': 1,
-            'columns': self._get_cash_flow_columns('investing', options),
-        }
-        lines.append(investing)
-        
-        # Flux de financement
-        financing = {
-            'name': _('Financing Activities'),
-            'level': 1,
-            'columns': self._get_cash_flow_columns('financing', options),
-        }
-        lines.append(financing)
-        
-        return lines
-
-    def _get_balance_columns(self, account_type, options):
-        """Calcule les colonnes de solde pour un type de compte donné"""
-        self.ensure_one()
-        columns = []
-        
-        if options.get('comparison', {}).get('periods'):
-            for period in options['comparison']['periods']:
-                balance = self._compute_balance(account_type, period)
-                columns.append({
-                    'name': balance,
-                    'no_format': balance,
-                    'class': 'number',
-                })
-        
-        # Solde de la période courante
-        balance = self._compute_balance(account_type, options.get('date'))
-        columns.append({
-            'name': balance,
-            'no_format': balance,
-            'class': 'number',
+        # Styles
+        title_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'font_size': 12,
+            'border': 1,
+            'bg_color': '#F2F2F2'
         })
-        
-        return columns
-
-    def _get_cash_flow_columns(self, activity_type, options):
-        """Calcule les colonnes pour le tableau des flux de trésorerie"""
-        self.ensure_one()
-        columns = []
-        
-        if options.get('comparison', {}).get('periods'):
-            for period in options['comparison']['periods']:
-                amount = self._compute_cash_flow(activity_type, period)
-                columns.append({
-                    'name': amount,
-                    'no_format': amount,
-                    'class': 'number',
-                })
-        
-        # Montant de la période courante
-        amount = self._compute_cash_flow(activity_type, options.get('date'))
-        columns.append({
-            'name': amount,
-            'no_format': amount,
-            'class': 'number',
+        header_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'border': 1,
+            'bg_color': '#D9D9D9'
         })
-        
-        return columns
+        cell_style = workbook.add_format({
+            'align': 'left',
+            'border': 1
+        })
+        number_style = workbook.add_format({
+            'align': 'right',
+            'border': 1,
+            'num_format': '#,##0.00'
+        })
 
-    def _compute_balance(self, account_type, period):
-        """Calcule le solde pour un type de compte et une période donnés"""
+        # En-tête du rapport
+        sheet.merge_range('A1:D1', self.name, title_style)
+        company = self.env.company
+        sheet.write('A2', _('Company:'), header_style)
+        sheet.write('B2', company.name, cell_style)
+        sheet.write('C2', _('Date:'), header_style)
+        sheet.write('D2', fields.Date.today().strftime('%Y-%m-%d'), cell_style)
+
+        # En-tête des colonnes
+        headers = ['Code', 'Account', 'Debit', 'Credit', 'Balance']
+        for col, header in enumerate(headers):
+            sheet.write(3, col, header, header_style)
+
+        # Données du rapport
+        lines = self._get_lines(options)
+        row = 4
+        for line in lines:
+            sheet.write(row, 0, line.get('code', ''), cell_style)
+            sheet.write(row, 1, line.get('name', ''), cell_style)
+            sheet.write(row, 2, line.get('debit', 0.0), number_style)
+            sheet.write(row, 3, line.get('credit', 0.0), number_style)
+            sheet.write(row, 4, line.get('balance', 0.0), number_style)
+            row += 1
+
+        # Ajustement des colonnes
+        for col in range(len(headers)):
+            sheet.set_column(col, col, 15)
+
+        workbook.close()
+        output.seek(0)
+        response.stream.write(output.read())
+        output.close()
+
+        return response
+
+    def _get_lines(self, options):
+        """Récupère les lignes du rapport selon le type"""
+        self.ensure_one()
+        
+        if self.report_type == 'bs':
+            return self._get_balance_sheet_lines(options)
+        elif self.report_type == 'pl':
+            return self._get_profit_loss_lines(options)
+        elif self.report_type == 'cf':
+            return self._get_cash_flow_lines(options)
+        elif self.report_type == 'gl':
+            return self._get_general_ledger_lines(options)
+        elif self.report_type == 'pl':
+            return self._get_partner_ledger_lines(options)
+        elif self.report_type == 'tb':
+            return self._get_trial_balance_lines(options)
+        elif self.report_type == 'ar':
+            return self._get_aged_receivable_lines(options)
+        elif self.report_type == 'ap':
+            return self._get_aged_payable_lines(options)
+        else:
+            raise UserError(_('Report type %s not supported') % self.report_type)
+
+    def _get_domain(self, account, options):
+        """Construit le domaine de recherche selon les options"""
         domain = [
-            ('account_id.internal_type', '=', account_type),
+            ('account_id', '=', account.id),
+            ('company_id', 'in', self.env.companies.ids),
         ]
         
-        if period.get('date_from'):
-            domain.append(('date', '>=', period['date_from']))
-        if period.get('date_to'):
-            domain.append(('date', '<=', period['date_to']))
+        # Filtre de date
+        if options.get('date'):
+            domain += [
+                ('date', '>=', options['date'].get('date_from')),
+                ('date', '<=', options['date'].get('date_to')),
+            ]
             
-        if period.get('journal_ids'):
-            domain.append(('journal_id', 'in', period['journal_ids']))
+        # Filtre des journaux
+        if options.get('journals'):
+            domain += [('journal_id', 'in', options['journals'])]
             
-        balance = sum(self.env['account.move.line'].search(domain).mapped('balance'))
-        return balance
+        return domain
 
-    def _compute_cash_flow(self, activity_type, period):
-        """Calcule le montant des flux de trésorerie pour un type d'activité et une période donnés"""
-        domain = []
+    def _get_balance_sheet_lines(self, options):
+        """Génère les lignes du bilan"""
+        lines = []
+        accounts = self.env['account.account'].search([
+            ('company_id', 'in', self.env.companies.ids),
+            ('internal_type', 'in', ['asset', 'liability', 'equity'])
+        ])
         
-        if activity_type == 'operating':
-            domain.append(('account_id.internal_type', 'in', ['receivable', 'payable']))
-        elif activity_type == 'investing':
-            domain.append(('account_id.internal_type', '=', 'other'))
-        elif activity_type == 'financing':
-            domain.append(('account_id.internal_type', '=', 'other'))
+        for account in accounts:
+            # Calcul des soldes
+            domain = self._get_domain(account, options)
+            move_lines = self.env['account.move.line'].search(domain)
+            debit = sum(move_lines.mapped('debit'))
+            credit = sum(move_lines.mapped('credit'))
+            balance = debit - credit
             
-        if period.get('date_from'):
-            domain.append(('date', '>=', period['date_from']))
-        if period.get('date_to'):
-            domain.append(('date', '<=', period['date_to']))
+            # Création de la ligne
+            lines.append({
+                'id': account.id,
+                'code': account.code,
+                'name': account.name,
+                'debit': debit,
+                'credit': credit,
+                'balance': balance,
+                'level': 1,
+                'unfoldable': False,
+                'unfolded': True,
+            })
             
-        amount = sum(self.env['account.move.line'].search(domain).mapped('balance'))
-        return amount
+        return lines

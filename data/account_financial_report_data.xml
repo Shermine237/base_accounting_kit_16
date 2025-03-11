@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rapports financiers standards -->
+    <record id="account_financial_report_balance_sheet" model="account.financial.report">
+        <field name="name">Balance Sheet</field>
+        <field name="report_type">bs</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+    </record>
+
+    <record id="account_financial_report_profit_loss" model="account.financial.report">
+        <field name="name">Profit and Loss</field>
+        <field name="report_type">pl</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_analytic_groupby">True</field>
+    </record>
+
+    <record id="account_financial_report_cash_flow" model="account.financial.report">
+        <field name="name">Cash Flow Statement</field>
+        <field name="report_type">cf</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+    </record>
+
+    <record id="account_financial_report_general_ledger" model="account.financial.report">
+        <field name="name">General Ledger</field>
+        <field name="report_type">gl</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_account_type">True</field>
+        <field name="filter_comparison">True</field>
+    </record>
+
+    <record id="account_financial_report_partner_ledger" model="account.financial.report">
+        <field name="name">Partner Ledger</field>
+        <field name="report_type">pl</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_partner">True</field>
+        <field name="filter_account_type">True</field>
+    </record>
+
+    <record id="account_financial_report_trial_balance" model="account.financial.report">
+        <field name="name">Trial Balance</field>
+        <field name="report_type">tb</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_account_type">True</field>
+        <field name="filter_comparison">True</field>
+    </record>
+
+    <record id="account_financial_report_aged_receivable" model="account.financial.report">
+        <field name="name">Aged Receivable</field>
+        <field name="report_type">ar</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_partner">True</field>
+    </record>
+
+    <record id="account_financial_report_aged_payable" model="account.financial.report">
+        <field name="name">Aged Payable</field>
+        <field name="report_type">ap</field>
+        <field name="filter_date_range">True</field>
+        <field name="filter_unfold_all">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_multi_company">True</field>
+        <field name="filter_partner">True</field>
+    </record>
+</odoo>

@@ -1,69 +1,53 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <!--    Financial report common form view    -->
-        <record id="financial_report_wiz_modified" model="ir.ui.view">
-            <field name="name">Financial Report</field>
-            <field name="model">financial.report</field>
-            <field name="arch" type="xml">
-                <form string="Report Options">
+    <record id="account_financial_report_wizard_view" model="ir.ui.view">
+        <field name="name">Financial Report Wizard</field>
+        <field name="model">account.financial.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Financial Report">
+                <group>
                     <group>
-                        <group>
-                            <field name="company_id" invisible="1"/>
-                            <field name="account_report_id" options="{'no_create': True}"/>
-                            <field name="target_move"/>
-                        </group>
-                        <group>
-                            <field name="date_from"/>
-                            <field name="date_to"/>
-                            <field name="debit_credit"/>
-                        </group>
+                        <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="target_move"/>
+                        <field name="report_type"/>
                     </group>
-                    
-                    <notebook>
-                        <page string="Comparaison" name="comparison">
-                            <group>
-                                <group>
-                                    <field name="enable_filter"/>
-                                    <field name="filter_cmp" attrs="{'invisible': [('enable_filter', '=', False)]}"/>
-                                </group>
-                                <group attrs="{'invisible': [('filter_cmp', '!=', 'filter_date')]}">
-                                    <field name="date_from_cmp"/>
-                                    <field name="date_to_cmp"/>
-                                </group>
-                            </group>
-                        </page>
-                    </notebook>
+                    <group>
+                        <field name="journal_ids" widget="many2many_tags"/>
+                        <field name="account_report_id"/>
+                        <field name="enable_filter"/>
+                        <field name="debit_credit"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('enable_filter', '=', False)]}">
+                    <group>
+                        <field name="filter_cmp"/>
+                    </group>
+                    <group>
+                        <field name="date_from_cmp" attrs="{'required': [('filter_cmp', '=', 'filter_date'), ('enable_filter', '=', True)]}"/>
+                        <field name="date_to_cmp" attrs="{'required': [('filter_cmp', '=', 'filter_date'), ('enable_filter', '=', True)]}"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="check_report" string="View PDF" type="object" default_focus="1" class="oe_highlight"/>
+                    <button name="check_report_xlsx" string="Export Excel" type="object" class="oe_highlight"/>
+                    <button string="Cancel" class="btn btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 
-                    <footer>
-                        <button name="check_report" string="Générer le rapport" type="object" default_focus="1" class="oe_highlight"/>
-                        <button string="Annuler" class="btn btn-secondary" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
+    <record id="action_account_financial_report_wizard" model="ir.actions.act_window">
+        <field name="name">Financial Reports</field>
+        <field name="res_model">account.financial.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
 
-        <!--    Action for financial reports    -->
-        <record id="action_account_financial_report" model="ir.actions.act_window">
-            <field name="name">Rapports financiers</field>
-            <field name="res_model">financial.report</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="financial_report_wiz_modified"/>
-            <field name="target">new</field>
-        </record>
-
-        <!-- Menu items -->
-        <menuitem id="menu_financial_reports"
-                  name="Rapports financiers"
-                  parent="account.menu_finance_reports"
-                  sequence="5"
-                  groups="account.group_account_user"/>
-
-        <menuitem id="menu_account_financial_reports_tree"
-                  name="Standard Reports"
-                  parent="menu_financial_reports"
-                  action="action_account_financial_report"
-                  sequence="1"/>
-    </data>
+    <menuitem id="menu_financial_reports_wizard"
+              name="Financial Reports"
+              parent="account.menu_finance_reports"
+              action="action_account_financial_report_wizard"
+              sequence="5"/>
 </odoo>
