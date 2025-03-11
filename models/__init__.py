@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #############################################################################
-# -*- coding: utf-8 -*-
-#############################################################################
 #
 #    Cybrosys Technologies Pvt. Ltd.
 #
@@ -21,21 +19,28 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+
+# Models de base
 from . import account_account
 from . import account_asset
-# from . import account_followup
 from . import account_journal
 from . import account_move
 from . import account_payment
-from . import credit_limit
 from . import product_template
-from . import recurring_payments
 from . import res_config_settings
 from . import res_partner
+
+# Models spécifiques
 from . import account_dashboard
-from . import payment_matching
+from . import credit_limit
 from . import multiple_invoice
 from . import multiple_invoice_layout
+from . import payment_matching
+from . import recurring_payments
+
+# Models de rapport
 from . import account_report
 from . import report_financial
-from . import report_financial_xlsx
+
+# Models désactivés
+# from . import account_followup
