@@ -120,7 +120,7 @@ class FinancialReport(models.TransientModel):
         data['report_lines'] = report_lines
         # checking view type
         return self.env.ref(
-            'base_accounting_kit.financial_report_pdf').report_action(self,
+            'base_accounting_kit_16.financial_report_pdf').report_action(self,
                                                                       data)
 
     def _compute_account_balance(self, accounts):
@@ -376,17 +376,18 @@ class FinancialReport(models.TransientModel):
 class ProfitLossPdf(models.AbstractModel):
     """ Abstract model for generating PDF report value and send to template """
 
-    _name = 'report.base_accounting_kit.report_financial'
+    _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Report'
 
     @api.model
     def _get_report_values(self, docids, data=None):
         """ Provide report values to template """
-        ctx = {
+        if not data:
+            return {}
+        return {
             'data': data,
             'journal_items': data['journal_items'],
             'report_lines': data['report_lines'],
             'account_report': data['form']['account_report_id'][1],
             'currency': data['currency'],
         }
-        return ctx
