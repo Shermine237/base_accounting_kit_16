@@ -42,7 +42,6 @@
         'security/ir.model.access.csv',
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
-        'data/account_report_data.xml',
         'wizard/financial_report.xml',
         'report/financial_report_actions.xml',
         'report/report_financial.xml',
