@@ -1,10 +1,10 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_financial_report_user,financial.report.user,model_financial_report,account.group_account_user,0,0,0,0
-access_financial_report_manager,financial.report.manager,model_financial_report,account.group_account_manager,0,0,0,0
+access_financial_report_wizard_user,financial.report.wizard.user,model_account_financial_report_wizard,account.group_account_user,1,1,1,0
+access_financial_report_wizard_manager,financial.report.wizard.manager,model_account_financial_report_wizard,account.group_account_manager,1,1,1,1
 access_generate_recurring_entries,generate.recurring.entries.user,model_account_recurring_payments,account.group_account_user,1,1,1,1
 
 access_account_asset_profile,account.asset.profile,model_account_asset_profile,account.group_account_user,1,0,0,0
-access_asset_modify_user,access_asset_modify_user,model_asset_modify,account.group_account_user,1,0,0,0
+access_asset_modify_user,access_asset_modify_user,model_asset_modify,account.group_account_user,1,1,1,0
 access_asset_modify_manager,access_asset_modify_manager,model_asset_modify,account.group_account_manager,1,1,1,1
 access_account_asset_asset,account.asset.asset,model_account_asset_asset,account.group_account_user,1,0,0,0
 access_account_asset_profile_manager,account.asset.profile,model_account_asset_profile,account.group_account_manager,1,1,1,1
@@ -18,7 +18,7 @@ access_account_asset_asset_invoicing_payment,account.asset.asset,model_account_a
 access_account_asset_depreciation_line_invoicing_payment,account.asset.depreciation.line,model_account_asset_depreciation_line,account.group_account_invoice,1,0,1,0
 
 access_account_aged_trial_balance,access.account.aged.trial.balance,model_account_aged_trial_balance,account.group_account_user,1,1,1,1
-access_account_account_bank_book_report,access.account.bank.book.report,model_account_bank_book_report,account.group_account_user,1,1,1,1
+access_account_bank_book_report,access.account.bank.book.report,model_account_bank_book_report,account.group_account_user,1,1,1,1
 access_account_cash_book_report,access.account.cash.book.report,model_account_cash_book_report,account.group_account_user,1,1,1,1
 access_account_day_book_report,access.account.day.book.report,model_account_day_book_report,account.group_account_user,1,1,1,1
 access_account_lock_date,access.account.lock.date,model_account_lock_date,account.group_account_user,1,1,1,1

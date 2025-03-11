@@ -20,6 +20,9 @@
 #
 #############################################################################
 
+# Modèle de base pour les rapports
+from . import account_common_report
+
 # Wizards de rapports financiers
 from . import financial_report
 from . import general_ledger
@@ -30,8 +33,17 @@ from . import tax_report
 from . import aged_partner
 from . import journal_audit
 from . import cash_flow_report
+from . import account_balance_report
 
 # Wizards de livres comptables
 from . import account_bank_book_wizard
 from . import account_cash_book_wizard
 from . import account_day_book_wizard
+
+# Wizards pour les immobilisations
+from . import asset_modify
+from . import asset_depreciation_confirmation_wizard
+
+# Autres wizards
+from . import account_report_common_partner
+from . import account_lock_date

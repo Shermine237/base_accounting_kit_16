@@ -4,8 +4,8 @@ from odoo.exceptions import UserError
 import io
 import xlsxwriter
 
-class AccountReport(models.Model):
-    _inherit = 'account.report'
+class AccountReport(models.AbstractModel):
+    _name = 'account.report'
     _description = 'Financial Reports'
 
     # Types de rapports disponibles
@@ -35,6 +35,19 @@ class AccountReport(models.Model):
     filter_partner = fields.Boolean('Partner Filter', default=False)
     filter_account_type = fields.Boolean('Account Type Filter', default=False)
     filter_comparison = fields.Boolean('Comparison Filter', default=False)
+
+    def _get_report_values(self, docids, data=None):
+        """Méthode standard pour obtenir les valeurs du rapport"""
+        if not data.get('form'):
+            raise UserError(_('Form content is missing, this report cannot be printed.'))
+
+        return {
+            'doc_ids': docids,
+            'doc_model': 'account.report',
+            'data': data,
+            'docs': self.env['account.report'].browse(docids),
+            'lines': self._get_lines(data.get('form', {})),
+        }
 
     @api.onchange('report_type')
     def _onchange_report_type(self):
