@@ -14,7 +14,7 @@ class AccountReport(models.Model):
         ('pl', 'Profit and Loss'),
         ('cf', 'Cash Flow Statement'),
         ('gl', 'General Ledger'),
-        ('pl', 'Partner Ledger'),
+        ('ptl', 'Partner Ledger'),
         ('tb', 'Trial Balance'),
         ('ar', 'Aged Receivable'),
         ('ap', 'Aged Payable')
@@ -24,7 +24,11 @@ class AccountReport(models.Model):
     filter_date_range = fields.Boolean('Date Range Filter', default=True)
     filter_unfold_all = fields.Boolean('Unfold All', default=True)
     filter_journals = fields.Boolean('Journals Filter', default=True)
-    filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
+    filter_multi_company = fields.Selection([
+        ('disabled', 'Disabled'),
+        ('companies', 'Companies'),
+        ('tax_units', 'Tax Units')
+    ], string='Multi-company Filter', default='companies')
 
     # Filtres spécifiques
     filter_analytic_groupby = fields.Boolean('Analytic Groupby', default=False)
@@ -36,7 +40,7 @@ class AccountReport(models.Model):
     def _onchange_report_type(self):
         """Active les filtres spécifiques selon le type de rapport"""
         self.filter_analytic_groupby = self.report_type == 'pl'
-        self.filter_partner = self.report_type in ['pl', 'ar', 'ap']
+        self.filter_partner = self.report_type in ['ptl', 'ar', 'ap']
         self.filter_account_type = self.report_type in ['pl', 'gl', 'tb']
         self.filter_comparison = self.report_type in ['gl', 'tb']
 
@@ -117,7 +121,7 @@ class AccountReport(models.Model):
             return self._get_cash_flow_lines(options)
         elif self.report_type == 'gl':
             return self._get_general_ledger_lines(options)
-        elif self.report_type == 'pl':
+        elif self.report_type == 'ptl':
             return self._get_partner_ledger_lines(options)
         elif self.report_type == 'tb':
             return self._get_trial_balance_lines(options)
