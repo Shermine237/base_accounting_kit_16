@@ -3,40 +3,37 @@
     <template id="report_financial">
         <t t-call="web.html_container">
             <t t-call="web.internal_layout">
-                <t t-set="data_report_margin_top" t-value="12"/>
-                <t t-set="data_report_header_spacing" t-value="9"/>
-                <t t-set="data_report_dpi" t-value="110"/>
                 <div class="page">
-                    <h2 class="text-center mb32" t-esc="data['form']['account_report_id'][1]"/>
+                    <h2 class="text-center mb32" t-esc="docs.name"/>
 
                     <div class="row mt32 mb32">
                         <div class="col-4">
                             <strong>Target Moves:</strong>
                             <p>
-                                <span t-if="data['form']['target_move'] == 'all'" class="text-muted">All Entries</span>
-                                <span t-if="data['form']['target_move'] == 'posted'" class="text-muted">All Posted Entries</span>
+                                <span t-if="data['target_move'] == 'all'" class="text-muted">All Entries</span>
+                                <span t-if="data['target_move'] == 'posted'" class="text-muted">All Posted Entries</span>
                             </p>
                         </div>
                         <div class="col-4">
                             <p>
-                                <t t-if="data['form']['date_from']">
+                                <t t-if="data['date_from']">
                                     <strong>Date from:</strong>
-                                    <span class="text-muted ml-2" t-esc="data['form']['date_from']"/>
+                                    <span class="text-muted ml-2" t-esc="data['date_from']"/>
                                     <br/>
                                 </t>
-                                <t t-if="data['form']['date_to']">
+                                <t t-if="data['date_to']">
                                     <strong>Date to:</strong>
-                                    <span class="text-muted ml-2" t-esc="data['form']['date_to']"/>
+                                    <span class="text-muted ml-2" t-esc="data['date_to']"/>
                                 </t>
                             </p>
                         </div>
-                        <div class="col-4" t-if="data['form']['enable_filter']">
+                        <div class="col-4" t-if="data['enable_filter']">
                             <strong>Comparison:</strong>
-                            <p class="text-muted" t-esc="data['form']['label_filter'] or 'Comparison'"/>
+                            <p class="text-muted">Previous Period</p>
                         </div>
                     </div>
 
-                    <table class="table table-sm table-bordered" t-if="data['form']['debit_credit'] == 1">
+                    <table class="table table-sm table-bordered" t-if="data['debit_credit']">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -46,28 +43,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr t-foreach="report_lines" t-as="a">
-                                <t t-if="a['level'] != 0">
-                                    <t t-set="style" t-value="'font-weight: ' + ('normal' if a.get('level', 0) &gt; 3 else 'bold')"/>
-                                    <td>
-                                        <span t-if="a.get('level', 0) &gt; 0" class="text-muted" t-esc="'    ' * (a.get('level', 0) - 1)"/>
-                                        <span t-att-style="style" t-esc="a.get('name')"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('debit')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('credit')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('balance')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                </t>
+                            <tr t-foreach="lines" t-as="line">
+                                <t t-set="style" t-value="'font-weight: ' + ('normal' if line.get('unfoldable', False) else 'bold')"/>
+                                <td>
+                                    <span t-if="line.get('unfoldable', False)" class="text-muted" t-esc="'    ' * line.get('level', 0)"/>
+                                    <span t-att-style="style" t-esc="line.get('name')"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[0].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[1].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[2].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <table class="table table-sm table-bordered" t-if="not data['form']['enable_filter'] and not data['form']['debit_credit']">
+                    <table class="table table-sm table-bordered" t-if="not data['enable_filter'] and not data['debit_credit']">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -75,44 +70,40 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr t-foreach="report_lines" t-as="a">
-                                <t t-if="a['level'] != 0">
-                                    <t t-set="style" t-value="'font-weight: ' + ('normal' if a.get('level', 0) &gt; 3 else 'bold')"/>
-                                    <td>
-                                        <span t-if="a.get('level', 0) &gt; 0" class="text-muted" t-esc="'    ' * (a.get('level', 0) - 1)"/>
-                                        <span t-att-style="style" t-esc="a.get('name')"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('balance')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                </t>
+                            <tr t-foreach="lines" t-as="line">
+                                <t t-set="style" t-value="'font-weight: ' + ('normal' if line.get('unfoldable', False) else 'bold')"/>
+                                <td>
+                                    <span t-if="line.get('unfoldable', False)" class="text-muted" t-esc="'    ' * line.get('level', 0)"/>
+                                    <span t-att-style="style" t-esc="line.get('name')"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[0].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <table class="table table-sm table-bordered" t-if="data['form']['enable_filter'] == 1 and not data['form']['debit_credit']">
+                    <table class="table table-sm table-bordered" t-if="data['enable_filter'] and not data['debit_credit']">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th class="text-right">Balance</th>
-                                <th class="text-right" t-esc="data['form']['label_filter'] or 'Comparison'"/>
+                                <th class="text-right">Previous Period</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr t-foreach="report_lines" t-as="a">
-                                <t t-if="a['level'] != 0">
-                                    <t t-set="style" t-value="'font-weight: ' + ('normal' if a.get('level', 0) &gt; 3 else 'bold')"/>
-                                    <td>
-                                        <span t-if="a.get('level', 0) &gt; 0" class="text-muted" t-esc="'    ' * (a.get('level', 0) - 1)"/>
-                                        <span t-att-style="style" t-esc="a.get('name')"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('balance')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                    <td class="text-right" style="white-space: nowrap;">
-                                        <span t-att-style="style" t-esc="a.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
-                                    </td>
-                                </t>
+                            <tr t-foreach="lines" t-as="line">
+                                <t t-set="style" t-value="'font-weight: ' + ('normal' if line.get('unfoldable', False) else 'bold')"/>
+                                <td>
+                                    <span t-if="line.get('unfoldable', False)" class="text-muted" t-esc="'    ' * line.get('level', 0)"/>
+                                    <span t-att-style="style" t-esc="line.get('name')"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[0].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <span t-att-style="style" t-esc="line.get('columns')[1].get('no_format')" t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
