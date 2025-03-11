@@ -20,9 +20,8 @@
 #
 #############################################################################
 
-# Models de base
+# Modèles de base Odoo
 from . import account_account
-from . import account_asset
 from . import account_journal
 from . import account_move
 from . import account_payment
@@ -30,7 +29,14 @@ from . import product_template
 from . import res_config_settings
 from . import res_partner
 
-# Models spécifiques
+# Modèles de gestion des immobilisations
+from . import account_asset
+
+# Modèles de rapports (ordre important)
+from . import account_report  # Modèle abstrait de base
+from . import report_financial  # Implémentation concrète
+
+# Modèles spécifiques
 from . import account_dashboard
 from . import credit_limit
 from . import multiple_invoice
@@ -38,9 +44,5 @@ from . import multiple_invoice_layout
 from . import payment_matching
 from . import recurring_payments
 
-# Models de rapport
-from . import account_report
-from . import report_financial
-
-# Models désactivés
+# Modèles désactivés
 # from . import account_followup
