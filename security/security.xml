@@ -48,5 +48,29 @@
             <field name="implied_ids" eval="[(4, ref('group_account_financial_report_user'))]"/>
             <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
         </record>
+
+        <!-- Règles de sécurité pour les rapports financiers -->
+        <record id="account_report_comp_rule" model="ir.rule">
+            <field name="name">Account Report Multi-Company</field>
+            <field name="model_id" ref="model_account_report"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+        <!-- Règle de sécurité pour les rapports PDF -->
+        <record id="report_financial_comp_rule" model="ir.rule">
+            <field name="name">Financial Report Multi-Company</field>
+            <field name="model_id" ref="model_report_financial"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+        <!-- Règle de sécurité pour les options de rapport -->
+        <record id="financial_report_options_comp_rule" model="ir.rule">
+            <field name="name">Financial Report Options Multi-Company</field>
+            <field name="model_id" ref="model_financial_report"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>

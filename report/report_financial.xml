@@ -5,24 +5,27 @@
             <t t-call="web.internal_layout">
                 <div class="page">
                     <!-- En-tête du rapport -->
-                    <h2 t-esc="data['form']['account_report_id'][1]" class="text-center"/>
-                    <div class="row mt32 mb32">
-                        <div class="col-4">
-                            <strong>Company:</strong>
-                            <p t-esc="res_company.name"/>
-                        </div>
-                        <div class="col-4">
-                            <strong>Target Moves:</strong>
-                            <p t-if="data['form']['target_move'] == 'all'">All Entries</p>
-                            <p t-if="data['form']['target_move'] == 'posted'">All Posted Entries</p>
-                        </div>
-                        <div class="col-4">
-                            <strong>Date Range:</strong>
-                            <p>
-                                <span t-esc="data['form']['date_from']" t-options='{"widget": "date"}'/>
-                                to
-                                <span t-esc="data['form']['date_to']" t-options='{"widget": "date"}'/>
-                            </p>
+                    <div class="row mb32">
+                        <div class="col-12">
+                            <h2><t t-esc="docs.name"/></h2>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Company:</strong> <t t-esc="res_company.name"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <div t-if="data['form']['date_from']">
+                                        <strong>Date from:</strong> <t t-esc="data['form']['date_from']"/>
+                                    </div>
+                                    <div t-if="data['form']['date_to']">
+                                        <strong>Date to:</strong> <t t-esc="data['form']['date_to']"/>
+                                    </div>
+                                    <div>
+                                        <strong>Target Moves:</strong>
+                                        <t t-if="data['form']['target_move'] == 'all'">All Entries</t>
+                                        <t t-if="data['form']['target_move'] == 'posted'">All Posted Entries</t>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -30,71 +33,65 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Name</th>
+                                <th>Account</th>
                                 <th t-if="data['form'].get('debit_credit')" class="text-right">Debit</th>
                                 <th t-if="data['form'].get('debit_credit')" class="text-right">Credit</th>
                                 <th class="text-right">Balance</th>
-                                <th t-if="data['form']['enable_filter']" class="text-right">
+                                <th t-if="data['form'].get('enable_filter')" class="text-right">
                                     <t t-if="data['form']['filter_cmp'] == 'filter_date'">
-                                        Balance
-                                        <br/>
-                                        <span t-esc="data['form']['date_from_cmp']" t-options='{"widget": "date"}'/>
-                                        -
-                                        <span t-esc="data['form']['date_to_cmp']" t-options='{"widget": "date"}'/>
+                                        Balance <t t-esc="data['form']['date_from_cmp']"/> - <t t-esc="data['form']['date_to_cmp']"/>
                                     </t>
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="data['form']['report_lines']" t-as="line">
-                                <tr t-att-class="'font-weight-bold' if line.get('level') == 1 else ''">
-                                    <!-- Nom avec indentation selon le niveau -->
-                                    <td>
-                                        <span t-att-style="'margin-left: ' + str(line['level'] * 20) + 'px;'">
-                                            <t t-esc="line['name']"/>
+                            <t t-foreach="get_account_lines(data['form'])" t-as="line">
+                                <!-- Ligne de compte -->
+                                <tr t-att-style="'padding-left: ' + str(line.get('level', 0) * 20) + 'px;'">
+                                    <td t-att-style="'padding-left: ' + str(line.get('level', 0) * 20) + 'px;'">
+                                        <span t-att-style="'font-weight: ' + ('bold' if line.get('level') == 1 else 'normal') + ';'">
+                                            <t t-esc="line.get('name')"/>
                                         </span>
                                     </td>
-                                    <!-- Colonnes de débit/crédit si activées -->
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="line.get('debit', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        <t t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
                                     </td>
                                     <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                        <t t-esc="line.get('credit', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        <t t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
                                     </td>
-                                    <!-- Solde -->
                                     <td class="text-right">
-                                        <t t-esc="line['balance']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        <t t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
                                     </td>
-                                    <!-- Colonne de comparaison si activée -->
-                                    <td t-if="data['form']['enable_filter']" class="text-right">
-                                        <t t-esc="line.get('comparison', {}).get('balance', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    <td t-if="data['form'].get('enable_filter')" class="text-right">
+                                        <t t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
                                     </td>
                                 </tr>
                             </t>
                         </tbody>
-                        <!-- Totaux -->
-                        <tfoot>
-                            <tr class="border-black font-weight-bold">
-                                <td>Total</td>
-                                <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                    <t t-esc="sum(line.get('debit', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
-                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
-                                </td>
-                                <td t-if="data['form'].get('debit_credit')" class="text-right">
-                                    <t t-esc="sum(line.get('credit', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
-                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
-                                </td>
-                                <td class="text-right">
-                                    <t t-esc="sum(line['balance'] for line in data['form']['report_lines'] if line.get('level') == 1)"
-                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
-                                </td>
-                                <td t-if="data['form']['enable_filter']" class="text-right">
-                                    <t t-esc="sum(line.get('comparison', {}).get('balance', 0.0) for line in data['form']['report_lines'] if line.get('level') == 1)"
-                                       t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
-                                </td>
-                            </tr>
-                        </tfoot>
                     </table>
+
+                    <!-- Totaux -->
+                    <div class="row">
+                        <div class="col-12">
+                            <table class="table table-sm">
+                                <tr class="border-black font-weight-bold">
+                                    <td>Total</td>
+                                    <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                        <t t-esc="sum_debit" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td t-if="data['form'].get('debit_credit')" class="text-right">
+                                        <t t-esc="sum_credit" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <t t-esc="sum_balance" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td t-if="data['form'].get('enable_filter')" class="text-right">
+                                        <t t-esc="sum_balance_cmp" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </t>
         </t>

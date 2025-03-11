@@ -36,6 +36,5 @@ from . import account_dashboard
 from . import payment_matching
 from . import multiple_invoice
 from . import multiple_invoice_layout
-from . import account_financial_report
 from . import account_report
 from . import report_financial

@@ -1,6 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_financial_report_user,financial.report.user,model_financial_report,account.group_account_user,1,1,1,1
-access_financial_report_manager,financial.report.manager,model_financial_report,account.group_account_manager,1,1,1,1
+access_financial_report_user,financial.report.user,model_financial_report,account.group_account_user,0,0,0,0
+access_financial_report_manager,financial.report.manager,model_financial_report,account.group_account_manager,0,0,0,0
 access_generate_recurring_entries,generate.recurring.entries.user,model_account_recurring_payments,account.group_account_user,1,1,1,1
 
 access_account_asset_profile,account.asset.profile,model_account_asset_profile,account.group_account_user,1,0,0,0
@@ -36,8 +36,5 @@ access_account_recurring_entries_line,access.account.recurring.entries.line,mode
 access_multiple_invoice,multiple_invoice,model_multiple_invoice,account.group_account_manager,1,1,1,1
 access_multiple_invoice_layout,multiple_invoice_layout,model_multiple_invoice_layout,account.group_account_manager,1,1,1,1
 
-access_account_financial_report_user,account.financial.report.user,model_account_financial_report,account.group_account_user,1,0,0,0
-access_account_financial_report_manager,account.financial.report.manager,model_account_financial_report,account.group_account_manager,1,1,1,1
-
-access_account_report_user,account.report.user,model_account_report,group_account_financial_report_user,1,0,0,0
-access_account_report_manager,account.report.manager,model_account_report,group_account_financial_report_manager,1,1,1,1
+access_account_report_user,account.report.user,model_account_report,account.group_account_user,1,0,0,0
+access_account_report_manager,account.report.manager,model_account_report,account.group_account_manager,1,1,1,1
