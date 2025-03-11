@@ -22,7 +22,7 @@
 
 {
     'name': 'Odoo 16 Full Accounting Kit',
-    'version': '16.0.1.0.0',
+    'version': '16.0.2.0.0',
     'category': 'Accounting',
     'live_test_url': 'https://www.youtube.com/watch?v=peAp2Tx_XIs',
     'summary': """ Asset and Budget Management,
@@ -50,14 +50,21 @@
     'website': "https://www.cybrosys.com",
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
-    'depends': ['base', 'account', 'sale', 'account_check_printing', 'base_account_budget_16'],
+    'depends': [
+        'base',
+        'account',
+        'account_reports',
+        'report_xlsx',
+        'sale',
+        'account_check_printing',
+        'base_account_budget_16'
+    ],
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
         'data/account_pdc_data.xml',
-        # 'data/followup_levels.xml',
         'data/account_asset_data.xml',
         'data/recurring_entry_cron.xml',
         'data/multiple_invoice_data.xml',
@@ -71,8 +78,6 @@
         'views/account_payment_view.xml',
         'views/res_config_view.xml',
         'views/recurring_payments_view.xml',
-        # 'views/account_followup.xml',
-        # 'views/followup_report.xml',
         'wizard/asset_depreciation_confirmation_wizard_views.xml',
         'wizard/asset_modify_views.xml',
         'views/account_asset_views.xml',
@@ -110,10 +115,12 @@
         'report/multiple_invoice_layouts.xml',
         'report/multiple_invoice_report.xml',
     ],
-    'qweb': [
-        'static/src/xml/template.xml',
-        'static/src/xml/payment_matching.xml'
-    ],
+    'assets': {
+        'web.assets_backend': [
+            'base_accounting_kit_16/static/src/js/payment_matching.js',
+            'base_accounting_kit_16/static/src/xml/payment_matching.xml',
+        ],
+    },
     'license': 'LGPL-3',
     'images': ['static/description/banner.gif'],
     'installable': True,

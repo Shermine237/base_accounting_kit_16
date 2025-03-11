@@ -22,6 +22,20 @@
 from odoo import api, models, fields
 
 
+class AccountReport(models.Model):
+    _inherit = 'account.report'
+
+    def _get_financial_report_pdf_lines(self, options):
+        """Get report lines for financial reports in PDF format."""
+        lines = self._get_lines(options)
+        for line in lines:
+            # Ensure all monetary values are properly formatted
+            for col in line.get('columns', []):
+                if isinstance(col.get('no_format'), (int, float)):
+                    col['name'] = self.format_value(col['no_format'])
+        return lines
+
+
 class FinancialReport(models.TransientModel):
     _name = "financial.report"
     _inherit = "account.common.report"
@@ -31,7 +45,6 @@ class FinancialReport(models.TransientModel):
         'res.company',
         string='Company',
         required=True,
-        readonly=True,
         default=lambda self: self.env.company
     )
     date_from = fields.Date(string='Start Date')
@@ -40,11 +53,15 @@ class FinancialReport(models.TransientModel):
         ('posted', 'All Posted Entries'),
         ('all', 'All Entries')
     ], string='Target Moves', required=True, default='posted')
-    enable_filter = fields.Boolean(string='Enable Comparison')
+    enable_filter = fields.Boolean(
+        string='Enable Comparison',
+        help="Enable the comparison with a previous period"
+    )
     account_report_id = fields.Many2one(
         'account.report',
         string='Account Report',
-        required=True
+        required=True,
+        domain=[('root_report_id', '!=', False)]
     )
     debit_credit = fields.Boolean(
         string='Display Debit/Credit Columns',
@@ -55,94 +72,165 @@ class FinancialReport(models.TransientModel):
         ('vertical', 'Vertical'),
         ('horizontal', 'Horizontal')
     ], string='View Format', default='vertical')
+    report_type = fields.Selection([
+        ('pdf', 'PDF'),
+        ('xlsx', 'Excel')
+    ], string='Report Type', default='pdf', required=True)
 
-    @api.model
-    def _get_account_report(self):
-        reports = []
-        if self._context.get('active_id'):
-            menu = self.env['ir.ui.menu'].browse(self._context.get('active_id')).name
-            reports = self.env['account.report'].search([('name', 'ilike', menu)])
-        return reports and reports[0] or False
+    @api.onchange('account_report_id')
+    def _onchange_account_report_id(self):
+        """Update available options based on selected report."""
+        if self.account_report_id:
+            self.debit_credit = self.account_report_id.filter_journals
+            self.enable_filter = self.account_report_id.filter_comparison
 
-    def _build_comparison_context(self, data):
-        result = {}
-        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
-        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
-        if data['form']['filter_cmp'] == 'filter_date':
-            result['date_from'] = data['form']['date_from_cmp']
-            result['date_to'] = data['form']['date_to_cmp']
-            result['strict_range'] = True
-        return result
-
-    def check_report(self):
+    def print_report(self, data=None):
+        """Generate the financial report."""
         self.ensure_one()
-        data = {}
-        data['ids'] = self.env.context.get('active_ids', [])
-        data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'company_id'])[0]
-        used_context = self._build_contexts(data)
-        data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
-        return self.with_context(discard_logo_check=True).print_report(data)
-
-    def print_report(self, data):
-        report_action = self.account_report_id._get_report_default_action()
-        if not report_action:
+        if not self.account_report_id:
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': 'Error',
-                    'message': 'No report action defined for this report.',
+                    'message': 'Please select a report type.',
                     'type': 'danger',
                     'sticky': False,
                 }
             }
-        action = report_action.copy()
-        action.update({
-            'context': {
-                'model': 'account.report',
-                'active_id': self.account_report_id.id,
-                'active_ids': [self.account_report_id.id],
-                'report_type': 'pdf',
+
+        options = {
+            'unfolded_lines': [],
+            'date': {
                 'date_from': self.date_from,
                 'date_to': self.date_to,
-                'target_move': self.target_move,
-                'enable_filter': self.enable_filter,
-                'debit_credit': self.debit_credit,
-                'view_format': self.view_format,
-                'company_id': self.company_id.id,
+                'filter': 'custom' if self.date_from or self.date_to else 'this_month',
+                'mode': 'range',
+            },
+            'target_move': self.target_move,
+            'company_id': self.company_id.id,
+            'all_entries': self.target_move == 'all',
+            'debit_credit': self.debit_credit,
+            'enable_filter': self.enable_filter,
+            'view_format': self.view_format,
+        }
+
+        if self.report_type == 'xlsx':
+            return {
+                'type': 'ir.actions.report',
+                'report_type': 'xlsx',
+                'report_name': 'base_accounting_kit_16.report_financial_xlsx',
+                'report_file': 'base_accounting_kit_16.report_financial_xlsx',
+                'data': {
+                    'model': 'account.report',
+                    'options': options,
+                    'output_format': 'xlsx',
+                    'report_name': self.account_report_id.name,
+                },
+                'context': {
+                    'active_id': self.account_report_id.id,
+                    'active_model': 'account.report',
+                },
             }
-        })
-        return action
+
+        return {
+            'type': 'ir.actions.report',
+            'report_type': 'qweb-pdf',
+            'report_name': 'base_accounting_kit_16.report_financial',
+            'report_file': 'base_accounting_kit_16.report_financial',
+            'data': {
+                'model': 'account.report',
+                'options': options,
+                'output_format': 'pdf',
+                'report_name': self.account_report_id.name,
+            },
+            'context': {
+                'active_id': self.account_report_id.id,
+                'active_model': 'account.report',
+            },
+        }
 
 
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Report'
-    _inherit = 'account.report'
+    _inherit = 'report.report_xlsx.abstract'
 
+    @api.model
     def _get_report_values(self, docids, data=None):
-        if not data.get('form'):
-            raise ValueError('Form content is missing.')
+        """Prepare report data."""
+        data = data or {}
+        if not data.get('options'):
+            raise ValueError('Report options are missing.')
 
-        report = self.env['account.report'].browse(data['form']['account_report_id'])
+        report = self.env['account.report'].browse(self.env.context.get('active_id'))
         if not report:
             raise ValueError('Report not found.')
 
-        lines = report._get_lines({
-            'date': {
-                'date_from': data['form'].get('date_from'),
-                'date_to': data['form'].get('date_to'),
-                'filter': 'custom',
-            },
-            'target_move': data['form'].get('target_move', 'posted'),
-            'company_id': data['form'].get('company_id', self.env.company.id),
-        })
+        lines = report._get_financial_report_pdf_lines(data['options'])
 
         return {
-            'doc_ids': docids,
+            'doc_ids': [report.id],
             'doc_model': 'account.report',
-            'data': data['form'],
+            'data': data,
             'docs': report,
             'lines': lines,
+            'company': self.env.company,
         }
+
+    def generate_xlsx_report(self, workbook, data, objects):
+        """Generate Excel report."""
+        report = self.env['account.report'].browse(self.env.context.get('active_id'))
+        if not report:
+            return
+
+        options = data.get('options', {})
+        lines = report._get_financial_report_pdf_lines(options)
+
+        # Create worksheet
+        sheet = workbook.add_worksheet(report.name[:31])
+        bold = workbook.add_format({'bold': True})
+        money_format = workbook.add_format({'num_format': '#,##0.00'})
+        date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+
+        # Set column widths
+        sheet.set_column(0, 0, 40)  # Name
+        sheet.set_column(1, 5, 20)  # Amounts
+
+        # Write headers
+        row = 0
+        sheet.write(row, 0, 'Name', bold)
+        col = 1
+        if options.get('debit_credit'):
+            sheet.write(row, col, 'Debit', bold)
+            sheet.write(row, col + 1, 'Credit', bold)
+            col += 2
+        sheet.write(row, col, 'Balance', bold)
+        if options.get('enable_filter'):
+            sheet.write(row, col + 1, 'Previous Period', bold)
+
+        # Write data rows
+        row = 1
+        for line in lines:
+            # Indentation for hierarchy
+            indent = '    ' * line.get('level', 0) if line.get('unfoldable', False) else ''
+            name = indent + line.get('name', '')
+            sheet.write(row, 0, name)
+
+            # Write amounts
+            col = 1
+            for column in line.get('columns', []):
+                value = column.get('no_format', 0.0)
+                if isinstance(value, (int, float)):
+                    sheet.write(row, col, value, money_format)
+                else:
+                    sheet.write(row, col, value)
+                col += 1
+            row += 1
+
+        # Write totals
+        sheet.write(row, 0, 'Total', bold)
+        total_col = 1 if options.get('debit_credit') else 3
+        total = sum(line.get('columns')[-1].get('no_format', 0.0)
+                   for line in lines if not line.get('unfoldable', False))
+        sheet.write(row, total_col, total, money_format)
