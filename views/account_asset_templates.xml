@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="assets_backend" name="account assets" inherit_id="web.assets_backend">
+    <template id="assets_backend" name="Account Assets" inherit_id="web.assets_backend">
         <xpath expr="." position="inside">
-            <link rel="stylesheet" href="/base_accounting_kit/static/src/scss/account_asset.scss"/>
-            <script type="text/javascript" src="/base_accounting_kit/static/src/js/account_asset.js"/>
+            <link rel="stylesheet" type="text/scss" href="/base_accounting_kit_16/static/src/scss/account_asset.scss"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/account_asset.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/account_asset_widget.js"/>
+        </xpath>
+    </template>
+
+    <template id="qunit_suite" name="account_asset_tests" inherit_id="web.qunit_suite_tests">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/base_accounting_kit_16/static/tests/account_asset_tests.js"/>
         </xpath>
     </template>
 </odoo>

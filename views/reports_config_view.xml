@@ -2,7 +2,6 @@
 <odoo>
     <data>
         <!-- Account Financial Report -->
-
         <record id="view_account_financial_report_form" model="ir.ui.view">
             <field name="name">account.financial.report.form</field>
             <field name="model">account.financial.report</field>
@@ -16,19 +15,16 @@
                         <field name="sign"/>
                         <field name="style_overwrite"/>
                     </group>
-                    <notebook
-                            attrs="{'invisible': [('type','not in',['accounts','account_type', 'account_report'])]}">
-                        <page string="Report">
+                    <notebook attrs="{'invisible': [('type','not in',['accounts','account_type', 'account_report'])]}">
+                        <page string="Report Configuration" name="report_config">
                             <group>
-                                <field name="display_detail"
-                                       attrs="{'invisible': [('type','not in',['accounts','account_type'])]}"/>
-                                <field name="account_report_id"
-                                       attrs="{'invisible': [('type', '!=', 'account_report')]}"/>
+                                <field name="display_detail" attrs="{'invisible': [('type','not in',['accounts','account_type'])]}"/>
+                                <field name="account_report_id" attrs="{'invisible': [('type', '!=', 'account_report')], 'required': [('type', '=', 'account_report')]}"/>
                             </group>
-                            <field name="account_ids"
-                                   attrs="{'invisible': [('type', '!=', 'accounts')]}"/>
-                            <field name="account_type_ids"
-                                   attrs="{'invisible': [('type', '!=', 'account_type')]}"/>
+                            <group>
+                                <field name="account_ids" attrs="{'invisible': [('type', '!=', 'accounts')], 'required': [('type', '=', 'accounts')]}" widget="many2many_tags" options="{'no_create': True}"/>
+                                <field name="account_type" attrs="{'invisible': [('type', '!=', 'account_type')], 'required': [('type', '=', 'account_type')]}"/>
+                            </group>
                         </page>
                     </notebook>
                 </form>
@@ -40,8 +36,9 @@
             <field name="model">account.financial.report</field>
             <field name="arch" type="xml">
                 <tree string="Account Report">
+                    <field name="sequence" widget="handle"/>
                     <field name="name"/>
-                    <field name="parent_id" invisible="1"/>
+                    <field name="parent_id"/>
                     <field name="type"/>
                     <field name="account_report_id"/>
                 </tree>
@@ -56,34 +53,37 @@
                     <field name="name" string="Account Report"/>
                     <field name="type"/>
                     <field name="account_report_id"/>
+                    <separator/>
+                    <filter string="Root Accounts" name="root_accounts" domain="[('parent_id', '=', False)]"/>
                     <group expand="0" string="Group By">
-                        <filter string="Parent Report"
-                                name="filter_parent_rep"
-                                domain=""
-                                context="{'group_by':'parent_id'}"/>
-                        <filter string="Report Type"
-                                name="filter_rep_type"
-                                domain="[]"
-                                context="{'group_by':'type'}"/>
+                        <filter string="Parent Report" name="parent_id" context="{'group_by':'parent_id'}"/>
+                        <filter string="Report Type" name="type" context="{'group_by':'type'}"/>
                     </group>
                 </search>
             </field>
         </record>
 
-        <record id="action_account_financial_report_tree"
-                model="ir.actions.act_window">
+        <record id="action_account_financial_report_tree" model="ir.actions.act_window">
             <field name="name">Financial Reports</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.financial.report</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id"
-                   ref="view_account_financial_report_search"/>
+            <field name="search_view_id" ref="view_account_financial_report_search"/>
             <field name="view_id" ref="view_account_financial_report_tree"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new financial report
+                </p>
+                <p>
+                    Financial reports allow you to configure your balance sheet and profit &amp; loss reports.
+                </p>
+            </field>
         </record>
 
         <menuitem id="menu_account_financial_reports_tree"
-                  name="Account Reports" parent="account.account_account_menu"
+                  name="Financial Reports"
+                  parent="account.account_account_menu"
                   action="action_account_financial_report_tree"
-        />
+                  sequence="5"/>
     </data>
 </odoo>

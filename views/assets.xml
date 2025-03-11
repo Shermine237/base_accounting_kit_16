@@ -1,18 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="assets_invoice_dashboard" name="Invoice Dashboard" inherit_id="web.assets_backend">
+    <template id="assets_backend_accounting" name="Accounting Backend Assets" inherit_id="web.assets_backend">
         <xpath expr="." position="inside">
-            <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet"/>
+            <!-- Fonts -->
+            <link rel="preconnect" href="https://fonts.googleapis.com"/>
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+            <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+
+            <!-- Styles -->
             <link rel="stylesheet" type="text/scss" href="/base_accounting_kit_16/static/src/scss/style.scss"/>
-            <link rel="stylesheet" type="text/scss" href="/base_accounting_kit_16/static/lib/bootstrap-toggle-master/css/bootstrap-toggle.min.css"/>
+            <link rel="stylesheet" type="text/scss" href="/base_accounting_kit_16/static/src/scss/account_dashboard.scss"/>
+            <link rel="stylesheet" href="/base_accounting_kit_16/static/lib/bootstrap-toggle/css/bootstrap-toggle.min.css"/>
+
+            <!-- Core Scripts -->
             <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/account_dashboard.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment_model.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment_render.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment_matching.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/Chart.bundle.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/Chart.bundle.min.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/Chart.min.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/Chart.js"/>
-            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/bootstrap-toggle-master/js/bootstrap-toggle.min.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/account_reports.js"/>
+
+            <!-- Payment Scripts -->
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment/payment_model.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment/payment_render.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment/payment_matching.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/src/js/payment/payment_widget.js"/>
+
+            <!-- Chart Scripts -->
+            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/chart.js/chart.min.js"/>
+
+            <!-- Toggle Scripts -->
+            <script type="text/javascript" src="/base_accounting_kit_16/static/lib/bootstrap-toggle/js/bootstrap-toggle.min.js"/>
+        </xpath>
+    </template>
+
+    <template id="qunit_suite" name="accounting_tests" inherit_id="web.qunit_suite_tests">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/base_accounting_kit_16/static/tests/account_dashboard_tests.js"/>
+            <script type="text/javascript" src="/base_accounting_kit_16/static/tests/payment_tests.js"/>
+        </xpath>
+    </template>
+
+    <template id="report_assets_common" name="Accounting Report Assets" inherit_id="web.report_assets_common">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/scss" href="/base_accounting_kit_16/static/src/scss/report_styles.scss"/>
         </xpath>
     </template>
 </odoo>
