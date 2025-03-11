@@ -32,7 +32,6 @@
     'depends': [
         'base',
         'account',
-        'account_reports',
         'sale',
         'account_check_printing',
         'base_account_budget_16',
