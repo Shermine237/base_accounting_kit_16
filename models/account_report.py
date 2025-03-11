@@ -7,7 +7,7 @@ class AccountReport(models.Model):
     _description = "Account Report"
 
     name = fields.Char(string='Report Name', required=True, translate=True)
-    root_report_id = fields.Many2one('account.report', string='Root Report')
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     parent_id = fields.Many2one('account.report', string='Parent Report')
     children_ids = fields.One2many('account.report', 'parent_id', string='Children Reports')
     
