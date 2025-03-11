@@ -3,8 +3,9 @@ from odoo import fields, models
 
 
 class MultipleInvoice(models.Model):
-    """Multiple Invoice Model"""
+    """Multiple Invoice Model for managing multiple copies of invoices with different names and sequences"""
     _name = "multiple.invoice"
+    _description = "Multiple Invoice Configuration"
     _order = "sequence"
 
     sequence = fields.Integer('Sequence No')

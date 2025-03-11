@@ -19,18 +19,23 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
-from . import account_balance_report
-from . import account_bank_book_wizard
-from . import account_cash_book_wizard
-from . import account_day_book_wizard
-from . import account_lock_date
-from . import account_report_common_partner
-from . import aged_partner
-from . import asset_depreciation_confirmation_wizard
-from . import asset_modify
-from . import cash_flow_report
-from . import financial_report
-from . import general_ledger
-from . import journal_audit
-from . import partner_ledger
-from . import tax_report
+
+from odoo import fields, models
+
+
+class AccountCommonPartnerReport(models.TransientModel):
+    _name = 'account.common.partner.report'
+    _description = 'Account Common Partner Report'
+    _inherit = "account.common.report"
+
+    result_selection = fields.Selection([
+        ('customer', 'Receivable Accounts'),
+        ('supplier', 'Payable Accounts'),
+        ('customer_supplier', 'Receivable and Payable Accounts')
+    ], string="Partner Type", required=True, default='customer')
+
+    partner_ids = fields.Many2many('res.partner', string='Partners')
+    
+    def pre_print_report(self, data):
+        data['form'].update(self.read(['result_selection', 'partner_ids'])[0])
+        return data

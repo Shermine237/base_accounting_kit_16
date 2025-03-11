@@ -19,6 +19,8 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from . import account_report_common
+from . import account_report_common_partner
 from . import general_ledger_report
 from . import account_report_common_account
 from . import report_partner_ledger

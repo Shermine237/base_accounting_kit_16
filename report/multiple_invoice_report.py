@@ -5,6 +5,7 @@ from odoo import models, api
 
 class ReportInvoiceMultiple(models.AbstractModel):
     _name = 'report.base_accounting_kit.report_multiple_invoice'
+    _description = 'Multiple Invoice Report Template'
     _inherit = 'report.account.report_invoice'
 
     @api.model
