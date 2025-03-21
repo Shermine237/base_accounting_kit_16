@@ -49,6 +49,7 @@
         'views/recurring_payments_view.xml',
         
         # Wizards
+        'wizard/account_common_report_view.xml',  
         'wizard/trial_balance.xml',
         'wizard/account_bank_book_wizard_view.xml',
         'wizard/account_cash_book_wizard_view.xml',

@@ -144,4 +144,46 @@
             </t>
         </t>
     </template>
+
+    <!-- Action pour le rapport PDF -->
+    <record id="action_report_financial_pdf" model="ir.actions.report">
+        <field name="name">Financial Report</field>
+        <field name="model">account.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">base_accounting_kit_16.report_financial</field>
+        <field name="report_file">base_accounting_kit_16.report_financial</field>
+        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Action pour le rapport HTML -->
+    <record id="action_report_financial" model="ir.actions.report">
+        <field name="name">Financial Report (HTML)</field>
+        <field name="model">account.financial.report.wizard</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">base_accounting_kit_16.report_financial</field>
+        <field name="report_file">base_accounting_kit_16.report_financial</field>
+        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Action pour le rapport Excel -->
+    <record id="action_report_financial_xlsx" model="ir.actions.server">
+        <field name="name">Financial Report (Excel)</field>
+        <field name="model_id" ref="model_account_financial_report_wizard"/>
+        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
+        <field name="binding_type">report</field>
+        <field name="state">code</field>
+        <field name="code">
+            if records:
+                action = records.check_report_xlsx()
+        </field>
+    </record>
+
+    <!-- Menu pour le rapport Excel -->
+    <menuitem id="menu_financial_reports_excel"
+              name="Financial Report (Excel)"
+              parent="menu_financial_reports"
+              action="action_report_financial_xlsx"
+              sequence="2"/>
 </odoo>

@@ -20,6 +20,9 @@
 #
 #############################################################################
 
+# Modèle de base pour les rapports
+from . import account_common_report
+
 # Wizards de rapports financiers
 from . import financial_report
 from . import general_ledger
