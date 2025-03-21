@@ -25,7 +25,6 @@
         'views/account_move_views.xml',
         'views/account_payment_view.xml',
         'views/accounting_menu.xml',
-        'views/assets.xml',
         'views/dashboard_views.xml',
         'views/reports_config_view.xml',
         'views/res_config_view.xml',
@@ -65,9 +64,38 @@
     ],
     'assets': {
         'web.assets_backend': [
-            'base_accounting_kit_16/static/src/css/account_report.css',
-            'base_accounting_kit_16/static/src/js/account_report.js',
-            'base_accounting_kit_16/static/src/xml/template.xml',
+            # Fonts
+            ('https://fonts.googleapis.com', 'preconnect'),
+            ('https://fonts.gstatic.com', 'preconnect'),
+            'https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap',
+            
+            # Styles
+            '/base_accounting_kit_16/static/src/scss/style.scss',
+            '/base_accounting_kit_16/static/src/scss/account_dashboard.scss',
+            '/base_accounting_kit_16/static/lib/bootstrap-toggle/css/bootstrap-toggle.min.css',
+            
+            # Core Scripts
+            '/base_accounting_kit_16/static/src/js/account_dashboard.js',
+            '/base_accounting_kit_16/static/src/js/account_reports.js',
+            
+            # Payment Scripts
+            '/base_accounting_kit_16/static/src/js/payment/payment_model.js',
+            '/base_accounting_kit_16/static/src/js/payment/payment_render.js',
+            '/base_accounting_kit_16/static/src/js/payment/payment_matching.js',
+            '/base_accounting_kit_16/static/src/js/payment/payment_widget.js',
+            
+            # Chart Scripts
+            '/base_accounting_kit_16/static/lib/chart.js/chart.min.js',
+            
+            # Toggle Scripts
+            '/base_accounting_kit_16/static/lib/bootstrap-toggle/js/bootstrap-toggle.min.js',
+        ],
+        'web.assets_qweb': [
+            '/base_accounting_kit_16/static/src/xml/template.xml',
+        ],
+        'web.qunit_suite_tests': [
+            '/base_accounting_kit_16/static/tests/account_dashboard_tests.js',
+            '/base_accounting_kit_16/static/tests/payment_tests.js',
         ],
     },
     'license': 'LGPL-3',
