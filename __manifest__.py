@@ -22,7 +22,6 @@
         
         # Views
         'views/account_report_views.xml',
-        'views/report_trial_balance.xml',
         'views/account_bank_book_views.xml',
         'views/account_cash_book_views.xml',
         'views/account_day_book_views.xml',
