@@ -27,7 +27,8 @@ class AccountFinancialReport(models.Model):
         compute='_compute_level',
         recursive=True,
         store=True,
-        help="Level in the report hierarchy"
+        help="Level in the report hierarchy",
+        compute_sudo=True
     )
     
     # Type de rapport selon les standards Odoo 16
@@ -81,25 +82,25 @@ class AccountFinancialReport(models.Model):
     ], 'Financial Report Style', default='4')
     
     # Filtres communs à tous les rapports
-    filter_date_range = fields.Boolean('Date Range Filter', default=True)
-    filter_unfold_all = fields.Boolean('Unfold All Filter', default=True)
-    filter_journals = fields.Boolean('Journals Filter', default=True)
-    filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
+    date_range = fields.Boolean('Date Range Filter', default=True)
+    unfold_all = fields.Boolean('Unfold All Filter', default=True)
+    journals = fields.Boolean('Journals Filter', default=True)
+    multi_company = fields.Boolean('Multi-company Filter', default=True)
     
     # Filtres spécifiques par type de rapport
-    filter_analytic_groupby = fields.Boolean(
+    analytic_groupby = fields.Boolean(
         'Analytic Groupby Filter',
         help="Used for Profit & Loss reports"
     )
-    filter_partner = fields.Boolean(
+    partner = fields.Boolean(
         'Partner Filter',
         help="Used for Partner Ledger and Aged reports"
     )
-    filter_account_type = fields.Boolean(
+    account_type = fields.Boolean(
         'Account Type Filter',
         help="Used for P&L, GL, and Trial Balance"
     )
-    filter_comparison = fields.Boolean(
+    comparison = fields.Boolean(
         'Comparison Filter',
         help="Used for GL and Trial Balance"
     )
@@ -123,16 +124,16 @@ class AccountFinancialReport(models.Model):
         if self.type in ['bs', 'pl', 'cf']:
             self.display_detail = 'detail_with_hierarchy'
             self.style_overwrite = '1'
-            self.filter_analytic_groupby = self.type == 'pl'
+            self.analytic_groupby = self.type == 'pl'
         elif self.type in ['gl', 'tb']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
-            self.filter_account_type = True
-            self.filter_comparison = True
+            self.account_type = True
+            self.comparison = True
         elif self.type in ['ptl', 'ar', 'ap']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
-            self.filter_partner = True
+            self.partner = True
 
     def get_xlsx(self, options, response=None):
         """Génère le rapport Excel selon les standards Odoo 16"""
