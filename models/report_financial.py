@@ -8,6 +8,7 @@ import xlsxwriter
 class AccountFinancialReport(models.Model):
     _name = 'account.financial.report'
     _description = 'Financial Report'
+    _inherit = ['account.report']
     _order = 'sequence, id'
     _parent_store = True
     _parent_name = "parent_id"
@@ -18,15 +19,27 @@ class AccountFinancialReport(models.Model):
     parent_path = fields.Char(index=True, unaccent=False)
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer('Level', default=0)
+    level = fields.Integer(
+        string='Level',
+        compute='_compute_level',
+        recursive=True,
+        store=True,
+        help="Level in the report hierarchy"
+    )
     
-    # Type de rapport
+    # Type de rapport selon les standards Odoo 16
     type = fields.Selection([
-        ('sum', 'View'),
-        ('accounts', 'Accounts'),
-        ('account_type', 'Account Type'),
-        ('account_report', 'Report Value'),
-    ], 'Type', default='sum')
+        ('sum', 'Summary'),  # Pour les états financiers
+        ('accounts', 'Accounts'),  # Pour les grands livres
+        ('bs', 'Balance Sheet'),
+        ('pl', 'Profit and Loss'),
+        ('cf', 'Cash Flow Statement'),
+        ('gl', 'General Ledger'),
+        ('ptl', 'Partner Ledger'),
+        ('tb', 'Trial Balance'),
+        ('ar', 'Aged Receivable'),
+        ('ap', 'Aged Payable'),
+    ], 'Report Type', default='sum')
     
     # Relations avec les comptes
     account_ids = fields.Many2many(
@@ -42,7 +55,7 @@ class AccountFinancialReport(models.Model):
         help="Used for 'Report Value' type reports"
     )
     
-    # Configuration d'affichage
+    # Configuration d'affichage selon les standards Odoo 16
     sign = fields.Selection([
         ('-1', 'Reverse balance sign'),
         ('1', 'Preserve balance sign')
@@ -52,50 +65,71 @@ class AccountFinancialReport(models.Model):
         ('no_detail', 'No detail'),
         ('detail_flat', 'Display children flat'),
         ('detail_with_hierarchy', 'Display children with hierarchy')
-    ], 'Display details', default='detail_flat')
+    ], 'Display details', default='detail_with_hierarchy')  # Par défaut hiérarchique pour les états financiers
     
     style_overwrite = fields.Selection([
         ('0', 'Automatic formatting'),
-        ('1', 'Main Title 1 (bold, underlined)'),
-        ('2', 'Title 2 (bold)'),
-        ('3', 'Title 3 (bold, smaller)'),
-        ('4', 'Normal Text'),
-        ('5', 'Italic Text (smaller)'),
-        ('6', 'Smallest Text'),
-    ], 'Financial Report Style', default='0')
+        ('1', 'Main Title 1 (bold, underlined)'),  # Pour les titres principaux
+        ('2', 'Title 2 (bold)'),  # Pour les sous-titres
+        ('3', 'Title 3 (bold, smaller)'),  # Pour les sections
+        ('4', 'Normal Text'),  # Pour les lignes normales
+        ('5', 'Italic Text (smaller)'),  # Pour les détails
+        ('6', 'Smallest Text'),  # Pour les notes
+    ], 'Financial Report Style', default='4')  # Par défaut texte normal
     
-    # Filtres standards
+    # Filtres communs à tous les rapports
     filter_date_range = fields.Boolean('Date Range Filter', default=True)
     filter_unfold_all = fields.Boolean('Unfold All Filter', default=True)
     filter_journals = fields.Boolean('Journals Filter', default=True)
     filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
     
-    # Filtres spécifiques
-    filter_analytic_groupby = fields.Boolean('Analytic Groupby Filter')
-    filter_partner = fields.Boolean('Partner Filter')
-    filter_account_type = fields.Boolean('Account Type Filter')
-    filter_comparison = fields.Boolean('Comparison Filter')
+    # Filtres spécifiques par type de rapport
+    filter_analytic_groupby = fields.Boolean(
+        'Analytic Groupby Filter',
+        help="Used for Profit & Loss reports"
+    )
+    filter_partner = fields.Boolean(
+        'Partner Filter',
+        help="Used for Partner Ledger and Aged reports"
+    )
+    filter_account_type = fields.Boolean(
+        'Account Type Filter',
+        help="Used for P&L, GL, and Trial Balance"
+    )
+    filter_comparison = fields.Boolean(
+        'Comparison Filter',
+        help="Used for GL and Trial Balance"
+    )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Surcharge de create pour définir le niveau"""
-        records = super().create(vals_list)
-        for record in records:
-            if record.parent_id:
-                record.level = record.parent_id.level + 1
-        return records
-
-    def write(self, vals):
-        """Surcharge de write pour mettre à jour le niveau"""
-        res = super().write(vals)
-        if 'parent_id' in vals:
-            for record in self:
-                record.level = record.parent_id.level + 1 if record.parent_id else 0
-        return res
+    @api.depends('parent_id', 'parent_id.level')
+    def _compute_level(self):
+        """Calcule le niveau hiérarchique de manière récursive"""
+        for report in self:
+            if not report.parent_id:
+                report.level = 0
+            else:
+                report.level = report.parent_id.level + 1
             
     def _get_children_by_order(self):
         """Retourne les enfants triés par séquence"""
         return self.search([('id', 'child_of', self.ids)], order='sequence, name')
+        
+    @api.onchange('type')
+    def _onchange_type(self):
+        """Met à jour les filtres et le style en fonction du type de rapport"""
+        if self.type in ['bs', 'pl', 'cf']:
+            self.display_detail = 'detail_with_hierarchy'
+            self.style_overwrite = '1'  # Titre principal pour les états financiers
+            self.filter_analytic_groupby = self.type == 'pl'
+        elif self.type in ['gl', 'tb']:
+            self.display_detail = 'detail_flat'
+            self.style_overwrite = '4'  # Texte normal pour les grands livres
+            self.filter_account_type = True
+            self.filter_comparison = True
+        elif self.type in ['ptl', 'ar', 'ap']:
+            self.display_detail = 'detail_flat'
+            self.style_overwrite = '4'
+            self.filter_partner = True
 
 
 class ReportFinancial(models.AbstractModel):

@@ -17,54 +17,63 @@
                 </div>
             </field>
         </record>
-        <menuitem id="account_reports_generic_statements" sequence="1"
-                  name="Generic Statements" parent="account.menu_finance_reports"/>
-        <menuitem id="account_reports_daily_reports" sequence="2"
-                  name="Daily Reports" parent="account.menu_finance_reports"/>
-        <menuitem id="account_reports_partner" sequence="3"
-                  name="Partner Reports" parent="account.menu_finance_reports"/>
-        <menuitem id="account_reports_audit" sequence="4"
-                  name="Audit Reports" parent="account.menu_finance_reports"/>
-        
-        <!-- Financial Reports Menu -->
-        <menuitem id="menu_finance_reports"
+
+        <!-- Menu principal des rapports financiers -->
+        <menuitem id="menu_financial_reports" 
                   name="Financial Reports"
                   parent="account.menu_finance"
-                  sequence="5"/>
+                  sequence="10"/>
+
+        <!-- Sous-menus des rapports -->
+        <menuitem id="account_reports_generic_statements" 
+                  name="Generic Statements" 
+                  parent="menu_financial_reports"
+                  sequence="20"/>
+
+        <menuitem id="account_reports_daily_reports" 
+                  name="Daily Reports" 
+                  parent="menu_financial_reports"
+                  sequence="30"/>
+
+        <menuitem id="account_reports_partner" 
+                  name="Partner Reports" 
+                  parent="menu_financial_reports"
+                  sequence="40"/>
+
+        <menuitem id="account_reports_audit" 
+                  name="Audit Reports" 
+                  parent="menu_financial_reports"
+                  sequence="50"/>
 
         <!-- Balance Sheet -->
         <menuitem id="menu_account_report_bs"
                   name="Balance Sheet"
-                  parent="menu_finance_reports"
+                  parent="menu_financial_reports"
                   action="action_account_report_bs"
-                  sequence="1"/>
+                  sequence="60"/>
 
         <!-- Profit and Loss -->
         <menuitem id="menu_account_report_pl"
                   name="Profit and Loss"
-                  parent="menu_finance_reports"
+                  parent="menu_financial_reports"
                   action="action_account_report_pl"
-                  sequence="2"/>
+                  sequence="70"/>
 
         <!-- Actions -->
         <record id="action_account_report_bs" model="ir.actions.act_window">
             <field name="name">Balance Sheet</field>
-            <field name="res_model">financial.report</field>
-            <field name="view_mode">form</field>
-            <field name="target">new</field>
-            <field name="context" eval="{
-                'default_account_report_id': ref('account_financial_report_bs'),
-            }"/>
+            <field name="res_model">account.financial.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','bs')]</field>
+            <field name="context">{'default_type': 'bs'}</field>
         </record>
 
         <record id="action_account_report_pl" model="ir.actions.act_window">
             <field name="name">Profit and Loss</field>
-            <field name="res_model">financial.report</field>
-            <field name="view_mode">form</field>
-            <field name="target">new</field>
-            <field name="context" eval="{
-                'default_account_report_id': ref('account_financial_report_pl'),
-            }"/>
+            <field name="res_model">account.financial.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','pl')]</field>
+            <field name="context">{'default_type': 'pl'}</field>
         </record>
     </data>
 </odoo>
