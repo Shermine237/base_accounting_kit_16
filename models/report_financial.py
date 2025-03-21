@@ -15,30 +15,45 @@ class AccountFinancialReport(models.Model):
 
     name = fields.Char('Report Name', required=True, translate=True)
     parent_id = fields.Many2one('account.financial.report', 'Parent', ondelete='cascade', index=True)
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer(
-        string='Level',
-        compute='_compute_level',
-        recursive=True,
-        store=True,
-        compute_sudo=True
-    )
+    level = fields.Integer('Level', default=0)
+    
+    # Type de rapport
     type = fields.Selection([
         ('sum', 'View'),
         ('accounts', 'Accounts'),
         ('account_type', 'Account Type'),
         ('account_report', 'Report Value'),
     ], 'Type', default='sum')
-    account_ids = fields.Many2many('account.account', 'account_account_financial_report', 'report_line_id', 'account_id', 'Accounts')
-    account_report_id = fields.Many2one('account.financial.report', 'Report Value')
-    sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')], 'Sign on Reports', required=True, default='1')
+    
+    # Relations avec les comptes
+    account_ids = fields.Many2many(
+        'account.account',
+        'account_account_financial_report',
+        'report_line_id',
+        'account_id',
+        string='Accounts'
+    )
+    account_report_id = fields.Many2one(
+        'account.financial.report',
+        string='Report Value',
+        help="Used for 'Report Value' type reports"
+    )
+    
+    # Configuration d'affichage
+    sign = fields.Selection([
+        ('-1', 'Reverse balance sign'),
+        ('1', 'Preserve balance sign')
+    ], 'Sign on Reports', required=True, default='1')
+    
     display_detail = fields.Selection([
         ('no_detail', 'No detail'),
         ('detail_flat', 'Display children flat'),
         ('detail_with_hierarchy', 'Display children with hierarchy')
     ], 'Display details', default='detail_flat')
+    
     style_overwrite = fields.Selection([
         ('0', 'Automatic formatting'),
         ('1', 'Main Title 1 (bold, underlined)'),
@@ -49,36 +64,38 @@ class AccountFinancialReport(models.Model):
         ('6', 'Smallest Text'),
     ], 'Financial Report Style', default='0')
     
-    # Options de filtrage
+    # Filtres standards
     filter_date_range = fields.Boolean('Date Range Filter', default=True)
     filter_unfold_all = fields.Boolean('Unfold All Filter', default=True)
     filter_journals = fields.Boolean('Journals Filter', default=True)
     filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
+    
+    # Filtres spécifiques
     filter_analytic_groupby = fields.Boolean('Analytic Groupby Filter')
     filter_partner = fields.Boolean('Partner Filter')
     filter_account_type = fields.Boolean('Account Type Filter')
     filter_comparison = fields.Boolean('Comparison Filter')
 
-    @api.depends('parent_id', 'parent_id.level')
-    def _compute_level(self):
-        """Calcule le niveau hiérarchique de chaque ligne de rapport de manière récursive"""
-        for report in self:
-            # Si pas de parent, niveau 0
-            if not report.parent_id:
-                report.level = 0
-                continue
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Surcharge de create pour définir le niveau"""
+        records = super().create(vals_list)
+        for record in records:
+            if record.parent_id:
+                record.level = record.parent_id.level + 1
+        return records
+
+    def write(self, vals):
+        """Surcharge de write pour mettre à jour le niveau"""
+        res = super().write(vals)
+        if 'parent_id' in vals:
+            for record in self:
+                record.level = record.parent_id.level + 1 if record.parent_id else 0
+        return res
             
-            # Utilise parent_path pour calculer le niveau
-            if report.parent_path:
-                report.level = report.parent_path.count('/') + 1
-            else:
-                # Fallback sur la méthode itérative si parent_path n'est pas disponible
-                level = 0
-                parent = report.parent_id
-                while parent:
-                    level += 1
-                    parent = parent.parent_id
-                report.level = level
+    def _get_children_by_order(self):
+        """Retourne les enfants triés par séquence"""
+        return self.search([('id', 'child_of', self.ids)], order='sequence, name')
 
 
 class ReportFinancial(models.AbstractModel):
