@@ -11,6 +11,7 @@ from datetime import datetime
 class AccountFinancialReport(models.Model):
     _name = 'account.financial.report'
     _description = 'Financial Report'
+    _inherit = ['account.report']
     _order = 'sequence, id'
     _parent_store = True
     _parent_name = "parent_id"
@@ -26,8 +27,8 @@ class AccountFinancialReport(models.Model):
         compute='_compute_level',
         recursive=True,
         store=True,
-        help="Level in the report hierarchy",
-        compute_sudo=True
+        compute_sudo=True,
+        depends=['parent_id', 'parent_id.level']
     )
     
     # Type de rapport selon les standards Odoo 16
@@ -80,62 +81,24 @@ class AccountFinancialReport(models.Model):
         ('6', 'Smallest Text'),
     ], 'Financial Report Style', default='4')
     
-    # Filtres standards Odoo 16
-    filter_date = fields.Selection([
-        ('this_month', 'This Month'),
-        ('this_quarter', 'This Quarter'),
-        ('this_year', 'This Year'),
-        ('last_month', 'Last Month'),
-        ('last_quarter', 'Last Quarter'),
-        ('last_year', 'Last Year'),
-        ('custom', 'Custom'),
-    ], string='Date Filter', default='this_month')
+    # Options de filtrage standards
+    enable_filter = fields.Boolean('Enable Filtering')
+    debit_credit = fields.Boolean('Enable Debit/Credit')
+    show_balance = fields.Boolean('Show Balance', default=True)
+    show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
+    enable_comparison = fields.Boolean('Enable Comparison')
+    show_partner_details = fields.Boolean('Show Partner Details')
     
-    filter_unfold_all = fields.Boolean('Unfold All', default=True)
-    filter_journals = fields.Many2many('account.journal', string='Journals')
-    filter_multi_company = fields.Boolean('Multi-company', default=True)
-    filter_analytic = fields.Many2many('account.analytic.account', string='Analytic Accounts')
-    filter_partner = fields.Many2many('res.partner', string='Partners')
-    filter_account_type = fields.Many2many('account.account.type', string='Account Types')
-    filter_comparison = fields.Boolean('Enable Comparison', default=False)
-    filter_hierarchy = fields.Boolean('Show Hierarchy', default=True)
-    filter_cash_basis = fields.Boolean('Cash Basis', default=False)
-    filter_all_entries = fields.Boolean('All Entries', default=False)
-    
-    # Filtres spécifiques par type de rapport
-    analytic_groupby = fields.Boolean(
-        'Analytic Groupby Filter',
-        help="Used for Profit & Loss reports"
-    )
-    partner = fields.Boolean(
-        'Partner Filter',
-        help="Used for Partner Ledger and Aged reports"
-    )
-    account_type = fields.Boolean(
-        'Account Type Filter',
-        help="Used for P&L, GL, and Trial Balance"
-    )
-    comparison = fields.Boolean(
-        'Comparison Filter',
-        help="Used for GL and Trial Balance"
-    )
-    hierarchy = fields.Boolean(
-        'Hierarchy Filter',
-        help="Used for Balance Sheet and Profit & Loss reports"
-    )
-    target_move = fields.Boolean(
-        'Target Move Filter',
-        help="Used for General Ledger and Trial Balance reports"
-    )
-
     @api.depends('parent_id', 'parent_id.level')
     def _compute_level(self):
         """Calcule le niveau hiérarchique de manière récursive"""
         for report in self:
-            if not report.parent_id:
-                report.level = 0
-            else:
-                report.level = report.parent_id.level + 1
+            level = 0
+            parent = report.parent_id
+            while parent:
+                level += 1
+                parent = parent.parent_id
+            report.level = level
             
     def _get_children_by_order(self):
         """Retourne les enfants triés par séquence"""
