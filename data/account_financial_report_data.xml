@@ -8,8 +8,9 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">10</field>
-        <field name="balance_column" eval="True"/>
-        <field name="show_journal_filter" eval="True"/>
+        <field name="show_balance" eval="True"/>
+        <field name="show_journal" eval="True"/>
+        <field name="show_hierarchy" eval="True"/>
     </record>
 
     <record id="account_financial_report_profit_loss" model="account.financial.report">
@@ -19,9 +20,10 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">20</field>
-        <field name="balance_column" eval="True"/>
-        <field name="debit_credit" eval="True"/>
-        <field name="show_analytic_filter" eval="True"/>
+        <field name="show_balance" eval="True"/>
+        <field name="show_debit_credit" eval="True"/>
+        <field name="show_analytic" eval="True"/>
+        <field name="show_hierarchy" eval="True"/>
     </record>
 
     <record id="account_financial_report_cash_flow" model="account.financial.report">
@@ -31,8 +33,9 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">30</field>
-        <field name="balance_column" eval="True"/>
-        <field name="show_journal_filter" eval="True"/>
+        <field name="show_balance" eval="True"/>
+        <field name="show_journal" eval="True"/>
+        <field name="show_hierarchy" eval="True"/>
     </record>
 
     <record id="account_financial_report_general_ledger" model="account.financial.report">
@@ -42,9 +45,9 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">40</field>
-        <field name="debit_credit" eval="True"/>
-        <field name="comparison" eval="True"/>
-        <field name="show_journal_filter" eval="True"/>
+        <field name="show_debit_credit" eval="True"/>
+        <field name="enable_filter" eval="True"/>
+        <field name="show_journal" eval="True"/>
     </record>
 
     <record id="account_financial_report_trial_balance" model="account.financial.report">
@@ -54,9 +57,9 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">50</field>
-        <field name="debit_credit" eval="True"/>
-        <field name="comparison" eval="True"/>
-        <field name="show_journal_filter" eval="True"/>
+        <field name="show_debit_credit" eval="True"/>
+        <field name="enable_filter" eval="True"/>
+        <field name="show_journal" eval="True"/>
     </record>
 
     <record id="account_financial_report_partner_ledger" model="account.financial.report">
@@ -66,9 +69,9 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">60</field>
-        <field name="debit_credit" eval="True"/>
-        <field name="show_partner_filter" eval="True"/>
-        <field name="show_journal_filter" eval="True"/>
+        <field name="show_debit_credit" eval="True"/>
+        <field name="show_partner" eval="True"/>
+        <field name="show_journal" eval="True"/>
     </record>
 
     <record id="account_financial_report_aged_receivable" model="account.financial.report">
@@ -78,8 +81,8 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">70</field>
-        <field name="balance_column" eval="True"/>
-        <field name="show_partner_filter" eval="True"/>
+        <field name="show_balance" eval="True"/>
+        <field name="show_partner" eval="True"/>
     </record>
 
     <record id="account_financial_report_aged_payable" model="account.financial.report">
@@ -89,7 +92,7 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">80</field>
-        <field name="balance_column" eval="True"/>
-        <field name="show_partner_filter" eval="True"/>
+        <field name="show_balance" eval="True"/>
+        <field name="show_partner" eval="True"/>
     </record>
 </odoo>
