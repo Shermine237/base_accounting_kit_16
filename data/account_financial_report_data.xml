@@ -8,11 +8,6 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">1</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
     </record>
 
     <record id="account_financial_report_profit_loss" model="account.financial.report">
@@ -22,12 +17,6 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">2</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_analytic_groupby">True</field>
     </record>
 
     <record id="account_financial_report_cash_flow" model="account.financial.report">
@@ -37,11 +26,6 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">3</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
     </record>
 
     <record id="account_financial_report_general_ledger" model="account.financial.report">
@@ -51,13 +35,6 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">4</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_account_type">True</field>
-        <field name="filter_comparison">True</field>
     </record>
 
     <record id="account_financial_report_partner_ledger" model="account.financial.report">
@@ -67,13 +44,6 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">5</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_partner">True</field>
-        <field name="filter_account_type">True</field>
     </record>
 
     <record id="account_financial_report_trial_balance" model="account.financial.report">
@@ -83,13 +53,6 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">6</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_account_type">True</field>
-        <field name="filter_comparison">True</field>
     </record>
 
     <record id="account_financial_report_aged_receivable" model="account.financial.report">
@@ -99,12 +62,6 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">7</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_partner">True</field>
     </record>
 
     <record id="account_financial_report_aged_payable" model="account.financial.report">
@@ -114,11 +71,5 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">8</field>
-        <!-- Options de filtrage -->
-        <field name="filter_date_range">True</field>
-        <field name="filter_unfold_all">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_multi_company">True</field>
-        <field name="filter_partner">True</field>
     </record>
 </odoo>
