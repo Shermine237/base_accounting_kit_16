@@ -11,7 +11,6 @@ from datetime import datetime
 class AccountFinancialReport(models.Model):
     _name = 'account.financial.report'
     _description = 'Financial Report'
-    _inherit = ['account.report']
     _order = 'sequence, id'
     _parent_store = True
     _parent_name = "parent_id"
@@ -24,11 +23,10 @@ class AccountFinancialReport(models.Model):
     sequence = fields.Integer('Sequence')
     level = fields.Integer(
         string='Level',
-        compute='_compute_level',
         recursive=True,
+        compute='_compute_level',
         store=True,
-        compute_sudo=True,
-        depends=['parent_id', 'parent_id.level']
+        compute_sudo=True
     )
     
     # Type de rapport selon les standards Odoo 16
@@ -81,15 +79,15 @@ class AccountFinancialReport(models.Model):
         ('6', 'Smallest Text'),
     ], 'Financial Report Style', default='4')
     
-    # Options de filtrage standards
-    enable_filter = fields.Boolean('Enable Filtering')
-    debit_credit = fields.Boolean('Enable Debit/Credit')
-    show_balance = fields.Boolean('Show Balance', default=True)
-    show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
-    enable_comparison = fields.Boolean('Enable Comparison')
-    show_partner_details = fields.Boolean('Show Partner Details')
+    # Options de base pour les rapports
+    debit_credit = fields.Boolean('Show Credit/Debit Columns')
+    balance_column = fields.Boolean('Show Balance Column', default=True)
+    comparison = fields.Boolean('Enable Comparison')
+    show_journal_filter = fields.Boolean('Show Journal Filter')
+    show_partner_filter = fields.Boolean('Show Partner Filter')
+    show_analytic_filter = fields.Boolean('Show Analytic Filter')
     
-    @api.depends('parent_id', 'parent_id.level')
+    @api.depends('parent_id')
     def _compute_level(self):
         """Calcule le niveau hiérarchique de manière récursive"""
         for report in self:
@@ -354,7 +352,6 @@ class AccountFinancialReport(models.Model):
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Reports'
-    _inherit = 'account.report'
 
     def _get_report_values(self, docids, data=None):
         """Génère les valeurs pour le rapport PDF"""
