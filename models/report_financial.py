@@ -22,12 +22,10 @@ class AccountFinancialReport(models.Model):
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
     sequence = fields.Integer('Sequence')
     level = fields.Integer(
-        string='Level',
-        recursive=True,
-        store=True,
         compute='_compute_level',
-        compute_sudo=True,
-        depends=['parent_id']
+        store=True,
+        recursive=True,
+        string='Level',
     )
     
     # Type de rapport selon les standards Odoo 16
@@ -81,13 +79,13 @@ class AccountFinancialReport(models.Model):
     ], 'Financial Report Style', default='4')
     
     # Options de base pour les rapports
-    debit_credit = fields.Boolean('Show Credit/Debit Columns')
-    balance_column = fields.Boolean('Show Balance Column', default=True)
-    comparison = fields.Boolean('Enable Comparison')
-    show_journal_filter = fields.Boolean('Show Journal Filter')
-    show_partner_filter = fields.Boolean('Show Partner Filter')
-    show_analytic_filter = fields.Boolean('Show Analytic Filter')
+    show_debit_credit = fields.Boolean('Show Debit/Credit Columns')
+    show_balance = fields.Boolean('Show Balance', default=True)
+    enable_filter = fields.Boolean('Enable Comparison')
     show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
+    show_journal = fields.Boolean('Show Journal Filter')
+    show_partner = fields.Boolean('Show Partner Filter')
+    show_analytic = fields.Boolean('Show Analytic Filter')
     
     @api.depends('parent_id')
     def _compute_level(self):
@@ -110,16 +108,16 @@ class AccountFinancialReport(models.Model):
         if self.type in ['bs', 'pl', 'cf']:
             self.display_detail = 'detail_with_hierarchy'
             self.style_overwrite = '1'
-            self.analytic_groupby = self.type == 'pl'
+            self.enable_filter = self.type == 'pl'
         elif self.type in ['gl', 'tb']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
-            self.account_type = True
-            self.comparison = True
+            self.show_debit_credit = True
+            self.enable_filter = True
         elif self.type in ['ptl', 'ar', 'ap']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
-            self.partner = True
+            self.show_partner = True
 
     def get_xlsx(self, options, response=None):
         """Génère le rapport Excel selon les standards Odoo 16"""

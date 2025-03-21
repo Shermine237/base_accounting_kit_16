@@ -130,20 +130,25 @@
         <field name="model">account.financial.report.wizard</field>
         <field name="arch" type="xml">
             <form string="Financial Report">
-                <group>
+                <sheet>
                     <group>
-                        <field name="company_id" groups="base.group_multi_company"/>
-                        <field name="date_from"/>
-                        <field name="date_to"/>
-                        <field name="target_move" widget="radio"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="report_type"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="target_move" widget="radio"/>
+                        </group>
+                        <group>
+                            <field name="show_debit_credit" attrs="{'invisible': [('report_type', 'in', ['aged_receivable','aged_payable'])]}"/>
+                            <field name="show_balance"/>
+                            <field name="show_hierarchy"/>
+                            <field name="show_partner"/>
+                            <field name="show_analytic"/>
+                            <field name="enable_filter"/>
+                            <field name="show_journal"/>
+                        </group>
                     </group>
-                    <group>
-                        <field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                        <field name="display_account" widget="radio"/>
-                        <field name="enable_filter" attrs="{'invisible': [('report_type', 'in', ['aged_receivable','aged_payable'])]}"/>
-                        <field name="debit_credit" attrs="{'invisible': [('report_type', 'in', ['aged_receivable','aged_payable'])]}"/>
-                    </group>
-                </group>
+                </sheet>
                 <group attrs="{'invisible': [('enable_filter','=',False)]}">
                     <group>
                         <field name="date_from_cmp" attrs="{'required': [('enable_filter', '=', True)]}"/>

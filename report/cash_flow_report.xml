@@ -6,7 +6,7 @@
                 <t t-call="web.internal_layout">
                     <div class="page">
                         <h2 t-esc="data['account_report_id'][1]"/>
-
+                        <h2>Cash Flow Statement</h2>
                         <div class="row mt32 mb32">
                             <div class="col-4">
                                 <strong>Target Moves:</strong>
@@ -25,7 +25,7 @@
                                 </p>
                             </div>
                         </div>
-                        <table class="table table-sm table-reports">
+                        <table class="table table-sm table-reports table-bordered">
                             <thead>
                                 <tr>
                                     <th>
@@ -59,20 +59,21 @@
                                             <span t-att-style="style" t-esc="a.get('name')"/>
                                         </td>
                                         <td t-if="data['debit_credit']" class="text-right" style="white-space: text-nowrap;">
-                                            <span t-att-style="style" t-esc="a.get('debit')" t-if="data['debit_credit']"
+                                            <span t-att-style="style" t-esc="a.get('debit')" 
+                                                  t-if="data['debit_credit']"
                                                   t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
                                         </td>
                                         <td t-if="data['debit_credit']" class="text-right" style="white-space: text-nowrap;">
-                                            <span t-att-style="style" t-esc="a.get('credit')"
+                                            <span t-att-style="style" t-esc="a.get('credit')" 
                                                   t-if="data['debit_credit']"
                                                   t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
                                         </td>
                                         <td class="text-right" style="white-space: text-nowrap;">
-                                            <span t-att-style="style" t-esc="a.get('balance')"
+                                            <span t-att-style="style" t-esc="a.get('balance')" 
                                                   t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
                                         </td>
                                         <td class="text-right">
-                                            <span t-att-style="style" t-esc="a.get('balance_cmp')"
+                                            <span t-att-style="style" t-esc="a.get('balance_cmp')" 
                                                   t-if="data['enable_filter']"
                                                   t-options="{'widget': 'monetary', 'display_currency': env.company.currency_id}"/>
                                         </td>
