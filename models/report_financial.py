@@ -35,6 +35,15 @@ class AccountFinancialReport(models.Model):
         ('accounts', 'Accounts'),
         ('account_type', 'Account Type'),
         ('account_report', 'Report Value'),
+        # Types de rapports standards Odoo 16
+        ('bs', 'Balance Sheet'),
+        ('pl', 'Profit and Loss'),
+        ('cf', 'Cash Flow Statement'),
+        ('gl', 'General Ledger'),
+        ('ptl', 'Partner Ledger'),
+        ('tb', 'Trial Balance'),
+        ('ar', 'Aged Receivable'),
+        ('ap', 'Aged Payable')
     ], 'Type', default='sum')
     account_ids = fields.Many2many('account.account', 'account_account_financial_report',
                                  'report_line_id', 'account_id', 'Accounts')
@@ -79,7 +88,7 @@ class AccountFinancialReport(models.Model):
     show_balance = fields.Boolean('Show Balance', default=True)
     enable_filter = fields.Boolean('Enable Comparison')
     show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
-    show_journal = fields.Boolean('Show Journal Filter')
+    show_journal = fields.Boolean('Show Journal', default=True)
     show_partner = fields.Boolean('Show Partner Filter')
     show_analytic = fields.Boolean('Show Analytic Filter')
 
