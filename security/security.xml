@@ -14,6 +14,7 @@
             <field eval="True" name="global"/>
             <field name="domain_force">['|',('company_id','=',False),('company_id','child_of',[user.company_id.id])]</field>
         </record>
+
         <!--    Rename user group as Accountant    -->
         <record id="account.group_account_user" model="res.groups">
             <field name="name">Accountant</field>
@@ -60,7 +61,7 @@
         <!-- Règle de sécurité pour les rapports PDF -->
         <record id="report_financial_comp_rule" model="ir.rule">
             <field name="name">Financial Report Multi-Company</field>
-            <field name="model_id" ref="model_report_financial"/>
+            <field name="model_id" ref="model_account_financial_report"/>
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
             <field name="global" eval="True"/>
         </record>

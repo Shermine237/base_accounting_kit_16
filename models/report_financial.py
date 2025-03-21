@@ -9,65 +9,56 @@ from datetime import datetime
 
 
 class AccountFinancialReport(models.Model):
-    _name = 'account.financial.report'
-    _description = 'Financial Report'
-    _order = 'sequence, id'
-    _parent_store = True
-    _parent_name = "parent_id"
+    _name = "account.financial.report"
+    _description = "Account Report"
+    _inherit = ['account.report']
     _rec_name = 'name'
 
+    @api.depends('parent_id', 'parent_id.level')
+    def _compute_level(self):
+        """Compute the level of each report"""
+        for report in self:
+            level = 0
+            parent = report.parent_id
+            while parent:
+                level += 1
+                parent = parent.parent_id
+            report.level = level
+
     name = fields.Char('Report Name', required=True, translate=True)
-    parent_id = fields.Many2one('account.financial.report', 'Parent', ondelete='cascade', index=True)
-    parent_path = fields.Char(index=True, unaccent=False)
-    children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
+    parent_id = fields.Many2one('account.financial.report', 'Parent')
+    children_ids = fields.One2many('account.financial.report', 'parent_id', 'Account Report')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer(
-        compute='_compute_level',
-        store=True,
-        recursive=True,
-        string='Level',
-    )
-    
-    # Type de rapport selon les standards Odoo 16
+    level = fields.Integer('Level', compute='_compute_level', recursive=True, store=True)
     type = fields.Selection([
-        ('sum', 'Summary'),  # Pour les états financiers
-        ('accounts', 'Accounts'),  # Pour les grands livres
-        ('bs', 'Balance Sheet'),
-        ('pl', 'Profit and Loss'),
-        ('cf', 'Cash Flow Statement'),
-        ('gl', 'General Ledger'),
-        ('ptl', 'Partner Ledger'),
-        ('tb', 'Trial Balance'),
-        ('ar', 'Aged Receivable'),
-        ('ap', 'Aged Payable'),
-    ], 'Report Type', default='sum')
-    
-    # Relations avec les comptes
-    account_ids = fields.Many2many(
-        'account.account',
-        'account_account_financial_report',
-        'report_line_id',
-        'account_id',
-        string='Accounts'
-    )
-    account_report_id = fields.Many2one(
-        'account.financial.report',
-        string='Report Value',
-        help="Used for 'Report Value' type reports"
-    )
-    
-    # Configuration d'affichage selon les standards Odoo 16
-    sign = fields.Selection([
-        ('-1', 'Reverse balance sign'),
-        ('1', 'Preserve balance sign')
-    ], 'Sign on Reports', required=True, default='1')
-    
+        ('sum', 'View'),
+        ('accounts', 'Accounts'),
+        ('account_type', 'Account Type'),
+        ('account_report', 'Report Value'),
+    ], 'Type', default='sum')
+    account_ids = fields.Many2many('account.account', 'account_account_financial_report',
+                                 'report_line_id', 'account_id', 'Accounts')
+    account_report_id = fields.Many2one('account.financial.report', 'Report Value')
+    account_type_ids = fields.Many2many('account.account.type',
+                                      'account_account_financial_report_type',
+                                      'report_id', 'account_type_id', 'Account Types')
+    sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')],
+                          'Sign on Reports', required=True, default='1',
+                          help='For accounts that are typically more'
+                               ' debited than credited and that you'
+                               ' would like to print as negative'
+                               ' amounts in your reports, you should'
+                               ' reverse the sign of the balance;'
+                               ' e.g.: Expense account. The same applies'
+                               ' for accounts that are typically more'
+                               ' credited than debited and that you would'
+                               ' like to print as positive amounts in'
+                               ' your reports; e.g.: Income account.')
     display_detail = fields.Selection([
         ('no_detail', 'No detail'),
         ('detail_flat', 'Display children flat'),
         ('detail_with_hierarchy', 'Display children with hierarchy')
-    ], 'Display details', default='detail_with_hierarchy')
-    
+    ], 'Display details', default='detail_flat')
     style_overwrite = fields.Selection([
         ('0', 'Automatic formatting'),
         ('1', 'Main Title 1 (bold, underlined)'),
@@ -76,9 +67,14 @@ class AccountFinancialReport(models.Model):
         ('4', 'Normal Text'),
         ('5', 'Italic Text (smaller)'),
         ('6', 'Smallest Text'),
-    ], 'Financial Report Style', default='4')
-    
-    # Options de base pour les rapports
+    ], 'Financial Report Style', default='0',
+        help="You can set up here the format you want this"
+             " record to be displayed. If you leave the"
+             " automatic formatting, it will be computed"
+             " based on the financial reports hierarchy "
+             "(auto-computed field 'level').")
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                               default=lambda self: self.env.company)
     show_debit_credit = fields.Boolean('Show Debit/Credit Columns')
     show_balance = fields.Boolean('Show Balance', default=True)
     enable_filter = fields.Boolean('Enable Comparison')
@@ -86,22 +82,11 @@ class AccountFinancialReport(models.Model):
     show_journal = fields.Boolean('Show Journal Filter')
     show_partner = fields.Boolean('Show Partner Filter')
     show_analytic = fields.Boolean('Show Analytic Filter')
-    
-    @api.depends('parent_id')
-    def _compute_level(self):
-        """Calcule le niveau hiérarchique de manière récursive"""
-        for report in self:
-            level = 0
-            parent = report.parent_id
-            while parent:
-                level += 1
-                parent = parent.parent_id
-            report.level = level
-            
+
     def _get_children_by_order(self):
         """Retourne les enfants triés par séquence"""
         return self.search([('id', 'child_of', self.ids)], order='sequence, name')
-        
+
     @api.onchange('type')
     def _onchange_type(self):
         """Met à jour les filtres et le style en fonction du type de rapport"""
