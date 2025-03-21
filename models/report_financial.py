@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import float_is_zero
 import io
+import json
 import xlsxwriter
+from datetime import datetime
 
 
 class AccountFinancialReport(models.Model):
@@ -65,17 +68,17 @@ class AccountFinancialReport(models.Model):
         ('no_detail', 'No detail'),
         ('detail_flat', 'Display children flat'),
         ('detail_with_hierarchy', 'Display children with hierarchy')
-    ], 'Display details', default='detail_with_hierarchy')  # Par défaut hiérarchique pour les états financiers
+    ], 'Display details', default='detail_with_hierarchy')
     
     style_overwrite = fields.Selection([
         ('0', 'Automatic formatting'),
-        ('1', 'Main Title 1 (bold, underlined)'),  # Pour les titres principaux
-        ('2', 'Title 2 (bold)'),  # Pour les sous-titres
-        ('3', 'Title 3 (bold, smaller)'),  # Pour les sections
-        ('4', 'Normal Text'),  # Pour les lignes normales
-        ('5', 'Italic Text (smaller)'),  # Pour les détails
-        ('6', 'Smallest Text'),  # Pour les notes
-    ], 'Financial Report Style', default='4')  # Par défaut texte normal
+        ('1', 'Main Title 1 (bold, underlined)'),
+        ('2', 'Title 2 (bold)'),
+        ('3', 'Title 3 (bold, smaller)'),
+        ('4', 'Normal Text'),
+        ('5', 'Italic Text (smaller)'),
+        ('6', 'Smallest Text'),
+    ], 'Financial Report Style', default='4')
     
     # Filtres communs à tous les rapports
     filter_date_range = fields.Boolean('Date Range Filter', default=True)
@@ -119,17 +122,246 @@ class AccountFinancialReport(models.Model):
         """Met à jour les filtres et le style en fonction du type de rapport"""
         if self.type in ['bs', 'pl', 'cf']:
             self.display_detail = 'detail_with_hierarchy'
-            self.style_overwrite = '1'  # Titre principal pour les états financiers
+            self.style_overwrite = '1'
             self.filter_analytic_groupby = self.type == 'pl'
         elif self.type in ['gl', 'tb']:
             self.display_detail = 'detail_flat'
-            self.style_overwrite = '4'  # Texte normal pour les grands livres
+            self.style_overwrite = '4'
             self.filter_account_type = True
             self.filter_comparison = True
         elif self.type in ['ptl', 'ar', 'ap']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
             self.filter_partner = True
+
+    def get_xlsx(self, options, response=None):
+        """Génère le rapport Excel selon les standards Odoo 16"""
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        sheet = workbook.add_worksheet(self.name[:31])
+
+        # Styles
+        title_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'font_size': 14,
+        })
+        header_style = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'border': 1,
+            'bg_color': '#D3D3D3',
+        })
+        cell_style = workbook.add_format({
+            'align': 'left',
+            'border': 1,
+        })
+        number_style = workbook.add_format({
+            'align': 'right',
+            'border': 1,
+            'num_format': '#,##0.00',
+        })
+
+        # En-tête
+        sheet.merge_range('A1:E1', self.name, title_style)
+        headers = ['Code', 'Account', 'Debit', 'Credit', 'Balance']
+        for col, header in enumerate(headers):
+            sheet.write(1, col, header, header_style)
+
+        # Données
+        lines = self._get_report_lines(options)
+        row = 2
+        for line in lines:
+            sheet.write(row, 0, line.get('code', ''), cell_style)
+            sheet.write(row, 1, line.get('name', ''), cell_style)
+            sheet.write(row, 2, line.get('debit', 0.0), number_style)
+            sheet.write(row, 3, line.get('credit', 0.0), number_style)
+            sheet.write(row, 4, line.get('balance', 0.0), number_style)
+            row += 1
+
+        # Ajustement des colonnes
+        for col in range(5):
+            sheet.set_column(col, col, 15)
+
+        workbook.close()
+        output.seek(0)
+        return output.read()
+
+    def _get_report_lines(self, options):
+        """Génère les lignes du rapport selon le type"""
+        self.ensure_one()
+        lines = []
+        
+        if self.type in ['bs', 'pl', 'cf']:
+            lines = self._get_financial_lines(options)
+        elif self.type in ['gl', 'tb']:
+            lines = self._get_ledger_lines(options)
+        elif self.type in ['ptl', 'ar', 'ap']:
+            lines = self._get_partner_lines(options)
+            
+        return lines
+
+    def _get_financial_lines(self, options):
+        """Génère les lignes pour les états financiers"""
+        self.ensure_one()
+        lines = []
+        
+        # Construction du domaine de base
+        domain = self._get_domain(options)
+        
+        if self.account_ids:
+            # Si des comptes sont directement liés
+            accounts = self.account_ids
+        else:
+            # Sinon, utiliser les comptes selon le type
+            account_types = {
+                'bs': ['asset', 'liability', 'equity'],
+                'pl': ['income', 'expense'],
+                'cf': ['asset', 'liability', 'income', 'expense'],
+            }
+            domain += [('account_type', 'in', account_types.get(self.type, []))]
+            accounts = self.env['account.account'].search(domain)
+            
+        # Calcul des soldes
+        for account in accounts:
+            balance = sum(account.mapped('balance'))
+            if float_is_zero(balance, precision_digits=2) and not options.get('show_zero_balance'):
+                continue
+                
+            lines.append({
+                'id': account.id,
+                'code': account.code,
+                'name': account.name,
+                'level': self.level,
+                'debit': sum(account.mapped('debit')),
+                'credit': sum(account.mapped('credit')),
+                'balance': balance * (int(self.sign) or 1),
+            })
+            
+        return lines
+
+    def _get_ledger_lines(self, options):
+        """Génère les lignes pour les grands livres"""
+        self.ensure_one()
+        lines = []
+        
+        # Construction du domaine
+        domain = self._get_domain(options)
+        if self.type == 'gl':
+            # Pour le grand livre général
+            if options.get('account_type'):
+                domain += [('account_id.account_type', 'in', options['account_type'])]
+        elif self.type == 'tb':
+            # Pour la balance
+            if options.get('account_type'):
+                domain += [('account_id.account_type', 'in', options['account_type'])]
+                
+        # Récupération des écritures
+        move_lines = self.env['account.move.line'].search(domain)
+        
+        # Regroupement par compte
+        accounts = {}
+        for line in move_lines:
+            if line.account_id not in accounts:
+                accounts[line.account_id] = {
+                    'debit': 0.0,
+                    'credit': 0.0,
+                    'balance': 0.0,
+                }
+            accounts[line.account_id]['debit'] += line.debit
+            accounts[line.account_id]['credit'] += line.credit
+            accounts[line.account_id]['balance'] += line.balance
+            
+        # Génération des lignes
+        for account, values in accounts.items():
+            if float_is_zero(values['balance'], precision_digits=2) and not options.get('show_zero_balance'):
+                continue
+                
+            lines.append({
+                'id': account.id,
+                'code': account.code,
+                'name': account.name,
+                'level': self.level,
+                'debit': values['debit'],
+                'credit': values['credit'],
+                'balance': values['balance'] * (int(self.sign) or 1),
+            })
+            
+        return lines
+
+    def _get_partner_lines(self, options):
+        """Génère les lignes pour les rapports partenaires"""
+        self.ensure_one()
+        lines = []
+        
+        # Construction du domaine
+        domain = self._get_domain(options)
+        if self.type in ['ar', 'ap']:
+            # Pour les balances âgées
+            account_types = ['asset_receivable'] if self.type == 'ar' else ['liability_payable']
+            domain += [('account_id.account_type', 'in', account_types)]
+            
+        # Filtre sur les partenaires
+        if options.get('partner_ids'):
+            domain += [('partner_id', 'in', options['partner_ids'])]
+            
+        # Récupération des écritures
+        move_lines = self.env['account.move.line'].search(domain)
+        
+        # Regroupement par partenaire
+        partners = {}
+        for line in move_lines:
+            if not line.partner_id:
+                continue
+                
+            if line.partner_id not in partners:
+                partners[line.partner_id] = {
+                    'debit': 0.0,
+                    'credit': 0.0,
+                    'balance': 0.0,
+                }
+            partners[line.partner_id]['debit'] += line.debit
+            partners[line.partner_id]['credit'] += line.credit
+            partners[line.partner_id]['balance'] += line.balance
+            
+        # Génération des lignes
+        for partner, values in partners.items():
+            if float_is_zero(values['balance'], precision_digits=2) and not options.get('show_zero_balance'):
+                continue
+                
+            lines.append({
+                'id': partner.id,
+                'code': partner.ref or '',
+                'name': partner.name,
+                'level': self.level,
+                'debit': values['debit'],
+                'credit': values['credit'],
+                'balance': values['balance'] * (int(self.sign) or 1),
+            })
+            
+        return lines
+
+    def _get_domain(self, options):
+        """Construit le domaine de recherche selon les options"""
+        self.ensure_one()
+        domain = []
+        
+        # Filtre de date
+        if options.get('date'):
+            domain += [
+                ('date', '>=', options['date']['date_from']),
+                ('date', '<=', options['date']['date_to']),
+            ]
+            
+        # Filtre des journaux
+        if options.get('journals'):
+            domain += [('journal_id', 'in', options['journals'])]
+            
+        # Filtre multi-société
+        if not options.get('multi_company'):
+            domain += [('company_id', '=', self.env.company.id)]
+            
+        return domain
 
 
 class ReportFinancial(models.AbstractModel):
@@ -142,142 +374,11 @@ class ReportFinancial(models.AbstractModel):
         if not data.get('form'):
             raise UserError(_("Form content is missing, this report cannot be printed."))
 
-        data['computed'] = {}
-        obj_account = self.env['account.financial.report'].browse(data['form']['account_report_id'][0])
-        
-        # Récupération des lignes du rapport
-        lines = self._get_financial_report_pdf_lines(data.get('form', {}))
-        
+        report = self.env['account.financial.report'].browse(data['form']['account_report_id'])
         return {
             'doc_ids': docids,
             'doc_model': 'account.financial.report',
             'data': data['form'],
-            'docs': obj_account,
-            'lines': lines,
+            'docs': report,
+            'get_account_lines': self._get_account_lines,
         }
-
-    def _get_financial_report_pdf_lines(self, options):
-        """Génère les lignes pour le rapport PDF"""
-        lines = []
-        report_type = options.get('report_type', 'bs')
-        
-        # Récupération des données selon le type de rapport
-        if report_type == 'bs':
-            lines = self._get_balance_sheet_lines(options)
-        elif report_type == 'pl':
-            lines = self._get_profit_loss_lines(options)
-        elif report_type == 'cf':
-            lines = self._get_cash_flow_lines(options)
-        elif report_type == 'gl':
-            lines = self._get_general_ledger_lines(options)
-        elif report_type == 'ptl':
-            lines = self._get_partner_ledger_lines(options)
-        elif report_type == 'tb':
-            lines = self._get_trial_balance_lines(options)
-        elif report_type == 'ar':
-            lines = self._get_aged_receivable_lines(options)
-        elif report_type == 'ap':
-            lines = self._get_aged_payable_lines(options)
-        
-        return lines
-
-    def _get_balance_sheet_lines(self, options):
-        """Génère les lignes du bilan"""
-        lines = []
-        accounts = self.env['account.account'].search([
-            ('company_id', 'in', self.env.companies.ids),
-            ('internal_type', 'in', ['asset', 'liability', 'equity'])
-        ])
-        
-        for account in accounts:
-            # Calcul des soldes
-            domain = self._get_domain(account, options)
-            balance = sum(self.env['account.move.line'].search(domain).mapped('balance'))
-            
-            # Création de la ligne
-            lines.append({
-                'id': account.id,
-                'name': account.name,
-                'code': account.code,
-                'level': 1,
-                'unfoldable': False,
-                'unfolded': True,
-                'columns': [
-                    {'name': balance, 'class': 'number'},
-                ],
-            })
-            
-        return lines
-
-    def _get_domain(self, account, options):
-        """Construit le domaine de recherche selon les options"""
-        domain = [
-            ('account_id', '=', account.id),
-            ('company_id', 'in', self.env.companies.ids),
-        ]
-        
-        # Filtre de date
-        if options.get('date'):
-            domain += [
-                ('date', '>=', options['date'].get('date_from')),
-                ('date', '<=', options['date'].get('date_to')),
-            ]
-            
-        # Filtre des journaux
-        if options.get('journals'):
-            domain += [('journal_id', 'in', options['journals'])]
-            
-        return domain
-
-    def get_xlsx(self, options, response=None):
-        """Export Excel utilisant les fonctionnalités standard d'Odoo"""
-        output = io.BytesIO()
-        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        sheet = workbook.add_worksheet(self._description)
-
-        # Styles
-        title_style = workbook.add_format({
-            'bold': True,
-            'align': 'center',
-            'font_size': 12,
-            'border': 1,
-            'bg_color': '#F2F2F2'
-        })
-        header_style = workbook.add_format({
-            'bold': True,
-            'align': 'center',
-            'border': 1,
-            'bg_color': '#D9D9D9'
-        })
-        cell_style = workbook.add_format({
-            'align': 'left',
-            'border': 1
-        })
-        number_style = workbook.add_format({
-            'align': 'right',
-            'border': 1,
-            'num_format': '#,##0.00'
-        })
-
-        # En-tête
-        sheet.merge_range('A1:D1', self._description, title_style)
-        headers = ['Code', 'Account', 'Debit', 'Credit', 'Balance']
-        for col, header in enumerate(headers):
-            sheet.write(1, col, header, header_style)
-
-        # Données
-        lines = self._get_financial_report_pdf_lines(options)
-        row = 2
-        for line in lines:
-            sheet.write(row, 0, line.get('code', ''), cell_style)
-            sheet.write(row, 1, line.get('name', ''), cell_style)
-            for col, column in enumerate(line.get('columns', [])):
-                sheet.write(row, col + 2, column.get('name', 0), number_style)
-            row += 1
-
-        workbook.close()
-        output.seek(0)
-        response.stream.write(output.read())
-        output.close()
-
-        return response
