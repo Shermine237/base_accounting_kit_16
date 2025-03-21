@@ -23,9 +23,9 @@ class AccountFinancialReport(models.Model):
     sequence = fields.Integer('Sequence')
     level = fields.Integer(
         string='Level',
-        compute='_compute_level',
         recursive=True,
         store=True,
+        compute='_compute_level',
         compute_sudo=True,
         depends=['parent_id']
     )
@@ -81,13 +81,13 @@ class AccountFinancialReport(models.Model):
     ], 'Financial Report Style', default='4')
     
     # Options de base pour les rapports
-    show_debit_credit = fields.Boolean('Show Debit/Credit Columns')
-    show_balance = fields.Boolean('Show Balance', default=True)
-    enable_filter = fields.Boolean('Enable Comparison')
+    debit_credit = fields.Boolean('Show Credit/Debit Columns')
+    balance_column = fields.Boolean('Show Balance Column', default=True)
+    comparison = fields.Boolean('Enable Comparison')
+    show_journal_filter = fields.Boolean('Show Journal Filter')
+    show_partner_filter = fields.Boolean('Show Partner Filter')
+    show_analytic_filter = fields.Boolean('Show Analytic Filter')
     show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
-    show_journal = fields.Boolean('Show Journal Filter')
-    show_partner = fields.Boolean('Show Partner Filter')
-    show_analytic = fields.Boolean('Show Analytic Filter')
     
     @api.depends('parent_id')
     def _compute_level(self):
