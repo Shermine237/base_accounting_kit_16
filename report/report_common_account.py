@@ -29,23 +29,52 @@ class AccountCommonAccountReport(models.TransientModel):
     _description = 'Account Common Account Report'
     _inherit = "account.common.report"
 
-    # Champs spécifiques aux rapports comptables
-    account_type_ids = fields.Many2many('account.account.type', string='Account Types',
-                                      help="Only accounts of this type will be included in the report")
-    analytic_account_ids = fields.Many2many('account.analytic.account', string='Analytic Accounts')
-    analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Analytic Tags')
+    # Champs mis à jour pour Odoo 16
+    account_type = fields.Selection([
+        ('asset_receivable', 'Receivable'),
+        ('asset_cash', 'Bank and Cash'),
+        ('asset_current', 'Current Assets'),
+        ('asset_non_current', 'Non-current Assets'),
+        ('asset_prepayments', 'Prepayments'),
+        ('asset_fixed', 'Fixed Assets'),
+        ('liability_payable', 'Payable'),
+        ('liability_credit_card', 'Credit Card'),
+        ('liability_current', 'Current Liabilities'),
+        ('liability_non_current', 'Non-current Liabilities'),
+        ('equity', 'Equity'),
+        ('equity_unaffected', 'Current Year Earnings'),
+        ('income', 'Income'),
+        ('income_other', 'Other Income'),
+        ('expense', 'Expenses'),
+        ('expense_depreciation', 'Depreciation'),
+        ('expense_direct_cost', 'Cost of Revenue'),
+        ('off_balance', 'Off-Balance Sheet')
+    ], string='Account Type')
+    
+    analytic_account_ids = fields.Many2many(
+        'account.analytic.account',
+        'account_report_analytic_rel',
+        'report_id', 'account_id',
+        string='Analytic Accounts'
+    )
+    
+    dimension_ids = fields.Many2many(
+        'account.analytic.dimension',
+        'account_report_dimension_rel',
+        'report_id', 'dimension_id',
+        string='Analytic Dimensions'
+    )
 
     def _build_contexts(self, data):
         """Étend le contexte du rapport avec les données comptables"""
         result = super(AccountCommonAccountReport, self)._build_contexts(data)
         
-        # Ajout des filtres comptables spécifiques
-        if data['form'].get('account_type_ids'):
-            result['account_type_ids'] = data['form']['account_type_ids']
+        if data['form'].get('account_type'):
+            result['account_type'] = data['form']['account_type']
         if data['form'].get('analytic_account_ids'):
             result['analytic_account_ids'] = data['form']['analytic_account_ids']
-        if data['form'].get('analytic_tag_ids'):
-            result['analytic_tag_ids'] = data['form']['analytic_tag_ids']
+        if data['form'].get('dimension_ids'):
+            result['dimension_ids'] = data['form']['dimension_ids']
             
         return result
 
@@ -56,11 +85,12 @@ class AccountCommonAccountReport(models.TransientModel):
 
         report_values = super(AccountCommonAccountReport, self)._get_report_values(docids, data)
         
-        # Ajout des données comptables spécifiques
         report_values.update({
-            'account_types': self.env['account.account.type'].browse(data['form'].get('account_type_ids', [])),
-            'analytic_accounts': self.env['account.analytic.account'].browse(data['form'].get('analytic_account_ids', [])),
-            'analytic_tags': self.env['account.analytic.tag'].browse(data['form'].get('analytic_tag_ids', [])),
+            'analytic_accounts': self.env['account.analytic.account'].browse(
+                data['form'].get('analytic_account_ids', [])),
+            'dimensions': self.env['account.analytic.dimension'].browse(
+                data['form'].get('dimension_ids', [])),
+            'account_type': data['form'].get('account_type', False),
         })
         
         return report_values
@@ -78,11 +108,11 @@ class AccountCommonAccountReport(models.TransientModel):
             domain.append(('date', '<=', data['form']['date_to']))
         if data['form'].get('journal_ids'):
             domain.append(('journal_id', 'in', data['form']['journal_ids']))
-        if data['form'].get('account_type_ids'):
-            domain.append(('account_id.user_type_id', 'in', data['form']['account_type_ids']))
+        if data['form'].get('account_type'):
+            domain.append(('account_id.account_type', '=', data['form']['account_type']))
         if data['form'].get('analytic_account_ids'):
             domain.append(('analytic_account_id', 'in', data['form']['analytic_account_ids']))
-        if data['form'].get('analytic_tag_ids'):
-            domain.append(('analytic_tag_ids', 'in', data['form']['analytic_tag_ids']))
+        if data['form'].get('dimension_ids'):
+            domain.append(('analytic_dimension_ids', 'in', data['form']['dimension_ids']))
             
         return domain
