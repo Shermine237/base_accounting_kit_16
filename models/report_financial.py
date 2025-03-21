@@ -11,13 +11,20 @@ class AccountFinancialReport(models.Model):
     _order = 'sequence, id'
     _parent_store = True
     _parent_name = "parent_id"
+    _rec_name = 'name'
 
     name = fields.Char('Report Name', required=True, translate=True)
-    parent_id = fields.Many2one('account.financial.report', 'Parent', ondelete='cascade')
+    parent_id = fields.Many2one('account.financial.report', 'Parent', ondelete='cascade', index=True)
     parent_path = fields.Char(index=True)
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer('Level', compute='_compute_level', recursive=True, store=True)
+    level = fields.Integer(
+        string='Level',
+        compute='_compute_level',
+        recursive=True,
+        store=True,
+        compute_sudo=True
+    )
     type = fields.Selection([
         ('sum', 'View'),
         ('accounts', 'Accounts'),

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template pour le grand livre -->
+    <template id="report_general_ledger">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2>General Ledger Report</h2>
+                    
+                    <!-- En-tête du rapport -->
+                    <div class="row mt32 mb32">
+                        <div class="col-3">
+                            <strong>Company:</strong>
+                            <p t-esc="res_company.name"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Date Range:</strong>
+                            <p>
+                                <span t-esc="data['date_from']"/> - 
+                                <span t-esc="data['date_to']"/>
+                            </p>
+                        </div>
+                        <div class="col-3">
+                            <strong>Target Moves:</strong>
+                            <p t-if="data['target_move'] == 'all'">All Entries</p>
+                            <p t-if="data['target_move'] == 'posted'">All Posted Entries</p>
+                        </div>
+                        <div class="col-3">
+                            <strong>Display Account:</strong>
+                            <p t-if="data['display_account'] == 'all'">All</p>
+                            <p t-if="data['display_account'] == 'movement'">With movements</p>
+                            <p t-if="data['display_account'] == 'not_zero'">With balance not equal to 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des écritures -->
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>JRNL</th>
+                                <th>Partner</th>
+                                <th>Ref</th>
+                                <th>Move</th>
+                                <th>Entry Label</th>
+                                <th class="text-right">Debit</th>
+                                <th class="text-right">Credit</th>
+                                <th class="text-right">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="Accounts" t-as="account">
+                                <!-- En-tête du compte -->
+                                <tr style="font-weight: bold;">
+                                    <td colspan="6">
+                                        <span t-esc="account['code']"/>
+                                        - <span t-esc="account['name']"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="account['debit']" 
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="account['credit']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="account['balance']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Lignes d'écritures -->
+                                <tr t-foreach="account.get('move_lines')" t-as="line">
+                                    <td><span t-esc="line['ldate']"/></td>
+                                    <td><span t-esc="line['lcode']"/></td>
+                                    <td><span t-esc="line['partner_name']"/></td>
+                                    <td><span t-esc="line['lref']"/></td>
+                                    <td><span t-esc="line['move_name']"/></td>
+                                    <td><span t-esc="line['lname']"/></td>
+                                    <td class="text-right">
+                                        <span t-esc="line['debit']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="line['credit']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="line['balance']"
+                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Action de rapport -->
+    <record id="action_report_general_ledger" model="ir.actions.report">
+        <field name="name">General Ledger</field>
+        <field name="model">account.report.general.ledger</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">base_accounting_kit_16.report_general_ledger</field>
+        <field name="report_file">base_accounting_kit_16.report_general_ledger</field>
+        <field name="binding_model_id" ref="model_account_report_general_ledger"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
