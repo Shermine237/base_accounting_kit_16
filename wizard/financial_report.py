@@ -168,27 +168,24 @@ class AccountFinancialReportWizard(models.TransientModel):
                 'label_filter': self.label_filter
             })
         
-        return self._print_report(data)
+        return data
 
-    def _print_report(self, data):
-        """Génère le rapport selon le format choisi"""
-        self.ensure_one()
-        
-        # Préparation des données
-        data['form'].update(self._build_contexts())
-        
-        # Sélection de l'action selon le type de rapport
-        if data.get('report_type') == 'xlsx':
-            report_action = self.env.ref(
-                'base_accounting_kit_16.action_report_financial_excel')
-        else:
-            report_action = self.env.ref(
-                'base_accounting_kit_16.action_report_financial_pdf')
-            
+    def action_view_report(self):
+        """Action pour afficher le rapport dans l'interface"""
+        data = self.check_report()
+        report_action = self.env.ref('base_accounting_kit_16.action_report_financial')
+        action = report_action.report_action(self, data=data)
+        action['close_on_report_download'] = False
+        return action
+
+    def action_print_pdf(self):
+        """Action pour imprimer le rapport en PDF"""
+        data = self.check_report()
+        report_action = self.env.ref('base_accounting_kit_16.action_report_financial_pdf')
         return report_action.report_action(self, data=data)
 
-    def check_report_xlsx(self):
-        """Point d'entrée pour la génération du rapport Excel"""
+    def action_export_excel(self):
+        """Action pour exporter le rapport en Excel"""
         data = self.check_report()
-        data['report_type'] = 'xlsx'
-        return self._print_report(data)
+        report_action = self.env.ref('base_accounting_kit_16.action_report_financial_xlsx')
+        return report_action.report_action(self, data=data)
