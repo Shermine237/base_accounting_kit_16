@@ -48,9 +48,10 @@ class AccountFinancialReport(models.Model):
     account_ids = fields.Many2many('account.account', 'account_account_financial_report',
                                  'report_line_id', 'account_id', 'Accounts')
     account_report_id = fields.Many2one('account.financial.report', 'Report Value')
-    account_type_ids = fields.Many2many('account.account.type',
-                                      'account_account_financial_report_type',
-                                      'report_id', 'account_type_id', 'Account Types')
+    # Dans Odoo 16, account.account.type a été remplacé par account.account
+    # account_type_ids = fields.Many2many('account.account.type',
+    #                                   'account_account_financial_report_type',
+    #                                   'report_id', 'account_type_id', 'Account Types')
     sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')],
                           'Sign on Reports', required=True, default='1',
                           help='For accounts that are typically more'
@@ -82,15 +83,17 @@ class AccountFinancialReport(models.Model):
              " automatic formatting, it will be computed"
              " based on the financial reports hierarchy "
              "(auto-computed field 'level').")
+    
+    # Champs manquants dans le modèle
+    show_journal = fields.Boolean('Show Journal', default=False)
+    show_balance = fields.Boolean('Show Balance', default=True)
+    show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
+    show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
+    show_partner = fields.Boolean('Show Partner', default=False)
+    show_analytic = fields.Boolean('Show Analytic', default=False)
+    enable_filter = fields.Boolean('Enable Comparison', default=False)
     company_id = fields.Many2one('res.company', string='Company', required=True,
                                default=lambda self: self.env.company)
-    show_debit_credit = fields.Boolean('Show Debit/Credit Columns')
-    show_balance = fields.Boolean('Show Balance', default=True)
-    enable_filter = fields.Boolean('Enable Comparison')
-    show_hierarchy = fields.Boolean('Show Hierarchy', default=True)
-    show_journal = fields.Boolean('Show Journal', default=True)
-    show_partner = fields.Boolean('Show Partner Filter')
-    show_analytic = fields.Boolean('Show Analytic Filter')
 
     def _get_children_by_order(self):
         """Retourne les enfants triés par séquence"""

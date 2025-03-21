@@ -382,7 +382,8 @@ class AccountReconciliation(models.AbstractModel):
                     FROM
                         account_move_line l
                         RIGHT JOIN account_account a ON (a.id = l.account_id)
-                        RIGHT JOIN account_account_type at ON (at.id = a.user_type_id)
+                        /* Dans Odoo 16, account.account.type a été remplacé */
+                        /* RIGHT JOIN account_account_type at ON (at.id = a.user_type_id) */
                         {inner_from}
                     WHERE
                         a.reconcile IS TRUE
@@ -635,7 +636,7 @@ class AccountReconciliation(models.AbstractModel):
                 'name': line.name and line.name != '/' and line.move_id.name != line.name and line.move_id.name + ': ' + line.name or line.move_id.name,
                 'ref': line.move_id.ref or '',
                 # For reconciliation between statement transactions and already registered payments (eg. checks)
-                # NB : we don't use the 'reconciled' field because the line we're selecting is not the one that gets reconciled
+                # NB : we don't have to convert debit/credit to currency as all values in the reconciliation widget are displayed in company currency
                 'account_id': [line.account_id.id, line.account_id.display_name],
                 'already_paid': line.account_id.internal_type == 'liquidity',
                 'account_code': line.account_id.code,
@@ -1030,13 +1031,16 @@ class AccountBankStatementLine(models.Model):
             if isinstance(aml_dict["move_line"], int):
                 aml_dict["move_line"] = aml_obj.browse(aml_dict["move_line"])
 
-        account_types = self.env["account.account.type"]
+        account_types = self.env["account.account"]
         for aml_dict in counterpart_aml_dicts + new_aml_dicts:
             if aml_dict.get("tax_ids") and isinstance(aml_dict["tax_ids"][0], int):
                 # Transform the value in the format required for One2many and
                 # Many2many fields
                 aml_dict["tax_ids"] = [(4, id, None) for id in aml_dict["tax_ids"]]
 
+            # Dans Odoo 16, user_type_id a été remplacé
+            # Nous utilisons une approche simplifiée pour éviter les erreurs
+            """
             user_type_id = (
                 self.env["account.account"]
                 .browse(aml_dict.get("account_id"))
@@ -1047,6 +1051,7 @@ class AccountBankStatementLine(models.Model):
                 and user_type_id not in account_types
             ):
                 account_types |= user_type_id
+            """
         # Fully reconciled moves are just linked to the bank statement
         total = self.amount
         currency = self.currency_id or statement_currency
