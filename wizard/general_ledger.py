@@ -30,18 +30,26 @@ class AccountReportGeneralLedger(models.TransientModel):
     _description = "General Ledger Report"
 
     initial_balance = fields.Boolean(string='Include Initial Balances',
-                                     help='If you selected date, this field '
-                                          'allow you to add a row to display '
-                                          'the amount of debit/credit/balance '
-                                          'that precedes the filter you\'ve '
-                                          'set.')
+                                   help='If you selected date, this field '
+                                        'allow you to add a row to display '
+                                        'the amount of debit/credit/balance '
+                                        'that precedes the filter you\'ve '
+                                        'set.')
     sortby = fields.Selection(
         [('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')],
         string='Sort by', required=True, default='sort_date')
     journal_ids = fields.Many2many('account.journal',
-                                   'account_report_general_ledger_journal_rel',
-                                   'account_id', 'journal_id',
-                                   string='Journals', required=True)
+                                 'account_report_general_ledger_journal_rel',
+                                 'report_id', 'journal_id',  
+                                 string='Journals', required=True)
+    
+    # Redéfinition du champ analytic_account_ids avec une nouvelle table relation
+    analytic_account_ids = fields.Many2many(
+        'account.analytic.account',
+        'account_report_gl_analytic_rel',  
+        'report_id', 'analytic_id',  
+        string='Analytic Accounts'
+    )
 
     def _print_report(self, data):
         data = self.pre_print_report(data)

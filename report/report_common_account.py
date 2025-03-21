@@ -53,16 +53,9 @@ class AccountCommonAccountReport(models.TransientModel):
     
     analytic_account_ids = fields.Many2many(
         'account.analytic.account',
-        'account_report_analytic_rel',
-        'report_id', 'account_id',
+        'account_common_report_analytic_rel',  # Nom de table unique
+        'report_id', 'analytic_id',  # Noms de colonnes uniques
         string='Analytic Accounts'
-    )
-    
-    dimension_ids = fields.Many2many(
-        'account.analytic.dimension',
-        'account_report_dimension_rel',
-        'report_id', 'dimension_id',
-        string='Analytic Dimensions'
     )
 
     def _build_contexts(self, data):
@@ -73,8 +66,6 @@ class AccountCommonAccountReport(models.TransientModel):
             result['account_type'] = data['form']['account_type']
         if data['form'].get('analytic_account_ids'):
             result['analytic_account_ids'] = data['form']['analytic_account_ids']
-        if data['form'].get('dimension_ids'):
-            result['dimension_ids'] = data['form']['dimension_ids']
             
         return result
 
@@ -88,8 +79,6 @@ class AccountCommonAccountReport(models.TransientModel):
         report_values.update({
             'analytic_accounts': self.env['account.analytic.account'].browse(
                 data['form'].get('analytic_account_ids', [])),
-            'dimensions': self.env['account.analytic.dimension'].browse(
-                data['form'].get('dimension_ids', [])),
             'account_type': data['form'].get('account_type', False),
         })
         
@@ -112,7 +101,5 @@ class AccountCommonAccountReport(models.TransientModel):
             domain.append(('account_id.account_type', '=', data['form']['account_type']))
         if data['form'].get('analytic_account_ids'):
             domain.append(('analytic_account_id', 'in', data['form']['analytic_account_ids']))
-        if data['form'].get('dimension_ids'):
-            domain.append(('analytic_dimension_ids', 'in', data['form']['dimension_ids']))
             
         return domain
