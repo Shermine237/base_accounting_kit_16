@@ -4,6 +4,63 @@ from odoo.exceptions import UserError
 import io
 import xlsxwriter
 
+
+class AccountFinancialReport(models.Model):
+    _name = 'account.financial.report'
+    _description = 'Financial Report'
+    _order = 'sequence, id'
+
+    name = fields.Char('Report Name', required=True, translate=True)
+    parent_id = fields.Many2one('account.financial.report', 'Parent')
+    children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
+    sequence = fields.Integer('Sequence')
+    level = fields.Integer('Level', compute='_compute_level', recursive=True, store=True)
+    type = fields.Selection([
+        ('sum', 'View'),
+        ('accounts', 'Accounts'),
+        ('account_type', 'Account Type'),
+        ('account_report', 'Report Value'),
+    ], 'Type', default='sum')
+    account_ids = fields.Many2many('account.account', 'account_account_financial_report', 'report_line_id', 'account_id', 'Accounts')
+    account_report_id = fields.Many2one('account.financial.report', 'Report Value')
+    sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')], 'Sign on Reports', required=True, default='1')
+    display_detail = fields.Selection([
+        ('no_detail', 'No detail'),
+        ('detail_flat', 'Display children flat'),
+        ('detail_with_hierarchy', 'Display children with hierarchy')
+    ], 'Display details', default='detail_flat')
+    style_overwrite = fields.Selection([
+        ('0', 'Automatic formatting'),
+        ('1', 'Main Title 1 (bold, underlined)'),
+        ('2', 'Title 2 (bold)'),
+        ('3', 'Title 3 (bold, smaller)'),
+        ('4', 'Normal Text'),
+        ('5', 'Italic Text (smaller)'),
+        ('6', 'Smallest Text'),
+    ], 'Financial Report Style', default='0')
+    
+    # Options de filtrage
+    filter_date_range = fields.Boolean('Date Range Filter', default=True)
+    filter_unfold_all = fields.Boolean('Unfold All Filter', default=True)
+    filter_journals = fields.Boolean('Journals Filter', default=True)
+    filter_multi_company = fields.Boolean('Multi-company Filter', default=True)
+    filter_analytic_groupby = fields.Boolean('Analytic Groupby Filter')
+    filter_partner = fields.Boolean('Partner Filter')
+    filter_account_type = fields.Boolean('Account Type Filter')
+    filter_comparison = fields.Boolean('Comparison Filter')
+
+    @api.depends('parent_id', 'parent_id.level')
+    def _compute_level(self):
+        """Calcule le niveau hiérarchique de chaque ligne de rapport"""
+        for report in self:
+            level = 0
+            parent = report.parent_id
+            while parent:
+                level += 1
+                parent = parent.parent_id
+            report.level = level
+
+
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Reports'

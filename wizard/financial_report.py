@@ -8,8 +8,8 @@ class AccountFinancialReportWizard(models.TransientModel):
 
     company_id = fields.Many2one('res.company', string='Company', required=True, 
                                default=lambda self: self.env.company)
-    date_from = fields.Date(string='Start Date', required=True)
-    date_to = fields.Date(string='End Date', required=True)
+    date_from = fields.Date(string='Period Start Date', required=True)
+    date_to = fields.Date(string='Period End Date', required=True)
     target_move = fields.Selection([
         ('posted', 'All Posted Entries'),
         ('all', 'All Entries')
@@ -19,8 +19,8 @@ class AccountFinancialReportWizard(models.TransientModel):
         'account.financial.report', string='Account Reports', required=True)
     enable_filter = fields.Boolean(string='Enable Comparison')
     debit_credit = fields.Boolean(string='Display Debit/Credit Columns')
-    date_from_cmp = fields.Date(string='Start Date')
-    date_to_cmp = fields.Date(string='End Date')
+    date_from_cmp = fields.Date(string='Comparison Start Date')
+    date_to_cmp = fields.Date(string='Comparison End Date')
     filter_cmp = fields.Selection([
         ('filter_no', 'No Filters'),
         ('filter_date', 'Date')
@@ -57,6 +57,16 @@ class AccountFinancialReportWizard(models.TransientModel):
             elif 'payable' in self.account_report_id.name.lower():
                 self.report_type = 'ap'
 
+    def _build_comparison_context(self):
+        """Construit le contexte pour la comparaison"""
+        result = {}
+        if self.enable_filter and self.filter_cmp == 'filter_date':
+            result.update({
+                'date_from_cmp': self.date_from_cmp,
+                'date_to_cmp': self.date_to_cmp,
+            })
+        return result
+
     def _build_contexts(self):
         """Construit le contexte pour le rapport"""
         self.ensure_one()
@@ -67,14 +77,46 @@ class AccountFinancialReportWizard(models.TransientModel):
             'date_to': self.date_to,
             'strict_range': True if self.date_from else False,
             'company_id': self.company_id.id,
+            'report_type': self.report_type,
         }
         
         if self.enable_filter:
-            result['date_from_cmp'] = self.date_from_cmp
-            result['date_to_cmp'] = self.date_to_cmp
-            result['filter_cmp'] = self.filter_cmp
+            result.update(self._build_comparison_context())
             
         return result
+
+    def check_report(self):
+        """Point d'entrée pour la génération du rapport"""
+        self.ensure_one()
+        
+        # Validation des dates
+        if self.enable_filter and self.filter_cmp == 'filter_date':
+            if not self.date_from_cmp or not self.date_to_cmp:
+                raise UserError(_('Please provide comparison dates.'))
+            if self.date_from_cmp > self.date_to_cmp:
+                raise UserError(_('Comparison start date must be before end date.'))
+        
+        data = {
+            'ids': self.ids,
+            'model': self._name,
+            'form': {
+                'date_from': self.date_from,
+                'date_to': self.date_to,
+                'journal_ids': self.journal_ids.ids,
+                'target_move': self.target_move,
+                'company_id': [self.company_id.id, self.company_id.name],
+                'account_report_id': [self.account_report_id.id, self.account_report_id.name],
+                'enable_filter': self.enable_filter,
+                'debit_credit': self.debit_credit,
+                'report_type': self.report_type,
+            }
+        }
+        
+        # Ajout des données de comparaison si activées
+        if self.enable_filter:
+            data['form'].update(self._build_comparison_context())
+        
+        return self._print_report(data)
 
     def _print_report(self, data):
         """Génère le rapport selon le format choisi"""
@@ -92,39 +134,6 @@ class AccountFinancialReportWizard(models.TransientModel):
                 'base_accounting_kit_16.action_report_financial_pdf')
             
         return report_action.report_action(self, data=data)
-
-    def check_report(self):
-        """Point d'entrée pour la génération du rapport"""
-        self.ensure_one()
-        
-        # Validation des dates
-        if self.enable_filter and self.filter_cmp == 'filter_date':
-            if not self.date_from_cmp or not self.date_to_cmp:
-                raise UserError(
-                    _('Please enter a valid date range for comparison'))
-        
-        # Préparation des données
-        data = {
-            'ids': self.ids,
-            'model': self._name,
-            'form': {
-                'date_from': self.date_from,
-                'date_to': self.date_to,
-                'journal_ids': self.journal_ids.ids,
-                'target_move': self.target_move,
-                'enable_filter': self.enable_filter,
-                'debit_credit': self.debit_credit,
-                'account_report_id': [self.account_report_id.id, 
-                                    self.account_report_id.name],
-                'date_from_cmp': self.date_from_cmp,
-                'date_to_cmp': self.date_to_cmp,
-                'filter_cmp': self.filter_cmp,
-                'company_id': self.company_id.id,
-                'report_type': self.report_type,
-            }
-        }
-        
-        return self._print_report(data)
 
     def check_report_xlsx(self):
         """Point d'entrée pour la génération du rapport Excel"""
