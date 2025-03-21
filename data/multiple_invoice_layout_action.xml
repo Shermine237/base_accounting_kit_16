@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Action pour le configurateur de mise en page des factures multiples -->
+        <record id="action_multiple_invoice_layout_configurator" model="ir.actions.act_window">
+            <field name="name">Configure Multiple Invoice Layout</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">multiple.invoice.layout</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{'default_journal_id': active_id}</field>
+        </record>
+    </data>
+</odoo>

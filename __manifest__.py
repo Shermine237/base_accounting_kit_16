@@ -23,6 +23,7 @@
         'data/account_pdc_data.xml',
         # 'data/followup_levels.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'data/multiple_invoice_data.xml',
+        'data/multiple_invoice_layout_action.xml',  # Nouveau fichier pour l'action manquante
         'data/recurring_entry_cron.xml',
         
         # Views
