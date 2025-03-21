@@ -21,7 +21,7 @@
         'data/cash_flow_data.xml',
         'data/account_asset_data.xml',
         'data/account_pdc_data.xml',
-        'data/followup_levels.xml',
+        # 'data/followup_levels.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'data/multiple_invoice_data.xml',
         'data/recurring_entry_cron.xml',
         
@@ -36,10 +36,10 @@
         'views/account_asset_views.xml',
         'views/account_asset_templates.xml',
         'views/account_configuration.xml',
-        'views/account_followup.xml',
+        # 'views/account_followup.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'views/account_group.xml',
         'views/credit_limit_view.xml',
-        'views/followup_report.xml',
+        # 'views/followup_report.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'views/multiple_invoice_form.xml',
         'views/multiple_invoice_layout_view.xml',
         'views/payment_matching.xml',
