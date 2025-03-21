@@ -11,7 +11,6 @@ from datetime import datetime
 class AccountFinancialReport(models.Model):
     _name = 'account.financial.report'
     _description = 'Financial Report'
-    _inherit = ['account.report']
     _order = 'sequence, id'
     _parent_store = True
     _parent_name = "parent_id"
@@ -81,13 +80,27 @@ class AccountFinancialReport(models.Model):
         ('6', 'Smallest Text'),
     ], 'Financial Report Style', default='4')
     
-    # Filtres communs à tous les rapports
-    date_range = fields.Boolean('Date Range Filter', default=True)
-    unfold_all = fields.Boolean('Unfold All Filter', default=True)
-    journals = fields.Boolean('Journals Filter', default=True)
-    multi_company = fields.Boolean('Multi-company Filter', default=True)
-    analytic_tags = fields.Boolean('Analytic Tags Filter', default=True)
-    account_tags = fields.Boolean('Account Tags Filter', default=True)
+    # Filtres standards Odoo 16
+    filter_date = fields.Selection([
+        ('this_month', 'This Month'),
+        ('this_quarter', 'This Quarter'),
+        ('this_year', 'This Year'),
+        ('last_month', 'Last Month'),
+        ('last_quarter', 'Last Quarter'),
+        ('last_year', 'Last Year'),
+        ('custom', 'Custom'),
+    ], string='Date Filter', default='this_month')
+    
+    filter_unfold_all = fields.Boolean('Unfold All', default=True)
+    filter_journals = fields.Many2many('account.journal', string='Journals')
+    filter_multi_company = fields.Boolean('Multi-company', default=True)
+    filter_analytic = fields.Many2many('account.analytic.account', string='Analytic Accounts')
+    filter_partner = fields.Many2many('res.partner', string='Partners')
+    filter_account_type = fields.Many2many('account.account.type', string='Account Types')
+    filter_comparison = fields.Boolean('Enable Comparison', default=False)
+    filter_hierarchy = fields.Boolean('Show Hierarchy', default=True)
+    filter_cash_basis = fields.Boolean('Cash Basis', default=False)
+    filter_all_entries = fields.Boolean('All Entries', default=False)
     
     # Filtres spécifiques par type de rapport
     analytic_groupby = fields.Boolean(

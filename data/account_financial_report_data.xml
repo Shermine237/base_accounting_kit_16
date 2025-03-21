@@ -8,10 +8,10 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">10</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_hierarchy" eval="True"/>
     </record>
 
     <record id="account_financial_report_profit_loss" model="account.financial.report">
@@ -21,10 +21,10 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">20</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_hierarchy" eval="True"/>
         <field name="analytic_groupby" eval="True"/>
     </record>
 
@@ -35,10 +35,10 @@
         <field name="display_detail">detail_with_hierarchy</field>
         <field name="style_overwrite">1</field>
         <field name="sequence">30</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_hierarchy" eval="True"/>
     </record>
 
     <record id="account_financial_report_general_ledger" model="account.financial.report">
@@ -48,12 +48,11 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">40</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
-        <field name="account_type" eval="True"/>
-        <field name="comparison" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_comparison" eval="True"/>
+        <field name="filter_all_entries" eval="True"/>
     </record>
 
     <record id="account_financial_report_trial_balance" model="account.financial.report">
@@ -63,12 +62,11 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">50</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
-        <field name="account_type" eval="True"/>
-        <field name="comparison" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_comparison" eval="True"/>
+        <field name="filter_all_entries" eval="True"/>
     </record>
 
     <record id="account_financial_report_partner_ledger" model="account.financial.report">
@@ -78,11 +76,10 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">60</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
-        <field name="partner" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_all_entries" eval="True"/>
     </record>
 
     <record id="account_financial_report_aged_receivable" model="account.financial.report">
@@ -92,11 +89,10 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">70</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
-        <field name="partner" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_all_entries" eval="True"/>
     </record>
 
     <record id="account_financial_report_aged_payable" model="account.financial.report">
@@ -106,10 +102,9 @@
         <field name="display_detail">detail_flat</field>
         <field name="style_overwrite">4</field>
         <field name="sequence">80</field>
-        <field name="date_range" eval="True"/>
-        <field name="unfold_all" eval="True"/>
-        <field name="journals" eval="True"/>
-        <field name="multi_company" eval="True"/>
-        <field name="partner" eval="True"/>
+        <field name="filter_date">this_month</field>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_multi_company" eval="True"/>
+        <field name="filter_all_entries" eval="True"/>
     </record>
 </odoo>
