@@ -86,6 +86,8 @@ class AccountFinancialReport(models.Model):
     unfold_all = fields.Boolean('Unfold All Filter', default=True)
     journals = fields.Boolean('Journals Filter', default=True)
     multi_company = fields.Boolean('Multi-company Filter', default=True)
+    analytic_tags = fields.Boolean('Analytic Tags Filter', default=True)
+    account_tags = fields.Boolean('Account Tags Filter', default=True)
     
     # Filtres spécifiques par type de rapport
     analytic_groupby = fields.Boolean(
@@ -103,6 +105,14 @@ class AccountFinancialReport(models.Model):
     comparison = fields.Boolean(
         'Comparison Filter',
         help="Used for GL and Trial Balance"
+    )
+    hierarchy = fields.Boolean(
+        'Hierarchy Filter',
+        help="Used for Balance Sheet and Profit & Loss reports"
+    )
+    target_move = fields.Boolean(
+        'Target Move Filter',
+        help="Used for General Ledger and Trial Balance reports"
     )
 
     @api.depends('parent_id', 'parent_id.level')
