@@ -30,7 +30,6 @@
         'views/res_config_view.xml',
         
         # Wizards
-        'wizard/account_report_common_view.xml',
         'wizard/trial_balance_view.xml',
         'wizard/bank_book_view.xml',
         'wizard/cash_book_view.xml',
