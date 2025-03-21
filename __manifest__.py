@@ -67,7 +67,6 @@
         
         # Reports
         'report/report.xml',
-        'report/financial_report_actions.xml',
         'report/report_financial.xml',
         'report/report_trial_balance.xml',
         'report/report_general_ledger.xml',
