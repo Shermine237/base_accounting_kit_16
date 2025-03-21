@@ -9,9 +9,12 @@ class AccountFinancialReport(models.Model):
     _name = 'account.financial.report'
     _description = 'Financial Report'
     _order = 'sequence, id'
+    _parent_store = True
+    _parent_name = "parent_id"
 
     name = fields.Char('Report Name', required=True, translate=True)
-    parent_id = fields.Many2one('account.financial.report', 'Parent')
+    parent_id = fields.Many2one('account.financial.report', 'Parent', ondelete='cascade')
+    parent_path = fields.Char(index=True)
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Children')
     sequence = fields.Integer('Sequence')
     level = fields.Integer('Level', compute='_compute_level', recursive=True, store=True)
@@ -51,14 +54,24 @@ class AccountFinancialReport(models.Model):
 
     @api.depends('parent_id', 'parent_id.level')
     def _compute_level(self):
-        """Calcule le niveau hiérarchique de chaque ligne de rapport"""
+        """Calcule le niveau hiérarchique de chaque ligne de rapport de manière récursive"""
         for report in self:
-            level = 0
-            parent = report.parent_id
-            while parent:
-                level += 1
-                parent = parent.parent_id
-            report.level = level
+            # Si pas de parent, niveau 0
+            if not report.parent_id:
+                report.level = 0
+                continue
+            
+            # Utilise parent_path pour calculer le niveau
+            if report.parent_path:
+                report.level = report.parent_path.count('/') + 1
+            else:
+                # Fallback sur la méthode itérative si parent_path n'est pas disponible
+                level = 0
+                parent = report.parent_id
+                while parent:
+                    level += 1
+                    parent = parent.parent_id
+                report.level = level
 
 
 class ReportFinancial(models.AbstractModel):

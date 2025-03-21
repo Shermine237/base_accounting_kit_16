@@ -5,102 +5,55 @@
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <div class="page">
-                    <h2 t-esc="docs.name" class="text-center"/>
-                    
-                    <!-- En-tête du rapport -->
+                    <h2><span t-esc="res_company.name"/>: <span t-esc="data['account_report_id'][1]"/></h2>
+
                     <div class="row mt32 mb32">
                         <div class="col-3">
-                            <strong>Company:</strong>
-                            <p t-esc="res_company.name"/>
+                            <strong>Target Moves:</strong>
+                            <p t-if="data['target_move'] == 'all'">All Entries</p>
+                            <p t-if="data['target_move'] == 'posted'">All Posted Entries</p>
                         </div>
                         <div class="col-3">
-                            <strong>Date Range:</strong>
                             <p>
-                                <span t-esc="data['date_from']"/> - 
+                                <strong>Date from :</strong>
+                                <span t-esc="data['date_from']"/>
+                            </p>
+                            <p>
+                                <strong>Date to :</strong>
                                 <span t-esc="data['date_to']"/>
                             </p>
                         </div>
-                        <div class="col-3">
-                            <strong>Target Moves:</strong>
-                            <p t-esc="data['target_move']"/>
-                        </div>
                     </div>
 
-                    <!-- Tableau des données -->
-                    <table class="table table-sm">
+                    <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Account</th>
-                                <th class="text-right">Debit</th>
-                                <th class="text-right">Credit</th>
-                                <th class="text-right">Balance</th>
+                                <th>Name</th>
+                                <th t-if="data['debit_credit']">Debit</th>
+                                <th t-if="data['debit_credit']">Credit</th>
+                                <th>Balance</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="lines" t-as="line">
-                                <tr>
-                                    <td>
-                                        <span t-att-style="'margin-left: %dpx' % (line['level'] * 10)"
-                                              t-esc="line['name']"/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-esc="line['columns'][0]['name']"
-                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-esc="line['columns'][1]['name']"
-                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-esc="line['columns'][2]['name']"
-                                              t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                    </td>
-                                </tr>
-                            </t>
+                            <tr t-foreach="get_account_lines" t-as="a">
+                                <td>
+                                    <span style="color: white;" t-esc="'..' * a.get('level', 0)"/>
+                                    <span t-esc="a.get('name')"/>
+                                </td>
+                                <td t-if="data['debit_credit']" class="text-right">
+                                    <span t-esc="a.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                </td>
+                                <td t-if="data['debit_credit']" class="text-right">
+                                    <span t-esc="a.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="a.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </t>
         </t>
     </template>
-
-    <!-- Actions de rapport PDF -->
-    <record id="action_report_financial_pdf" model="ir.actions.report">
-        <field name="name">Financial Report</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">base_accounting_kit_16.report_financial</field>
-        <field name="report_file">base_accounting_kit_16.report_financial</field>
-        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
-        <field name="binding_type">report</field>
-    </record>
-
-    <!-- Actions d'export Excel -->
-    <record id="action_report_financial_excel" model="ir.actions.report">
-        <field name="name">Financial Report (Excel)</field>
-        <field name="model">account.financial.report.wizard</field>
-        <field name="report_type">xlsx</field>
-        <field name="report_name">base_accounting_kit_16.report_financial</field>
-        <field name="report_file">base_accounting_kit_16.report_financial</field>
-        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
-        <field name="binding_type">report</field>
-    </record>
-
-    <!-- Actions de menu -->
-    <menuitem id="menu_financial_reports"
-              name="Financial Reports"
-              parent="account.menu_finance_reports"
-              sequence="5"/>
-
-    <menuitem id="menu_financial_reports_pdf"
-              name="Financial Report (PDF)"
-              parent="menu_financial_reports"
-              action="action_report_financial_pdf"
-              sequence="1"/>
-
-    <menuitem id="menu_financial_reports_excel"
-              name="Financial Report (Excel)"
-              parent="menu_financial_reports"
-              action="action_report_financial_excel"
-              sequence="2"/>
 </odoo>
