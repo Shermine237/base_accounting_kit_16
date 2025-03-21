@@ -19,7 +19,7 @@
         # Data
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
-        'data/account_asset_data.xml',
+        # 'data/account_asset_data.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'data/account_pdc_data.xml',
         # 'data/followup_levels.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'data/multiple_invoice_data.xml',
@@ -33,8 +33,8 @@
         'views/dashboard_views.xml',
         'views/reports_config_view.xml',
         'views/res_config_view.xml',
-        'views/account_asset_views.xml',
-        'views/account_asset_templates.xml',
+        # 'views/account_asset_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
+        # 'views/account_asset_templates.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'views/account_configuration.xml',
         # 'views/account_followup.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'views/account_group.xml',
@@ -58,8 +58,8 @@
         'wizard/partner_ledger.xml',
         'wizard/tax_report.xml',
         'wizard/aged_partner.xml',
-        'wizard/asset_depreciation_confirmation_wizard_views.xml',
-        'wizard/asset_modify_views.xml',
+        # 'wizard/asset_depreciation_confirmation_wizard_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
+        # 'wizard/asset_modify_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'wizard/account_lock_date.xml',
         'wizard/journal_audit.xml',
         
@@ -77,7 +77,7 @@
         'report/account_cash_book_view.xml',
         'report/account_day_book_view.xml',
         'report/cash_flow_report.xml',
-        'report/account_asset_report_views.xml',
+        # 'report/account_asset_report_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'report/multiple_invoice_layouts.xml',
         'report/multiple_invoice_report.xml',
         'report/report_financial_xlsx.xml',
