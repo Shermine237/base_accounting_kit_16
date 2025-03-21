@@ -36,6 +36,11 @@ class AccountReport(models.AbstractModel):
     filter_account_type = fields.Boolean('Account Type Filter', default=False)
     filter_comparison = fields.Boolean('Comparison Filter', default=False)
 
+    company_id = fields.Many2one('res.company', string='Company', readonly=True,
+                                default=lambda self: self.env.company)
+    country_id = fields.Many2one('res.country', string='Country',
+                                related='company_id.country_id', store=True)
+
     def _get_report_values(self, docids, data=None):
         """Méthode standard pour obtenir les valeurs du rapport"""
         if not data.get('form'):
@@ -195,3 +200,22 @@ class AccountReport(models.AbstractModel):
             })
             
         return lines
+
+class AccountReportExternalValue(models.Model):
+    _name = 'account.report.external.value'
+    _description = 'External Values for Financial Reports'
+
+    name = fields.Char(string='Name', required=True)
+    report_id = fields.Many2one('account.report', string='Report', required=True)
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                                default=lambda self: self.env.company)
+    report_country_id = fields.Many2one('res.country', string='Country',
+                                       related='company_id.country_id', store=True)
+    value = fields.Float(string='Value', required=True)
+    date = fields.Date(string='Date', required=True)
+    
+    _sql_constraints = [
+        ('unique_report_date',
+         'unique(report_id, date, company_id)',
+         'Only one value per date is allowed for each report and company!')
+    ]

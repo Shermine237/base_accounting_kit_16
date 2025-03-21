@@ -72,5 +72,24 @@
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
             <field name="global" eval="True"/>
         </record>
+
+        <!-- Règles de sécurité pour les valeurs externes des rapports -->
+        <record id="account_report_external_value_comp_rule" model="ir.rule">
+            <field name="name">Account Report External Value Multi-Company</field>
+            <field name="model_id" ref="model_account_report_external_value"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+        <!-- Droits d'accès pour les valeurs externes des rapports -->
+        <record id="access_account_report_external_value_user" model="ir.model.access">
+            <field name="name">account.report.external.value.user</field>
+            <field name="model_id" ref="model_account_report_external_value"/>
+            <field name="group_id" ref="account.group_account_user"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+        </record>
     </data>
 </odoo>
