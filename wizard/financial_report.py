@@ -35,6 +35,37 @@ class AccountFinancialReportWizard(models.TransientModel):
         ('ar', 'Aged Receivable'),
         ('ap', 'Aged Payable')
     ], string='Report Type', required=True, default='bs')
+    
+    # Champs additionnels pour la vue
+    name = fields.Char(string='Report Name', compute='_compute_report_name', store=True)
+    show_debit_credit = fields.Boolean(string='Show Debit/Credit', default=False)
+    show_balance = fields.Boolean(string='Show Balance', default=True)
+    show_hierarchy = fields.Boolean(string='Show Hierarchy', default=False)
+    show_partner = fields.Boolean(string='Show Partner Details', default=False)
+    show_analytic = fields.Boolean(string='Show Analytic', default=False)
+    show_journal = fields.Boolean(string='Show Journal', default=False)
+    label_filter = fields.Char(string='Column Label', default='Comparison')
+    
+    @api.depends('account_report_id', 'report_type')
+    def _compute_report_name(self):
+        """Calcule un nom pour le rapport basé sur le type ou le rapport sélectionné"""
+        for record in self:
+            if record.account_report_id:
+                record.name = record.account_report_id.name
+            elif record.report_type:
+                type_mapping = {
+                    'bs': 'Balance Sheet',
+                    'pl': 'Profit and Loss',
+                    'cf': 'Cash Flow Statement',
+                    'gl': 'General Ledger',
+                    'ptl': 'Partner Ledger',
+                    'tb': 'Trial Balance',
+                    'ar': 'Aged Receivable',
+                    'ap': 'Aged Payable'
+                }
+                record.name = type_mapping.get(record.report_type, 'Financial Report')
+            else:
+                record.name = 'Financial Report'
 
     @api.onchange('account_report_id')
     def _onchange_account_report_id(self):
@@ -78,6 +109,12 @@ class AccountFinancialReportWizard(models.TransientModel):
             'strict_range': True if self.date_from else False,
             'company_id': self.company_id.id,
             'report_type': self.report_type,
+            'show_debit_credit': self.show_debit_credit,
+            'show_balance': self.show_balance,
+            'show_hierarchy': self.show_hierarchy,
+            'show_partner': self.show_partner,
+            'show_analytic': self.show_analytic,
+            'show_journal': self.show_journal
         }
         
         if self.enable_filter:
@@ -109,12 +146,27 @@ class AccountFinancialReportWizard(models.TransientModel):
                 'enable_filter': self.enable_filter,
                 'debit_credit': self.debit_credit,
                 'report_type': self.report_type,
+                'show_debit_credit': self.show_debit_credit,
+                'show_balance': self.show_balance,
+                'show_hierarchy': self.show_hierarchy,
+                'show_partner': self.show_partner,
+                'show_analytic': self.show_analytic,
+                'show_journal': self.show_journal,
+                'name': self.name,
+                'label_filter': self.label_filter if self.enable_filter else ''
             }
         }
         
         # Ajout des données de comparaison si activées
         if self.enable_filter:
-            data['form'].update(self._build_comparison_context())
+            comparison_context = self._build_comparison_context()
+            data['form'].update({
+                'comparison_context': comparison_context,
+                'date_from_cmp': comparison_context.get('date_from_cmp'),
+                'date_to_cmp': comparison_context.get('date_to_cmp'),
+                'filter_cmp': self.filter_cmp,
+                'label_filter': self.label_filter
+            })
         
         return self._print_report(data)
 

@@ -23,6 +23,20 @@
                                 <span t-esc="data['date_to']"/>
                             </p>
                         </div>
+                        <div class="col-4" t-if="data.get('enable_filter')">
+                            <p>
+                                <strong>Comparison Date from :</strong>
+                                <span t-esc="data['date_from_cmp']"/>
+                            </p>
+                            <p>
+                                <strong>Comparison Date to :</strong>
+                                <span t-esc="data['date_to_cmp']"/>
+                            </p>
+                            <p>
+                                <strong>Comparison Label :</strong>
+                                <span t-esc="data['label_filter']"/>
+                            </p>
+                        </div>
                     </div>
 
                     <table class="table table-bordered">
@@ -32,24 +46,98 @@
                                 <th t-if="data['show_debit_credit']">Debit</th>
                                 <th t-if="data['show_debit_credit']">Credit</th>
                                 <th t-if="data['show_balance']">Balance</th>
+                                <th t-if="data['enable_filter']">
+                                    <span t-esc="data['label_filter']"/>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr t-foreach="get_account_lines" t-as="a">
-                                <td>
-                                    <span style="color: white;" t-esc="'..' * a.get('level', 0)"/>
-                                    <span t-att-style="style" t-esc="a.get('name')"/>
-                                </td>
-                                <td t-if="data['show_debit_credit']" class="text-right">
-                                    <span t-att-style="style" t-esc="a.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                </td>
-                                <td t-if="data['show_debit_credit']" class="text-right">
-                                    <span t-att-style="style" t-esc="a.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                </td>
-                                <td t-if="data['show_balance']" class="text-right">
-                                    <span t-att-style="style" t-esc="a.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
-                                </td>
-                            </tr>
+                            <t t-foreach="lines" t-as="line">
+                                <tr t-att-class="'total' if line.get('level') == 0 else ''">
+                                    <td>
+                                        <span style="color: white;" t-esc="'..' * line.get('level', 0)"/>
+                                        <span t-att-style="'font-weight: bold' if line.get('level') == 0 else ''" t-esc="line.get('name')"/>
+                                    </td>
+                                    <td t-if="data['show_debit_credit']" class="text-right">
+                                        <span t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td t-if="data['show_debit_credit']" class="text-right">
+                                        <span t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td t-if="data['show_balance']" class="text-right">
+                                        <span t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                    <td t-if="data['enable_filter']" class="text-right">
+                                        <span t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Détails partenaire -->
+                                <t t-if="line.get('partner_id') and data.get('show_partner')">
+                                    <tr>
+                                        <td>
+                                            <span style="color: white;" t-esc="'..' * (line.get('level', 0) + 1)"/>
+                                            <span t-esc="line.get('partner_name')"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_balance']" class="text-right">
+                                            <span t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['enable_filter']" class="text-right">
+                                            <span t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                                
+                                <!-- Détails analytiques -->
+                                <t t-if="line.get('analytic_id') and data.get('show_analytic')">
+                                    <tr>
+                                        <td>
+                                            <span style="color: white;" t-esc="'..' * (line.get('level', 0) + 1)"/>
+                                            <span t-esc="line.get('analytic_name')"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_balance']" class="text-right">
+                                            <span t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['enable_filter']" class="text-right">
+                                            <span t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                                
+                                <!-- Détails journal -->
+                                <t t-if="line.get('journal_id') and data.get('show_journal')">
+                                    <tr>
+                                        <td>
+                                            <span style="color: white;" t-esc="'..' * (line.get('level', 0) + 1)"/>
+                                            <span t-esc="line.get('journal_name')"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('debit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_debit_credit']" class="text-right">
+                                            <span t-esc="line.get('credit')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['show_balance']" class="text-right">
+                                            <span t-esc="line.get('balance')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                        <td t-if="data['enable_filter']" class="text-right">
+                                            <span t-esc="line.get('balance_cmp')" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
                         </tbody>
                     </table>
                 </div>

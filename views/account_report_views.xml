@@ -139,7 +139,7 @@
                             <field name="target_move" widget="radio"/>
                         </group>
                         <group>
-                            <field name="show_debit_credit" attrs="{'invisible': [('report_type', 'in', ['aged_receivable','aged_payable'])]}"/>
+                            <field name="show_debit_credit" attrs="{'invisible': [('report_type', 'in', ['ar','ap'])]}"/>
                             <field name="show_balance"/>
                             <field name="show_hierarchy"/>
                             <field name="show_partner"/>

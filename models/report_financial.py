@@ -87,12 +87,10 @@ class AccountFinancialReport(models.Model):
     # Champs manquants dans le modèle
     show_journal = fields.Boolean('Show Journal', default=False)
     show_balance = fields.Boolean('Show Balance', default=True)
-    # Champs qui causaient des erreurs dans le XML - commentés pour référence future
-    # show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
+    show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
-    # show_partner = fields.Boolean('Show Partner', default=False)
+    show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
-    # enable_filter = fields.Boolean('Enable Comparison', default=False)
     company_id = fields.Many2one('res.company', string='Company', required=True,
                                default=lambda self: self.env.company)
 
@@ -106,12 +104,12 @@ class AccountFinancialReport(models.Model):
         if self.type in ['bs', 'pl', 'cf']:
             self.display_detail = 'detail_with_hierarchy'
             self.style_overwrite = '1'
-            self.enable_filter = self.type == 'pl'
+            # self.enable_filter = self.type == 'pl'
         elif self.type in ['gl', 'tb']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
             self.show_debit_credit = True
-            self.enable_filter = True
+            # self.enable_filter = True
         elif self.type in ['ptl', 'ar', 'ap']:
             self.display_detail = 'detail_flat'
             self.style_overwrite = '4'
@@ -346,21 +344,421 @@ class AccountFinancialReport(models.Model):
             
         return domain
 
+    def get_report_values(self, data):
+        """Récupère les valeurs pour le rapport"""
+        form = data.get('form', {})
+        debit_credit = form.get('show_debit_credit', False)
+        show_balance = form.get('show_balance', True)
+        show_hierarchy = form.get('show_hierarchy', False)
+        show_partner = form.get('show_partner', False)
+        show_analytic = form.get('show_analytic', False)
+        show_journal = form.get('show_journal', False)
+        enable_filter = form.get('enable_filter', False)
+        comparison_context = form.get('comparison_context', {})
+        
+        lines = []
+        # Logique de génération des lignes du rapport
+        if show_hierarchy:
+            lines = self._get_hierarchical_lines(data)
+        else:
+            lines = self._get_flat_lines(data)
+            
+        if show_partner and self.type in ['ptl', 'ar', 'ap']:
+            lines = self._add_partner_details(lines, data)
+            
+        if show_analytic and self.type in ['pl']:
+            lines = self._add_analytic_details(lines, data)
+            
+        if show_journal:
+            lines = self._add_journal_details(lines, data)
+            
+        return {
+            'doc_ids': data.get('ids', []),
+            'doc_model': data.get('model', 'account.financial.report'),
+            'data': data,
+            'docs': self,
+            'lines': lines,
+            'debit_credit': debit_credit,
+            'show_balance': show_balance,
+            'show_hierarchy': show_hierarchy,
+            'show_partner': show_partner,
+            'show_analytic': show_analytic,
+            'show_journal': show_journal,
+            'enable_filter': enable_filter,
+            'comparison_context': comparison_context,
+        }
+        
+    def _get_hierarchical_lines(self, data):
+        """Génère les lignes de rapport en mode hiérarchique"""
+        lines = []
+        form = data.get('form', {})
+        comparison_context = form.get('comparison_context', {})
+        
+        def _get_children_by_order():
+            return self.search([('parent_id', '=', self.id)], order='sequence ASC')
+            
+        def _process_report(report, parent_id=False, level=1):
+            currency_table = self.env['res.currency']._get_query_currency_table(self.env.companies.ids)
+            MoveLine = self.env['account.move.line']
+            domain = self._get_move_line_domain(form)
+            
+            if report.type == 'accounts':
+                # Pour les lignes de type 'accounts', on récupère les écritures comptables
+                if report.account_ids:
+                    domain.append(('account_id', 'in', report.account_ids.ids))
+                query = MoveLine._where_calc(domain)
+                tables, where_clause, where_params = query.get_sql()
+                
+                select = """
+                    SELECT 
+                        account_move_line.account_id as account_id,
+                        SUM(ROUND(account_move_line.debit * currency_table.rate, currency_table.precision)) as debit,
+                        SUM(ROUND(account_move_line.credit * currency_table.rate, currency_table.precision)) as credit,
+                        SUM(ROUND(account_move_line.balance * currency_table.rate, currency_table.precision)) as balance
+                """
+                
+                if form.get('show_partner', False):
+                    select += """,
+                        account_move_line.partner_id as partner_id
+                    """
+                    
+                if form.get('show_analytic', False):
+                    select += """,
+                        account_move_line.analytic_account_id as analytic_account_id
+                    """
+                    
+                if form.get('show_journal', False):
+                    select += """,
+                        account_move_line.journal_id as journal_id
+                    """
+                
+                sql = f"""
+                    {select}
+                    FROM {tables}
+                    LEFT JOIN {currency_table} ON currency_table.company_id = account_move_line.company_id
+                    WHERE {where_clause}
+                """
+                
+                group_by = """
+                    GROUP BY account_move_line.account_id
+                """
+                
+                if form.get('show_partner', False):
+                    group_by += ", account_move_line.partner_id"
+                if form.get('show_analytic', False):
+                    group_by += ", account_move_line.analytic_account_id"
+                if form.get('show_journal', False):
+                    group_by += ", account_move_line.journal_id"
+                    
+                sql += group_by
+                
+                self.env.cr.execute(sql, where_params)
+                results = self.env.cr.dictfetchall()
+                
+                accounts = self.env['account.account'].browse([x['account_id'] for x in results])
+                accounts_by_id = {account.id: account for account in accounts}
+                
+                for values in results:
+                    account = accounts_by_id[values['account_id']]
+                    
+                    line = {
+                        'id': report.id,
+                        'name': account.name,
+                        'level': level,
+                        'parent_id': parent_id,
+                        'type': 'account',
+                        'account_type': account.account_type,
+                        'debit': values['debit'],
+                        'credit': values['credit'],
+                        'balance': values['balance'],
+                        'account_id': account.id,
+                        'show_hierarchy': form.get('show_hierarchy', False)
+                    }
+                    
+                    if form.get('show_partner', False) and values.get('partner_id'):
+                        partner = self.env['res.partner'].browse(values['partner_id'])
+                        line.update({
+                            'partner_id': partner.id,
+                            'partner_name': partner.name
+                        })
+                        
+                    if form.get('show_analytic', False) and values.get('analytic_account_id'):
+                        analytic = self.env['account.analytic.account'].browse(values['analytic_account_id'])
+                        line.update({
+                            'analytic_id': analytic.id,
+                            'analytic_name': analytic.name
+                        })
+                        
+                    if form.get('show_journal', False) and values.get('journal_id'):
+                        journal = self.env['account.journal'].browse(values['journal_id'])
+                        line.update({
+                            'journal_id': journal.id,
+                            'journal_name': journal.name
+                        })
+                        
+                    lines.append(line)
+                    
+            elif report.type == 'account_type':
+                # Pour les lignes de type 'account_type', on regroupe par type de compte
+                domain.append(('account_id.account_type', '=', report.account_type))
+                query = MoveLine._where_calc(domain)
+                tables, where_clause, where_params = query.get_sql()
+                
+                sql = f"""
+                    SELECT 
+                        SUM(ROUND(account_move_line.debit * currency_table.rate, currency_table.precision)) as debit,
+                        SUM(ROUND(account_move_line.credit * currency_table.rate, currency_table.precision)) as credit,
+                        SUM(ROUND(account_move_line.balance * currency_table.rate, currency_table.precision)) as balance
+                    FROM {tables}
+                    LEFT JOIN {currency_table} ON currency_table.company_id = account_move_line.company_id
+                    WHERE {where_clause}
+                """
+                
+                self.env.cr.execute(sql, where_params)
+                result = self.env.cr.dictfetchone()
+                
+                if result:
+                    lines.append({
+                        'id': report.id,
+                        'name': report.name,
+                        'level': level,
+                        'parent_id': parent_id,
+                        'type': 'account_type',
+                        'account_type': report.account_type,
+                        'debit': result['debit'] or 0.0,
+                        'credit': result['credit'] or 0.0,
+                        'balance': result['balance'] or 0.0,
+                        'show_hierarchy': form.get('show_hierarchy', False)
+                    })
+                    
+            elif report.type == 'account_report' and report.account_report_id:
+                # Pour les lignes de type 'account_report', on récupère les valeurs du rapport lié
+                lines.extend(_process_report(report.account_report_id, report.id, level + 1))
+                
+            elif report.type == 'sum':
+                # Pour les lignes de type 'sum', on calcule la somme des enfants
+                lines.append({
+                    'id': report.id,
+                    'name': report.name,
+                    'level': level,
+                    'parent_id': parent_id,
+                    'type': 'sum',
+                    'debit': 0.0,
+                    'credit': 0.0,
+                    'balance': 0.0,
+                    'show_hierarchy': form.get('show_hierarchy', False)
+                })
+                
+                for child in _get_children_by_order():
+                    child_lines = _process_report(child, report.id, level + 1)
+                    for child_line in child_lines:
+                        lines[-1]['debit'] += child_line['debit']
+                        lines[-1]['credit'] += child_line['credit']
+                        lines[-1]['balance'] += child_line['balance']
+                    lines.extend(child_lines)
+                    
+            return lines
+            
+        # Début du traitement
+        return _process_report(self)
+        
+    def _get_flat_lines(self, data):
+        """Génère les lignes de rapport en mode plat"""
+        lines = self._get_hierarchical_lines(data)
+        # En mode plat, on ne garde que les lignes de type 'account'
+        return [line for line in lines if line['type'] == 'account']
+        
+    def _add_partner_details(self, lines, data):
+        """Ajoute les détails des partenaires aux lignes"""
+        if not data.get('form', {}).get('show_partner', False):
+            return lines
+            
+        result = []
+        MoveLine = self.env['account.move.line']
+        Partner = self.env['res.partner']
+        
+        for line in lines:
+            if line.get('account_id'):
+                domain = self._get_move_line_domain(data.get('form', {}))
+                domain.append(('account_id', '=', line['account_id']))
+                
+                query = MoveLine._where_calc(domain)
+                tables, where_clause, where_params = query.get_sql()
+                
+                sql = """
+                    SELECT DISTINCT partner_id
+                    FROM """ + tables + """
+                    WHERE """ + where_clause + """
+                    AND partner_id IS NOT NULL
+                """
+                
+                self.env.cr.execute(sql, where_params)
+                partner_ids = [x[0] for x in self.env.cr.fetchall()]
+                partners = Partner.browse(partner_ids)
+                
+                for partner in partners:
+                    domain.append(('partner_id', '=', partner.id))
+                    query = MoveLine._where_calc(domain)
+                    tables, where_clause, where_params = query.get_sql()
+                    
+                    sql = """
+                        SELECT 
+                            SUM(debit) as debit,
+                            SUM(credit) as credit,
+                            SUM(balance) as balance
+                        FROM """ + tables + """
+                        WHERE """ + where_clause
+                        
+                    self.env.cr.execute(sql, where_params)
+                    values = self.env.cr.dictfetchone()
+                    
+                    if values and not float_is_zero(values['balance'], precision_digits=2):
+                        result.append({
+                            'id': line['id'],
+                            'name': partner.name,
+                            'level': line['level'] + 1,
+                            'parent_id': line['id'],
+                            'type': 'partner',
+                            'debit': values['debit'],
+                            'credit': values['credit'],
+                            'balance': values['balance'],
+                            'partner_id': partner.id
+                        })
+                        
+            result.append(line)
+            
+        return result
+        
+    def _add_analytic_details(self, lines, data):
+        """Ajoute les détails analytiques aux lignes"""
+        if not data.get('form', {}).get('show_analytic', False):
+            return lines
+            
+        result = []
+        MoveLine = self.env['account.move.line']
+        AnalyticAccount = self.env['account.analytic.account']
+        
+        for line in lines:
+            if line.get('account_id'):
+                domain = self._get_move_line_domain(data.get('form', {}))
+                domain.append(('account_id', '=', line['account_id']))
+                
+                query = MoveLine._where_calc(domain)
+                tables, where_clause, where_params = query.get_sql()
+                
+                sql = """
+                    SELECT DISTINCT analytic_account_id
+                    FROM """ + tables + """
+                    WHERE """ + where_clause + """
+                    AND analytic_account_id IS NOT NULL
+                """
+                
+                self.env.cr.execute(sql, where_params)
+                analytic_ids = [x[0] for x in self.env.cr.fetchall()]
+                analytics = AnalyticAccount.browse(analytic_ids)
+                
+                for analytic in analytics:
+                    domain.append(('analytic_account_id', '=', analytic.id))
+                    query = MoveLine._where_calc(domain)
+                    tables, where_clause, where_params = query.get_sql()
+                    
+                    sql = """
+                        SELECT 
+                            SUM(debit) as debit,
+                            SUM(credit) as credit,
+                            SUM(balance) as balance
+                        FROM """ + tables + """
+                        WHERE """ + where_clause
+                        
+                    self.env.cr.execute(sql, where_params)
+                    values = self.env.cr.dictfetchone()
+                    
+                    if values and not float_is_zero(values['balance'], precision_digits=2):
+                        result.append({
+                            'id': line['id'],
+                            'name': analytic.name,
+                            'level': line['level'] + 1,
+                            'parent_id': line['id'],
+                            'type': 'analytic',
+                            'debit': values['debit'],
+                            'credit': values['credit'],
+                            'balance': values['balance'],
+                            'analytic_id': analytic.id
+                        })
+                        
+            result.append(line)
+            
+        return result
+        
+    def _add_journal_details(self, lines, data):
+        """Ajoute les détails des journaux aux lignes"""
+        if not data.get('form', {}).get('show_journal', False):
+            return lines
+            
+        result = []
+        MoveLine = self.env['account.move.line']
+        Journal = self.env['account.journal']
+        
+        for line in lines:
+            if line.get('account_id'):
+                domain = self._get_move_line_domain(data.get('form', {}))
+                domain.append(('account_id', '=', line['account_id']))
+                
+                query = MoveLine._where_calc(domain)
+                tables, where_clause, where_params = query.get_sql()
+                
+                sql = """
+                    SELECT DISTINCT journal_id
+                    FROM """ + tables + """
+                    WHERE """ + where_clause
+                    
+                self.env.cr.execute(sql, where_params)
+                journal_ids = [x[0] for x in self.env.cr.fetchall()]
+                journals = Journal.browse(journal_ids)
+                
+                for journal in journals:
+                    domain.append(('journal_id', '=', journal.id))
+                    query = MoveLine._where_calc(domain)
+                    tables, where_clause, where_params = query.get_sql()
+                    
+                    sql = """
+                        SELECT 
+                            SUM(debit) as debit,
+                            SUM(credit) as credit,
+                            SUM(balance) as balance
+                        FROM """ + tables + """
+                        WHERE """ + where_clause
+                        
+                    self.env.cr.execute(sql, where_params)
+                    values = self.env.cr.dictfetchone()
+                    
+                    if values and not float_is_zero(values['balance'], precision_digits=2):
+                        result.append({
+                            'id': line['id'],
+                            'name': journal.name,
+                            'level': line['level'] + 1,
+                            'parent_id': line['id'],
+                            'type': 'journal',
+                            'debit': values['debit'],
+                            'credit': values['credit'],
+                            'balance': values['balance'],
+                            'journal_id': journal.id
+                        })
+                        
+            result.append(line)
+            
+        return result
+
 
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
     _description = 'Financial Reports'
-
+    
+    @api.model
     def _get_report_values(self, docids, data=None):
         """Génère les valeurs pour le rapport PDF"""
         if not data.get('form'):
             raise UserError(_("Form content is missing, this report cannot be printed."))
-
-        report = self.env['account.financial.report'].browse(data['form']['account_report_id'])
-        return {
-            'doc_ids': docids,
-            'doc_model': 'account.financial.report',
-            'data': data['form'],
-            'docs': report,
-            'get_account_lines': self._get_account_lines,
-        }
+            
+        report = self.env['account.financial.report'].browse(docids)
+        return report.get_report_values(data)
