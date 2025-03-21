@@ -87,11 +87,12 @@ class AccountFinancialReport(models.Model):
     # Champs manquants dans le modèle
     show_journal = fields.Boolean('Show Journal', default=False)
     show_balance = fields.Boolean('Show Balance', default=True)
-    show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
+    # Champs qui causaient des erreurs dans le XML - commentés pour référence future
+    # show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
-    show_partner = fields.Boolean('Show Partner', default=False)
+    # show_partner = fields.Boolean('Show Partner', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
-    enable_filter = fields.Boolean('Enable Comparison', default=False)
+    # enable_filter = fields.Boolean('Enable Comparison', default=False)
     company_id = fields.Many2one('res.company', string='Company', required=True,
                                default=lambda self: self.env.company)
 
