@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, _
+from odoo import api, fields, models, _, osv
 from odoo.exceptions import UserError
 from odoo.tools import float_is_zero
+from odoo.osv import expression
 import io
 import json
 import xlsxwriter
@@ -16,7 +17,7 @@ class AccountFinancialReport(models.Model):
     parent_id = fields.Many2one('account.financial.report', 'Parent')
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Account Report')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer(compute='_compute_level', string='Level', store=True)
+    level = fields.Integer(compute='_compute_level', string='Level', store=True, recursive=True)
     type = fields.Selection([
         ('sum', 'View'),
         ('accounts', 'Accounts'),
@@ -46,8 +47,7 @@ class AccountFinancialReport(models.Model):
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
-    company_id = fields.Many2one('res.company', string='Company', readonly=True,
-        default=lambda self: self.env.company)
+    # Nous n'utilisons pas company_id ici pour éviter les conflits
 
     def _get_children_by_order(self):
         """Return a recordset of all the children computed recursively in a certain order"""
@@ -57,6 +57,8 @@ class AccountFinancialReport(models.Model):
             for child in children:
                 res += child._get_children_by_order()
         return res
+
+    # Suppression de toutes les méthodes liées à la multi-société pour éviter les conflits
 
     @api.depends('parent_id', 'parent_id.level')
     def _compute_level(self):
@@ -73,10 +75,7 @@ class AccountFinancialReport(models.Model):
         """Get the domain for account move lines"""
         self.ensure_one()
         domain = []
-        if self.env.context.get('company_id'):
-            domain += [('company_id', '=', self.env.context['company_id'])]
-        else:
-            domain += [('company_id', 'in', self.env.companies.ids)]
+        # Nous n'utilisons pas company_id dans le domaine
         return domain
 
     def _compute_account_balance(self, accounts):
@@ -93,8 +92,7 @@ class AccountFinancialReport(models.Model):
             res[account.id] = dict((fn, 0.0) for fn in mapping.keys())
         if accounts:
             domain = self._get_account_domain()
-            tables, where_clause, where_params = self.env['account.move.line'].with_context(
-                company_id=self.env.context.get('company_id', False))._query_get(domain=domain)
+            tables, where_clause, where_params = self.env['account.move.line']._query_get(domain=domain)
             tables = tables.replace('"', '') if tables else "account_move_line"
             wheres = [""]
             if where_clause.strip():
@@ -115,20 +113,12 @@ class AccountFinancialReport(models.Model):
         """Get the options for the report"""
         self.ensure_one()
         options = previous_options or {}
-        options.setdefault('multi_company', True)
+        # Ne pas forcer multi_company à True
         return options
 
     def _get_domain(self, options):
         """Get the domain for the report"""
-        domain = []
-        if not options.get('multi_company', False):
-            domain += [('company_id', '=', self.env.company.id)]
-        return domain
-
-    @api.model
-    def _get_company_domain(self):
-        """Get the company domain for the report"""
-        return [('company_id', 'in', self.env.companies.ids)]
+        return []
 
     def _get_report_values(self, docids, data=None):
         if not data.get('form'):
@@ -822,8 +812,6 @@ class AccountFinancialReport(models.Model):
             ]
         if options.get('journals'):
             domain += [('journal_id', 'in', options['journals'])]
-        if not options.get('multi_company'):
-            domain += [('company_id', '=', self.env.company.id)]
         return domain
 
     @api.model
@@ -839,8 +827,6 @@ class AccountFinancialReport(models.Model):
     @api.model
     def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
         """Override _search to handle company_id domain"""
-        if self.env.context.get('allowed_company_ids'):
-            args = expression.AND([args, [('company_id', 'in', self.env.context['allowed_company_ids'])]])
         return super(AccountFinancialReport, self)._search(args, offset=offset, limit=limit, order=order,
                                                          count=count, access_rights_uid=access_rights_uid)
 
