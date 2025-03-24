@@ -30,7 +30,7 @@ from odoo.exceptions import UserError
 
 class AccountAgedTrialBalance(models.TransientModel):
     _name = 'account.aged.trial.balance'
-    _inherit = 'account.common.partner.report'
+    _inherit = ['account.common.report', 'account.common.partner.report']
     _description = 'Account Aged Trial balance Report'
 
     journal_ids = fields.Many2many('account.journal', string='Journals',
