@@ -84,6 +84,9 @@
             '/base_accounting_kit_16/static/src/scss/account_asset.scss',
             '/base_accounting_kit_16/static/lib/bootstrap-toggle-master/css/bootstrap-toggle.min.css',
             
+            # Chart.js Library (load before other scripts)
+            '/base_accounting_kit_16/static/lib/chart.js/chart.min.js',
+            
             # Core Scripts
             '/base_accounting_kit_16/static/src/js/account_dashboard.js',
             '/base_accounting_kit_16/static/src/js/account_reports.js',
@@ -93,9 +96,6 @@
             '/base_accounting_kit_16/static/src/js/payment/payment_render.js',
             '/base_accounting_kit_16/static/src/js/payment/payment_matching.js',
             '/base_accounting_kit_16/static/src/js/payment/payment_widget.js',
-            
-            # Chart Scripts
-            '/base_accounting_kit_16/static/lib/chart.js/chart.min.js',
             
             # Toggle Scripts
             '/base_accounting_kit_16/static/lib/bootstrap-toggle-master/js/bootstrap-toggle.min.js',

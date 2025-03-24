@@ -7,7 +7,7 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
     var web_client = require('web.web_client');
     var _t = core._t;
     var QWeb = core.qweb;
-    var self = this;
+    // var self = this;  
     var currency;
     var ActionMenu = AbstractAction.extend({
 
@@ -547,49 +547,50 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                     // End Defining data
                     if (window.myCharts != undefined)
                         window.myCharts.destroy();
-                    window.myCharts = new Chart(ctx, {
-                        //var myChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                    label: 'Income', // Name the series
-                                    data: income, // Specify the data values array
-                                    backgroundColor: '#66aecf',
-                                    borderColor: '#66aecf',
+                    if (typeof Chart !== 'undefined') {
+                        window.myCharts = new Chart(ctx, {
+                            //var myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Income', // Name the series
+                                        data: income, // Specify the data values array
+                                        backgroundColor: '#66aecf',
+                                        borderColor: '#66aecf',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Expense', // Name the series
-                                    data: expense, // Specify the data values array
-                                    backgroundColor: '#6993d6',
-                                    borderColor: '#6993d6',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Expense', // Name the series
+                                        data: expense, // Specify the data values array
+                                        backgroundColor: '#6993d6',
+                                        borderColor: '#6993d6',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Profit/Loss', // Name the series
-                                    data: profit, // Specify the data values array
-                                    backgroundColor: '#0bd465',
-                                    borderColor: '#0bd465',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Profit/Loss', // Name the series
+                                        data: profit, // Specify the data values array
+                                        backgroundColor: '#0bd465',
+                                        borderColor: '#0bd465',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'line', // Set this data to a line chart
-                                    fill: false
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true, // Instruct chart js to respond nicely.
-                            maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
-                        }
-                    });
-
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'line', // Set this data to a line chart
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true, // Instruct chart js to respond nicely.
+                                maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+                            }
+                        });
+                    }
                 })
         },
 
@@ -625,49 +626,50 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                     // End Defining data
                     if (window.myCharts != undefined)
                         window.myCharts.destroy();
-                    window.myCharts = new Chart(ctx, {
-                        //var myChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                    label: 'Income', // Name the series
-                                    data: income, // Specify the data values array
-                                    backgroundColor: '#66aecf',
-                                    borderColor: '#66aecf',
+                    if (typeof Chart !== 'undefined') {
+                        window.myCharts = new Chart(ctx, {
+                            //var myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Income', // Name the series
+                                        data: income, // Specify the data values array
+                                        backgroundColor: '#66aecf',
+                                        borderColor: '#66aecf',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Expense', // Name the series
-                                    data: expense, // Specify the data values array
-                                    backgroundColor: '#6993d6',
-                                    borderColor: '#6993d6',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Expense', // Name the series
+                                        data: expense, // Specify the data values array
+                                        backgroundColor: '#6993d6',
+                                        borderColor: '#6993d6',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Profit/Loss', // Name the series
-                                    data: profit, // Specify the data values array
-                                    backgroundColor: '#0bd465',
-                                    borderColor: '#0bd465',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Profit/Loss', // Name the series
+                                        data: profit, // Specify the data values array
+                                        backgroundColor: '#0bd465',
+                                        borderColor: '#0bd465',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'line', // Set this data to a line chart
-                                    fill: false
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true, // Instruct chart js to respond nicely.
-                            maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
-                        }
-                    });
-
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'line', // Set this data to a line chart
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true, // Instruct chart js to respond nicely.
+                                maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+                            }
+                        });
+                    }
                 })
         },
         onclick_income_this_year: function(ev) {
@@ -706,49 +708,50 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
 
                     if (window.myCharts != undefined)
                         window.myCharts.destroy();
-                    window.myCharts = new Chart(ctx, {
-                        //var myChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                    label: 'Income', // Name the series
-                                    data: income, // Specify the data values array
-                                    backgroundColor: '#66aecf',
-                                    borderColor: '#66aecf',
+                    if (typeof Chart !== 'undefined') {
+                        window.myCharts = new Chart(ctx, {
+                            //var myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Income', // Name the series
+                                        data: income, // Specify the data values array
+                                        backgroundColor: '#66aecf',
+                                        borderColor: '#66aecf',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Expense', // Name the series
-                                    data: expense, // Specify the data values array
-                                    backgroundColor: '#6993d6',
-                                    borderColor: '#6993d6',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Expense', // Name the series
+                                        data: expense, // Specify the data values array
+                                        backgroundColor: '#6993d6',
+                                        borderColor: '#6993d6',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Profit/Loss', // Name the series
-                                    data: profit, // Specify the data values array
-                                    backgroundColor: '#0bd465',
-                                    borderColor: '#0bd465',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Profit/Loss', // Name the series
+                                        data: profit, // Specify the data values array
+                                        backgroundColor: '#0bd465',
+                                        borderColor: '#0bd465',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'line', // Set this data to a line chart
-                                    fill: false
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true, // Instruct chart js to respond nicely.
-                            maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
-                        }
-                    });
-
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'line', // Set this data to a line chart
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true, // Instruct chart js to respond nicely.
+                                maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+                            }
+                        });
+                    }
                 })
         },
 
@@ -950,49 +953,50 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                     // End Defining data
                     if (window.myCharts != undefined)
                         window.myCharts.destroy();
-                    window.myCharts = new Chart(ctx, {
-                        //var myChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                    label: 'Income', // Name the series
-                                    data: income, // Specify the data values array
-                                    backgroundColor: '#66aecf',
-                                    borderColor: '#66aecf',
+                    if (typeof Chart !== 'undefined') {
+                        window.myCharts = new Chart(ctx, {
+                            //var myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Income', // Name the series
+                                        data: income, // Specify the data values array
+                                        backgroundColor: '#66aecf',
+                                        borderColor: '#66aecf',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Expense', // Name the series
-                                    data: expense, // Specify the data values array
-                                    backgroundColor: '#6993d6',
-                                    borderColor: '#6993d6',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Expense', // Name the series
+                                        data: expense, // Specify the data values array
+                                        backgroundColor: '#6993d6',
+                                        borderColor: '#6993d6',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'bar', // Set this data to a line chart
-                                    fill: false
-                                },
-                                {
-                                    label: 'Profit/Loss', // Name the series
-                                    data: profit, // Specify the data values array
-                                    backgroundColor: '#0bd465',
-                                    borderColor: '#0bd465',
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'bar', // Set this data to a line chart
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Profit/Loss', // Name the series
+                                        data: profit, // Specify the data values array
+                                        backgroundColor: '#0bd465',
+                                        borderColor: '#0bd465',
 
-                                    borderWidth: 1, // Specify bar border width
-                                    type: 'line', // Set this data to a line chart
-                                    fill: false
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true, // Instruct chart js to respond nicely.
-                            maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
-                        }
-                    });
-
+                                        borderWidth: 1, // Specify bar border width
+                                        type: 'line', // Set this data to a line chart
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true, // Instruct chart js to respond nicely.
+                                maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+                            }
+                        });
+                    }
                 })
         },
 
@@ -1192,49 +1196,50 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                             // End Defining data
                             if (window.myCharts != undefined)
                                 window.myCharts.destroy();
-                            window.myCharts = new Chart(ctx, {
-                                //var myChart = new Chart(ctx, {
-                                type: 'bar',
-                                data: {
-                                    labels: labels,
-                                    datasets: [{
-                                            label: 'Income', // Name the series
-                                            data: income, // Specify the data values array
-                                            backgroundColor: '#66aecf',
-                                            borderColor: '#66aecf',
+                            if (typeof Chart !== 'undefined') {
+                                window.myCharts = new Chart(ctx, {
+                                    //var myChart = new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                                label: 'Income', // Name the series
+                                                data: income, // Specify the data values array
+                                                backgroundColor: '#66aecf',
+                                                borderColor: '#66aecf',
 
-                                            borderWidth: 1, // Specify bar border width
-                                            type: 'bar', // Set this data to a line chart
-                                            fill: false
-                                        },
-                                        {
-                                            label: 'Expense', // Name the series
-                                            data: expense, // Specify the data values array
-                                            backgroundColor: '#6993d6',
-                                            borderColor: '#6993d6',
+                                                borderWidth: 1, // Specify bar border width
+                                                type: 'bar', // Set this data to a line chart
+                                                fill: false
+                                            },
+                                            {
+                                                label: 'Expense', // Name the series
+                                                data: expense, // Specify the data values array
+                                                backgroundColor: '#6993d6',
+                                                borderColor: '#6993d6',
 
-                                            borderWidth: 1, // Specify bar border width
-                                            type: 'bar', // Set this data to a line chart
-                                            fill: false
-                                        },
-                                        {
-                                            label: 'Profit/Loss', // Name the series
-                                            data: profit, // Specify the data values array
-                                            backgroundColor: '#0bd465',
-                                            borderColor: '#0bd465',
+                                                borderWidth: 1, // Specify bar border width
+                                                type: 'bar', // Set this data to a line chart
+                                                fill: false
+                                            },
+                                            {
+                                                label: 'Profit/Loss', // Name the series
+                                                data: profit, // Specify the data values array
+                                                backgroundColor: '#0bd465',
+                                                borderColor: '#0bd465',
 
-                                            borderWidth: 1, // Specify bar border width
-                                            type: 'line', // Set this data to a line chart
-                                            fill: false
-                                        }
-                                    ]
-                                },
-                                options: {
-                                    responsive: true, // Instruct chart js to respond nicely.
-                                    maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
-                                }
-                            });
-
+                                                borderWidth: 1, // Specify bar border width
+                                                type: 'line', // Set this data to a line chart
+                                                fill: false
+                                            }
+                                        ]
+                                    },
+                                    options: {
+                                        responsive: true, // Instruct chart js to respond nicely.
+                                        maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+                                    }
+                                });
+                            }
                         })
                     var arg = 'this_month';
                     rpc.query({
@@ -1263,43 +1268,45 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                                 };
                                 if (window.donut != undefined)
                                     window.donut.destroy();
-                                window.donut = new Chart($("#canvas1"), {
-                                    type: 'doughnut',
-                                    tooltipFillColor: "rgba(51, 51, 51, 0.55)",
-                                    data: {
-                                        labels: result.due_partner,
-                                        datasets: [{
-                                            data: result.due_amount,
-                                            backgroundColor: [
-                                                '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
-                                                '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
-                                                '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
-                                                ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
-                                                '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
-                                                '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
-                                                '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
-                                                '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
-                                                '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
-                                                '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
-                                            ],
-                                            hoverBackgroundColor: [
-                                                '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
-                                                '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
-                                                '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
-                                                ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
-                                                '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
-                                                '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
-                                                '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
-                                                '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
-                                                '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
-                                                '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
-                                            ]
-                                        }]
-                                    },
-                                    options: {
-                                        responsive: false
-                                    }
-                                });
+                                if (typeof Chart !== 'undefined') {
+                                    window.donut = new Chart($("#canvas1"), {
+                                        type: 'doughnut',
+                                        tooltipFillColor: "rgba(51, 51, 51, 0.55)",
+                                        data: {
+                                            labels: result.due_partner,
+                                            datasets: [{
+                                                data: result.due_amount,
+                                                backgroundColor: [
+                                                    '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
+                                                    '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
+                                                    '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
+                                                    ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
+                                                    '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
+                                                    '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
+                                                    '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
+                                                    '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
+                                                    '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
+                                                    '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
+                                                ],
+                                                hoverBackgroundColor: [
+                                                    '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
+                                                    '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
+                                                    '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
+                                                    ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
+                                                    '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
+                                                    '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
+                                                    '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
+                                                    '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
+                                                    '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
+                                                    '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
+                                                ]
+                                            }]
+                                        },
+                                        options: {
+                                            responsive: false
+                                        }
+                                    });
+                                }
                             });
                         })
                     rpc.query({
@@ -1389,43 +1396,45 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                                 };
                                 if (window.donuts != undefined)
                                     window.donuts.destroy();
-                                window.donuts = new Chart($("#horizontalbarChart"), {
-                                    type: 'doughnut',
-                                    tooltipFillColor: "rgba(51, 51, 51, 0.55)",
-                                    data: {
-                                        labels: result.bill_partner,
-                                        datasets: [{
-                                            data: result.bill_amount,
-                                            backgroundColor: [
-                                                '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
-                                                '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
-                                                '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
-                                                ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
-                                                '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
-                                                '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
-                                                '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
-                                                '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
-                                                '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
-                                                '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
-                                            ],
-                                            hoverBackgroundColor: [
-                                                '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
-                                                '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
-                                                '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
-                                                ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
-                                                '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
-                                                '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
-                                                '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
-                                                '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
-                                                '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
-                                                '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
-                                            ]
-                                        }]
-                                    },
-                                    options: {
-                                        responsive: false
-                                    }
-                                });
+                                if (typeof Chart !== 'undefined') {
+                                    window.donuts = new Chart($("#horizontalbarChart"), {
+                                        type: 'doughnut',
+                                        tooltipFillColor: "rgba(51, 51, 51, 0.55)",
+                                        data: {
+                                            labels: result.bill_partner,
+                                            datasets: [{
+                                                data: result.bill_amount,
+                                                backgroundColor: [
+                                                    '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
+                                                    '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
+                                                    '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
+                                                    ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
+                                                    '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
+                                                    '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
+                                                    '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
+                                                    '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
+                                                    '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
+                                                    '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
+                                                ],
+                                                hoverBackgroundColor: [
+                                                    '#66aecf ', '#6993d6 ', '#666fcf', '#7c66cf', '#9c66cf',
+                                                    '#bc66cf ', '#b75fcc', ' #cb5fbf ', ' #cc5f7f ', ' #cc6260',
+                                                    '#cc815f', '#cca15f ', '#ccc25f', '#b9cf66', '#99cf66',
+                                                    ' #75cb5f ', '#60cc6c', '#804D8000', '#80B33300', '#80CC80CC', '#f2552c', '#00cccc',
+                                                    '#1f2e2e', '#993333', '#00cca3', '#1a1a00', '#3399ff',
+                                                    '#8066664D', '#80991AFF', '#808E666FF', '#804DB3FF', '#801AB399',
+                                                    '#80E666B3', '#8033991A', '#80CC9999', '#80B3B31A', '#8000E680',
+                                                    '#804D8066', '#80809980', '#80E6FF80', '#801AFF33', '#80999933',
+                                                    '#80FF3380', '#80CCCC00', '#8066E64D', '#804D80CC', '#809900B3',
+                                                    '#80E64D66', '#804DB380', '#80FF4D4D', '#8099E6E6', '#806666FF'
+                                                ]
+                                            }]
+                                        },
+                                        options: {
+                                            responsive: false
+                                        }
+                                    });
+                                }
                             });
                         })
                     rpc.query({
