@@ -46,6 +46,8 @@ class AccountFinancialReport(models.Model):
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
+    company_id = fields.Many2one('res.company', string='Company', readonly=True,
+        default=lambda self: self.env.company)
 
     def _get_children_by_order(self):
         """Return a recordset of all the children computed recursively in a certain order"""
@@ -823,6 +825,24 @@ class AccountFinancialReport(models.Model):
         if not options.get('multi_company'):
             domain += [('company_id', '=', self.env.company.id)]
         return domain
+
+    @api.model
+    def _get_default_company(self):
+        """Get the default company for the report"""
+        return self.env.company
+
+    @api.model
+    def _get_allowed_company_ids(self):
+        """Get the allowed companies for the report"""
+        return self.env.companies.ids
+
+    @api.model
+    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+        """Override _search to handle company_id domain"""
+        if self.env.context.get('allowed_company_ids'):
+            args = expression.AND([args, [('company_id', 'in', self.env.context['allowed_company_ids'])]])
+        return super(AccountFinancialReport, self)._search(args, offset=offset, limit=limit, order=order,
+                                                         count=count, access_rights_uid=access_rights_uid)
 
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
