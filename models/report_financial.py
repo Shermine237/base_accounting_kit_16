@@ -473,7 +473,10 @@ class AccountFinancialReport(models.Model):
             return self.search([('parent_id', '=', self.id)], order='sequence ASC')
             
         def _process_report(report, parent_id=False, level=1):
-            currency_table = self.env['res.currency']._get_query_currency_table(self.env.companies.ids)
+            currency_table = self.env['res.currency']._get_query_currency_table({
+                'multi_company': True,
+                'company_ids': self.env.companies.ids,
+            })
             MoveLine = self.env['account.move.line']
             domain = self._get_move_line_domain(form)
             
