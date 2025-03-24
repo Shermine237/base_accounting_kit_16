@@ -55,8 +55,6 @@ class AccountFinancialReport(models.Model):
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
-    company_id = fields.Many2one('res.company', string='Company', required=True,
-                               default=lambda self: self.env.company)
 
     @api.depends('parent_id', 'parent_id.level')
     def _compute_level(self):
@@ -77,6 +75,20 @@ class AccountFinancialReport(models.Model):
             for child in children:
                 res += child._get_children_by_order()
         return res
+
+    def _get_options(self, previous_options=None):
+        """Get the options for the report"""
+        self.ensure_one()
+        options = super(AccountFinancialReport, self)._get_options(previous_options=previous_options) or {}
+        options.setdefault('multi_company', True)
+        return options
+
+    def _get_domain(self, options):
+        """Get the domain for the report"""
+        domain = super(AccountFinancialReport, self)._get_domain(options) or []
+        if not options.get('multi_company', False):
+            domain += [('company_id', '=', self.env.company.id)]
+        return domain
 
     @api.model
     def _get_report_values(self, docids, data=None):
@@ -151,7 +163,9 @@ class AccountFinancialReport(models.Model):
         for account in accounts:
             res[account.id] = dict((fn, 0.0) for fn in mapping.keys())
         if accounts:
-            tables, where_clause, where_params = self.env['account.move.line']._query_get()
+            options = self._get_options()
+            domain = self._get_domain(options)
+            tables, where_clause, where_params = self.env['account.move.line']._query_get(domain=domain)
             tables = tables.replace('"', '') if tables else "account_move_line"
             wheres = [""]
             if where_clause.strip():
@@ -386,28 +400,6 @@ class AccountFinancialReport(models.Model):
             })
             
         return lines
-
-    def _get_domain(self, options):
-        """Construit le domaine de recherche selon les options"""
-        self.ensure_one()
-        domain = []
-        
-        # Filtre de date
-        if options.get('date'):
-            domain += [
-                ('date', '>=', options['date']['date_from']),
-                ('date', '<=', options['date']['date_to']),
-            ]
-            
-        # Filtre des journaux
-        if options.get('journals'):
-            domain += [('journal_id', 'in', options['journals'])]
-            
-        # Filtre multi-société
-        if not options.get('multi_company'):
-            domain += [('company_id', '=', self.env.company.id)]
-            
-        return domain
 
     def get_report_values(self, data):
         """Récupère les valeurs pour le rapport"""
