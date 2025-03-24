@@ -60,7 +60,6 @@ class ReportFinancialXlsx(models.AbstractModel):
 
         # Récupération des données du rapport
         form_data = data.get('form', {})
-        company_id = form_data.get('company_id', False)
         date_from = form_data.get('date_from', False)
         date_to = form_data.get('date_to', False)
         enable_filter = form_data.get('enable_filter', False)
@@ -93,9 +92,6 @@ class ReportFinancialXlsx(models.AbstractModel):
             context = {
                 'date_from': date_from,
                 'date_to': date_to,
-                'company_id': company_id and company_id[0],
-                'enable_filter': enable_filter,
-                'debit_credit': debit_credit,
             }
             
             # Obtenir les lignes du rapport via une méthode personnalisée
@@ -153,7 +149,6 @@ class ReportFinancialXlsx(models.AbstractModel):
         lines = []
         
         # Récupérer les paramètres du formulaire
-        company_id = form_data.get('company_id', False)
         date_from = form_data.get('date_from', False)
         date_to = form_data.get('date_to', False)
         
@@ -161,7 +156,6 @@ class ReportFinancialXlsx(models.AbstractModel):
         context = {
             'date_from': date_from,
             'date_to': date_to,
-            'company_id': company_id and company_id[0],
         }
         
         # Récupérer les lignes de rapport de manière récursive
@@ -253,8 +247,10 @@ class ReportFinancialXlsx(models.AbstractModel):
             domain.append(('date', '>=', context['date_from']))
         if context.get('date_to'):
             domain.append(('date', '<=', context['date_to']))
-        if context.get('company_id'):
-            domain.append(('company_id', '=', context['company_id']))
+            
+        # Utiliser la société actuelle
+        company = self.env.company
+        domain.append(('company_id', '=', company.id))
         
         # Récupérer les écritures comptables
         account_moves = self.env['account.move.line'].search(domain)
