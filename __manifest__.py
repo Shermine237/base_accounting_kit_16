@@ -99,6 +99,9 @@
             
             # Toggle Scripts
             '/base_accounting_kit_16/static/lib/bootstrap-toggle-master/js/bootstrap-toggle.min.js',
+            
+            # XML Templates
+            '/base_accounting_kit_16/static/src/xml/template.xml',
         ],
         'web.assets_qweb': [
             '/base_accounting_kit_16/static/src/xml/template.xml',

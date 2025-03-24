@@ -11,7 +11,7 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
     var currency;
     var ActionMenu = AbstractAction.extend({
 
-        template: 'Invoicedashboard',
+        template: 'base_accounting_kit_16.Invoicedashboard',
 
         events: {
             'click .invoice_dashboard': 'onclick_dashboard',
