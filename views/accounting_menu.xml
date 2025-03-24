@@ -24,6 +24,12 @@
                   parent="account.menu_finance"
                   sequence="10"/>
 
+        <!-- Sous-menu pour les rapports d'audit -->
+        <menuitem id="account_reports_audit"
+                  name="Audit Reports"
+                  parent="menu_financial_reports"
+                  sequence="15"/>
+
         <!-- Sous-menus des rapports -->
         <menuitem id="account_reports_generic_statements" 
                   name="Generic Statements" 
@@ -40,9 +46,9 @@
                   parent="menu_financial_reports"
                   sequence="40"/>
 
-        <menuitem id="account_reports_audit" 
-                  name="Audit Reports" 
-                  parent="menu_financial_reports"
+        <menuitem id="account_reports_audit_child" 
+                  name="Audit Reports Child" 
+                  parent="account_reports_audit"
                   sequence="50"/>
 
         <!-- Balance Sheet -->
