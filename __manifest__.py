@@ -81,8 +81,8 @@
             
             # Styles
             '/base_accounting_kit_16/static/src/scss/style.scss',
-            '/base_accounting_kit_16/static/src/scss/account_dashboard.scss',
-            '/base_accounting_kit_16/static/lib/bootstrap-toggle/css/bootstrap-toggle.min.css',
+            '/base_accounting_kit_16/static/src/scss/account_asset.scss',
+            '/base_accounting_kit_16/static/lib/bootstrap-toggle-master/css/bootstrap-toggle.min.css',
             
             # Core Scripts
             '/base_accounting_kit_16/static/src/js/account_dashboard.js',
@@ -98,7 +98,7 @@
             '/base_accounting_kit_16/static/lib/chart.js/chart.min.js',
             
             # Toggle Scripts
-            '/base_accounting_kit_16/static/lib/bootstrap-toggle/js/bootstrap-toggle.min.js',
+            '/base_accounting_kit_16/static/lib/bootstrap-toggle-master/js/bootstrap-toggle.min.js',
         ],
         'web.assets_qweb': [
             '/base_accounting_kit_16/static/src/xml/template.xml',
