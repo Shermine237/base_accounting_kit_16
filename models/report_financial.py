@@ -47,6 +47,26 @@ class AccountFinancialReport(models.Model):
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
+    account_type = fields.Selection([
+        ('asset_receivable', 'Receivable'),
+        ('asset_cash', 'Bank and Cash'),
+        ('asset_current', 'Current Assets'),
+        ('asset_non_current', 'Non-current Assets'),
+        ('asset_prepayments', 'Prepayments'),
+        ('asset_fixed', 'Fixed Assets'),
+        ('liability_payable', 'Payable'),
+        ('liability_credit_card', 'Credit Card'),
+        ('liability_current', 'Current Liabilities'),
+        ('liability_non_current', 'Non-current Liabilities'),
+        ('equity', 'Equity'),
+        ('equity_unaffected', 'Current Year Earnings'),
+        ('income', 'Income'),
+        ('income_other', 'Other Income'),
+        ('expense', 'Expenses'),
+        ('expense_depreciation', 'Depreciation'),
+        ('expense_direct_cost', 'Cost of Revenue'),
+        ('off_balance', 'Off-Balance Sheet')
+    ], string='Account Type')
     # Nous n'utilisons pas company_id ici pour éviter les conflits
 
     def _get_children_by_order(self):
