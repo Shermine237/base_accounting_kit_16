@@ -1365,7 +1365,7 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                         supplier_invoice_total_current_month = self.format_currency(currency, supplier_invoice_total_current_month);
 
                         $('#total_customer_invoice_paid_current_month').append('<div class="logo">' + '<span>' + customer_invoice_paid_current_month + '</span><span>Total Paid<span></div>');
-                        $('#total_customer_invoice_current_month').append('<div" class="logo">' + '<span>' + customer_invoice_total_current_month + '</span><span>Total Invoice<span></div>');
+                        $('#total_customer_invoice_current_month').append('<div" class="logo">' + '<span>' + customer_invoice_total_current_month + '</span><span>Total Invoice <span></div>');
 
                         $('#total_supplier_invoice_paid_current_month').append('<div" class="logo">' + '<span>' + supplier_invoice_paid_current_month + '</span><span>Total Paid<span></div>');
                         $('#total_supplier_invoice_current_month').append('<div" class="logo">' + '<span>' + supplier_invoice_total_current_month + '</span><span>Total Invoice<span></div>');
@@ -1836,7 +1836,7 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
         willStart: function() {
             var self = this;
             self.drpdn_show = false;
-            return Promise.all([ajax.loadLibs(this), this._super()]);
+            return this._super();
         },
     });
     core.action_registry.add('invoice_dashboard', ActionMenu);
