@@ -48,11 +48,12 @@ class AccountJournal(models.Model):
                 'context': action_context,
             }
 
-    @api.depends('outbound_payment_method_ids')
+    @api.depends('available_payment_method_ids')
     def _compute_check_printing_payment_method_selected(self):
         for journal in self:
             journal.check_printing_payment_method_selected = any(
-                pm.code == 'check_printing' for pm in journal.outbound_payment_method_ids)
+                pm.code == 'check_printing' and pm.payment_type == 'outbound' 
+                for pm in journal.available_payment_method_ids)
 
     @api.model
     def check_dashboard_journals(self):
@@ -101,7 +102,7 @@ class AccountJournal(models.Model):
         bank_journals = self.search([('type', '=', 'bank')])
         for bank_journal in bank_journals:
             bank_journal._create_check_sequence()
+            # Dans Odoo 16, on utilise available_payment_method_ids au lieu de inbound/outbound_payment_method_ids
             bank_journal.write({
-                'inbound_payment_method_ids': [(4, pdcin.id, None)],
-                'outbound_payment_method_ids': [(4, pdcout.id, None)],
+                'available_payment_method_ids': [(4, pdcin.id), (4, pdcout.id)],
             })
