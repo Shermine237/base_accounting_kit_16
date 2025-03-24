@@ -30,8 +30,14 @@
         </record>
 
         <!-- Financial Report Security Rules -->
-        <!-- Nous supprimons complètement cette règle pour éviter les conflits -->
-        <delete model="ir.rule" id="account_financial_report_comp_rule"/>
+        <!-- Commenté pour éviter les conflits avec le champ company_id -->
+        <!-- 
+        <record id="account_financial_report_comp_rule" model="ir.rule">
+            <field name="name">Account Financial Report Multi Company</field>
+            <field name="model_id" ref="model_account_financial_report"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        -->
 
         <!-- Financial Report Access Rights -->
         <record id="group_account_financial_report_user" model="res.groups">
