@@ -1828,6 +1828,29 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
                 });
         },
 
+        willStart: function() {
+            var self = this;
+            return this._super.apply(this, arguments).then(function() {
+                return self.fetch_data();
+            });
+        },
+        
+        fetch_data: function() {
+            var self = this;
+            var def1 = this._rpc({
+                model: 'account.journal',
+                method: 'check_dashboard_journals',
+                args: [],
+            }).then(function(result) {
+                if (result && result.error) {
+                    console.warn("Dashboard error:", result.error);
+                    return Promise.resolve();
+                }
+                return Promise.resolve();
+            });
+            return Promise.all([def1]);
+        },
+
         format_currency: function(currency, amount) {
             if (typeof(amount) != 'number') {
                 amount = parseFloat(amount);
@@ -1842,11 +1865,7 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
             }
         },
 
-        willStart: function() {
-            var self = this;
-            self.drpdn_show = false;
-            return this._super();
-        },
+        drpdn_show: false,
     });
     core.action_registry.add('invoice_dashboard', ActionMenu);
 

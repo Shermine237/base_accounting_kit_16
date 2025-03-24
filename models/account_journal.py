@@ -52,8 +52,43 @@ class AccountJournal(models.Model):
     def _compute_check_printing_payment_method_selected(self):
         for journal in self:
             journal.check_printing_payment_method_selected = any(
-                pm.code in ['check_printing', 'pdc'] for pm in
-                journal.outbound_payment_method_ids)
+                pm.code == 'check_printing' for pm in journal.outbound_payment_method_ids)
+
+    @api.model
+    def check_dashboard_journals(self):
+        """
+        Vérifie l'existence des journaux nécessaires pour le tableau de bord
+        et les crée si nécessaire
+        """
+        company_id = self.env.company.id
+        journals = self.search([
+            ('company_id', '=', company_id),
+            ('type', '=', 'general')
+        ])
+        
+        if not journals:
+            # Aucun journal de type général trouvé, créer un journal par défaut
+            try:
+                default_account = self.env['account.account'].search([
+                    ('company_id', '=', company_id),
+                    ('account_type', '=', 'asset_current')
+                ], limit=1)
+                
+                if not default_account:
+                    return {'error': 'Aucun compte comptable trouvé pour créer un journal général'}
+                
+                self.create({
+                    'name': 'Journal des opérations diverses',
+                    'code': 'MISC',
+                    'type': 'general',
+                    'company_id': company_id,
+                    'default_account_id': default_account.id,
+                })
+                return {'success': 'Journal général créé avec succès'}
+            except Exception as e:
+                return {'error': f'Erreur lors de la création du journal: {str(e)}'}
+        
+        return {'success': 'Journaux existants'}
 
     @api.model
     def _enable_pdc_on_bank_journals(self):
