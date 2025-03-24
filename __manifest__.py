@@ -73,7 +73,6 @@
         'report/cash_flow_report.xml',
         'report/multiple_invoice_layouts.xml',
         'report/multiple_invoice_report.xml',
-        'report/report_financial_xlsx.xml',
     ],
     'assets': {
         'web.assets_backend': [
