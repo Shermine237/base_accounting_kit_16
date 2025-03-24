@@ -19,11 +19,9 @@
         # Data
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
-        # 'data/account_asset_data.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'data/account_pdc_data.xml',
-        # 'data/followup_levels.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'data/multiple_invoice_data.xml',
-        'data/multiple_invoice_layout_action.xml',  # Nouveau fichier pour l'action manquante
+        'data/multiple_invoice_layout_action.xml',
         'data/recurring_entry_cron.xml',
         
         # Views
@@ -34,13 +32,9 @@
         'views/dashboard_views.xml',
         'views/reports_config_view.xml',
         'views/res_config_view.xml',
-        # 'views/account_asset_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
-        # 'views/account_asset_templates.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'views/account_configuration.xml',
-        # 'views/account_followup.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'views/account_group.xml',
         'views/credit_limit_view.xml',
-        # 'views/followup_report.xml',  # Commenté car le modèle followup.line n'existe plus dans Odoo 16
         'views/multiple_invoice_form.xml',
         'views/multiple_invoice_layout_view.xml',
         'views/payment_matching.xml',
@@ -49,7 +43,8 @@
         'views/recurring_payments_view.xml',
         
         # Wizards
-        'wizard/account_common_report_view.xml',  
+        'wizard/account_common_report_view.xml',
+        'wizard/account_report_common_partner_view.xml',
         'wizard/trial_balance.xml',
         'wizard/account_bank_book_wizard_view.xml',
         'wizard/account_cash_book_wizard_view.xml',
@@ -60,8 +55,6 @@
         'wizard/partner_ledger.xml',
         'wizard/tax_report.xml',
         'wizard/aged_partner.xml',
-        # 'wizard/asset_depreciation_confirmation_wizard_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
-        # 'wizard/asset_modify_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'wizard/account_lock_date.xml',
         'wizard/journal_audit.xml',
         
@@ -78,7 +71,6 @@
         'report/account_cash_book_view.xml',
         'report/account_day_book_view.xml',
         'report/cash_flow_report.xml',
-        # 'report/account_asset_report_views.xml',  # Commenté car les modèles d'actifs ne sont pas compatibles avec Odoo 16
         'report/multiple_invoice_layouts.xml',
         'report/multiple_invoice_report.xml',
         'report/report_financial_xlsx.xml',

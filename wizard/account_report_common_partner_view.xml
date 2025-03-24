@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="account_common_partner_report_view" model="ir.ui.view">
+        <field name="name">Account Common Partner Report</field>
+        <field name="model">account.common.partner.report</field>
+        <field name="inherit_id" ref="base_accounting_kit_16.account_common_report_view"/>
+        <field name="arch" type="xml">
+            <field name="target_move" position="after">
+                <field name="result_selection"/>
+            </field>
+        </field>
+    </record>
+</odoo>
