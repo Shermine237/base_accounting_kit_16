@@ -11,31 +11,18 @@ from datetime import datetime
 class AccountFinancialReport(models.Model):
     _name = "account.financial.report"
     _description = "Account Report"
-    _inherit = ['account.report']
-    _rec_name = 'name'
-
-    @api.depends('parent_id', 'parent_id.level')
-    def _compute_level(self):
-        """Compute the level of each report"""
-        for report in self:
-            level = 0
-            parent = report.parent_id
-            while parent:
-                level += 1
-                parent = parent.parent_id
-            report.level = level
+    _inherit = 'account.report'
 
     name = fields.Char('Report Name', required=True, translate=True)
     parent_id = fields.Many2one('account.financial.report', 'Parent')
     children_ids = fields.One2many('account.financial.report', 'parent_id', 'Account Report')
     sequence = fields.Integer('Sequence')
-    level = fields.Integer('Level', compute='_compute_level', recursive=True, store=True)
+    level = fields.Integer(compute='_compute_level', string='Level', store=True)
     type = fields.Selection([
         ('sum', 'View'),
         ('accounts', 'Accounts'),
         ('account_type', 'Account Type'),
         ('account_report', 'Report Value'),
-        # Types de rapports standards Odoo 16
         ('bs', 'Balance Sheet'),
         ('pl', 'Profit and Loss'),
         ('cf', 'Cash Flow Statement'),
@@ -45,25 +32,9 @@ class AccountFinancialReport(models.Model):
         ('ar', 'Aged Receivable'),
         ('ap', 'Aged Payable')
     ], 'Type', default='sum')
-    account_ids = fields.Many2many('account.account', 'account_account_financial_report',
-                                 'report_line_id', 'account_id', 'Accounts')
+    account_ids = fields.Many2many('account.account', 'account_account_financial_report', 'report_line_id', 'account_id', 'Accounts')
     account_report_id = fields.Many2one('account.financial.report', 'Report Value')
-    # Dans Odoo 16, account.account.type a été remplacé par account.account
-    # account_type_ids = fields.Many2many('account.account.type',
-    #                                   'account_account_financial_report_type',
-    #                                   'report_id', 'account_type_id', 'Account Types')
-    sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')],
-                          'Sign on Reports', required=True, default='1',
-                          help='For accounts that are typically more'
-                               ' debited than credited and that you'
-                               ' would like to print as negative'
-                               ' amounts in your reports, you should'
-                               ' reverse the sign of the balance;'
-                               ' e.g.: Expense account. The same applies'
-                               ' for accounts that are typically more'
-                               ' credited than debited and that you would'
-                               ' like to print as positive amounts in'
-                               ' your reports; e.g.: Income account.')
+    sign = fields.Selection([('-1', 'Reverse balance sign'), ('1', 'Preserve balance sign')], 'Sign on Reports', required=True, default='1')
     display_detail = fields.Selection([
         ('no_detail', 'No detail'),
         ('detail_flat', 'Display children flat'),
@@ -77,14 +48,7 @@ class AccountFinancialReport(models.Model):
         ('4', 'Normal Text'),
         ('5', 'Italic Text (smaller)'),
         ('6', 'Smallest Text'),
-    ], 'Financial Report Style', default='0',
-        help="You can set up here the format you want this"
-             " record to be displayed. If you leave the"
-             " automatic formatting, it will be computed"
-             " based on the financial reports hierarchy "
-             "(auto-computed field 'level').")
-    
-    # Champs manquants dans le modèle
+    ], 'Financial Report Style', default='0')
     show_journal = fields.Boolean('Show Journal', default=False)
     show_balance = fields.Boolean('Show Balance', default=True)
     show_debit_credit = fields.Boolean('Show Debit/Credit', default=False)
@@ -94,26 +58,127 @@ class AccountFinancialReport(models.Model):
     company_id = fields.Many2one('res.company', string='Company', required=True,
                                default=lambda self: self.env.company)
 
-    def _get_children_by_order(self):
-        """Retourne les enfants triés par séquence"""
-        return self.search([('id', 'child_of', self.ids)], order='sequence, name')
+    @api.depends('parent_id', 'parent_id.level')
+    def _compute_level(self):
+        """Compute the level of each report"""
+        for report in self:
+            level = 0
+            parent = report.parent_id
+            while parent:
+                level += 1
+                parent = parent.parent_id
+            report.level = level
 
-    @api.onchange('type')
-    def _onchange_type(self):
-        """Met à jour les filtres et le style en fonction du type de rapport"""
-        if self.type in ['bs', 'pl', 'cf']:
-            self.display_detail = 'detail_with_hierarchy'
-            self.style_overwrite = '1'
-            # self.enable_filter = self.type == 'pl'
-        elif self.type in ['gl', 'tb']:
-            self.display_detail = 'detail_flat'
-            self.style_overwrite = '4'
-            self.show_debit_credit = True
-            # self.enable_filter = True
-        elif self.type in ['ptl', 'ar', 'ap']:
-            self.display_detail = 'detail_flat'
-            self.style_overwrite = '4'
-            self.show_partner = True
+    def _get_children_by_order(self):
+        """Return a recordset of all the children computed recursively in a certain order"""
+        res = self
+        children = self.search([('parent_id', 'in', self.ids)], order='sequence ASC')
+        if children:
+            for child in children:
+                res += child._get_children_by_order()
+        return res
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        if not data.get('form'):
+            raise UserError(_("Form content is missing, this report cannot be printed."))
+
+        data['computed'] = {}
+        obj_report = self.env['account.financial.report'].browse(data['form']['account_report_id'][0])
+        used_context = self._build_contexts(data)
+        data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
+        result = self.with_context(data['form']['used_context'])._compute_report_balance(obj_report)
+        data['computed']['result'] = result
+
+        return {
+            'doc_ids': self.ids,
+            'doc_model': 'account.financial.report',
+            'docs': obj_report,
+            'data': data,
+        }
+
+    def _build_contexts(self, data):
+        result = {}
+        result['date_from'] = data['form'].get('date_from', False)
+        result['date_to'] = data['form'].get('date_to', False)
+        result['strict_range'] = True if result.get('date_from', False) else False
+        return result
+
+    def _compute_report_balance(self, reports):
+        res = {}
+        fields = ['credit', 'debit', 'balance']
+        for report in reports:
+            if report.id in res:
+                continue
+            res[report.id] = dict((fn, 0.0) for fn in fields)
+            if report.type == 'accounts':
+                # it's the sum of the linked accounts
+                res[report.id] = self._compute_account_balance(report.account_ids)
+                for value in res[report.id].values():
+                    for field in fields:
+                        res[report.id][field] += value.get(field, 0)
+            elif report.type == 'account_type':
+                # it's the sum the account types
+                accounts = self.env['account.account'].search([('account_type', 'in', ['asset', 'liability', 'equity', 'income', 'expense'])])
+                res[report.id] = self._compute_account_balance(accounts)
+                for value in res[report.id].values():
+                    for field in fields:
+                        res[report.id][field] += value.get(field, 0)
+            elif report.type == 'account_report' and report.account_report_id:
+                # it's the amount of the linked report
+                res2 = self._compute_report_balance(report.account_report_id)
+                for key, value in res2.items():
+                    for field in fields:
+                        res[report.id][field] += value[field]
+            elif report.type == 'sum':
+                # it's the sum of the children of this account.report
+                res2 = self._compute_report_balance(report.children_ids)
+                for key, value in res2.items():
+                    for field in fields:
+                        res[report.id][field] += value[field]
+        return res
+
+    def _compute_account_balance(self, accounts):
+        """ compute the balance, debit and credit for the provided accounts
+        """
+        mapping = {
+            'balance': "COALESCE(SUM(debit),0) - COALESCE(SUM(credit), 0) as balance",
+            'debit': "COALESCE(SUM(debit), 0) as debit",
+            'credit': "COALESCE(SUM(credit), 0) as credit",
+        }
+
+        res = {}
+        for account in accounts:
+            res[account.id] = dict((fn, 0.0) for fn in mapping.keys())
+        if accounts:
+            tables, where_clause, where_params = self.env['account.move.line']._query_get()
+            tables = tables.replace('"', '') if tables else "account_move_line"
+            wheres = [""]
+            if where_clause.strip():
+                wheres.append(where_clause.strip())
+            filters = " AND ".join(wheres)
+            request = "SELECT account_id as id, " + ', '.join(mapping.values()) + \
+                     " FROM " + tables + \
+                     " WHERE account_id IN %s " \
+                     + filters + \
+                     " GROUP BY account_id"
+            params = (tuple(accounts._ids),) + tuple(where_params)
+            self.env.cr.execute(request, params)
+            for row in self.env.cr.dictfetchall():
+                res[row['id']] = row
+        return res
+
+    def _get_report_name(self):
+        """Get the report name based on the type"""
+        self.ensure_one()
+        if self.type == 'sum':
+            return _('Financial Report')
+        elif self.type == 'accounts':
+            return _('Account Balance Report')
+        elif self.type == 'account_type':
+            return _('Account Type Report')
+        else:
+            return _('Report Value')
 
     def get_xlsx(self, options, response=None):
         """Génère le rapport Excel selon les standards Odoo 16"""
@@ -749,6 +814,18 @@ class AccountFinancialReport(models.Model):
             
         return result
 
+    def _get_move_line_domain(self, options):
+        domain = []
+        if options.get('date'):
+            domain += [
+                ('date', '>=', options['date']['date_from']),
+                ('date', '<=', options['date']['date_to']),
+            ]
+        if options.get('journals'):
+            domain += [('journal_id', 'in', options['journals'])]
+        if not options.get('multi_company'):
+            domain += [('company_id', '=', self.env.company.id)]
+        return domain
 
 class ReportFinancial(models.AbstractModel):
     _name = 'report.base_accounting_kit_16.report_financial'
