@@ -47,6 +47,7 @@ class AccountFinancialReport(models.Model):
     show_hierarchy = fields.Boolean('Show Hierarchy', default=False)
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     account_type = fields.Selection([
         ('asset_receivable', 'Receivable'),
         ('asset_cash', 'Bank and Cash'),
@@ -94,7 +95,7 @@ class AccountFinancialReport(models.Model):
     def _get_account_domain(self):
         """Get the domain for account move lines"""
         self.ensure_one()
-        domain = []
+        domain = [('company_id', '=', self.company_id.id)]
         # Nous n'utilisons pas company_id dans le domaine
         return domain
 
@@ -824,7 +825,7 @@ class AccountFinancialReport(models.Model):
         return result
 
     def _get_move_line_domain(self, options):
-        domain = []
+        domain = [('company_id', '=', self.company_id.id)]
         if options.get('date'):
             domain += [
                 ('date', '>=', options['date']['date_from']),
