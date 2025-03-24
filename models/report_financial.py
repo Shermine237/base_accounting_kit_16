@@ -11,7 +11,6 @@ from datetime import datetime
 class AccountFinancialReport(models.Model):
     _name = "account.financial.report"
     _description = "Account Report"
-    _inherit = 'account.report'
 
     name = fields.Char('Report Name', required=True, translate=True)
     parent_id = fields.Many2one('account.financial.report', 'Parent')
@@ -23,14 +22,6 @@ class AccountFinancialReport(models.Model):
         ('accounts', 'Accounts'),
         ('account_type', 'Account Type'),
         ('account_report', 'Report Value'),
-        ('bs', 'Balance Sheet'),
-        ('pl', 'Profit and Loss'),
-        ('cf', 'Cash Flow Statement'),
-        ('gl', 'General Ledger'),
-        ('ptl', 'Partner Ledger'),
-        ('tb', 'Trial Balance'),
-        ('ar', 'Aged Receivable'),
-        ('ap', 'Aged Payable')
     ], 'Type', default='sum')
     account_ids = fields.Many2many('account.account', 'account_account_financial_report', 'report_line_id', 'account_id', 'Accounts')
     account_report_id = fields.Many2one('account.financial.report', 'Report Value')
@@ -56,6 +47,15 @@ class AccountFinancialReport(models.Model):
     show_partner = fields.Boolean('Show Partner Details', default=False)
     show_analytic = fields.Boolean('Show Analytic', default=False)
 
+    def _get_children_by_order(self):
+        """Return a recordset of all the children computed recursively in a certain order"""
+        res = self
+        children = self.search([('parent_id', 'in', self.ids)], order='sequence ASC')
+        if children:
+            for child in children:
+                res += child._get_children_by_order()
+        return res
+
     @api.depends('parent_id', 'parent_id.level')
     def _compute_level(self):
         """Compute the level of each report"""
@@ -67,30 +67,67 @@ class AccountFinancialReport(models.Model):
                 parent = parent.parent_id
             report.level = level
 
-    def _get_children_by_order(self):
-        """Return a recordset of all the children computed recursively in a certain order"""
-        res = self
-        children = self.search([('parent_id', 'in', self.ids)], order='sequence ASC')
-        if children:
-            for child in children:
-                res += child._get_children_by_order()
+    def _get_account_domain(self):
+        """Get the domain for account move lines"""
+        self.ensure_one()
+        domain = []
+        if self.env.context.get('company_id'):
+            domain += [('company_id', '=', self.env.context['company_id'])]
+        else:
+            domain += [('company_id', 'in', self.env.companies.ids)]
+        return domain
+
+    def _compute_account_balance(self, accounts):
+        """ compute the balance, debit and credit for the provided accounts
+        """
+        mapping = {
+            'balance': "COALESCE(SUM(debit),0) - COALESCE(SUM(credit), 0) as balance",
+            'debit': "COALESCE(SUM(debit), 0) as debit",
+            'credit': "COALESCE(SUM(credit), 0) as credit",
+        }
+
+        res = {}
+        for account in accounts:
+            res[account.id] = dict((fn, 0.0) for fn in mapping.keys())
+        if accounts:
+            domain = self._get_account_domain()
+            tables, where_clause, where_params = self.env['account.move.line'].with_context(
+                company_id=self.env.context.get('company_id', False))._query_get(domain=domain)
+            tables = tables.replace('"', '') if tables else "account_move_line"
+            wheres = [""]
+            if where_clause.strip():
+                wheres.append(where_clause.strip())
+            filters = " AND ".join(wheres)
+            request = "SELECT account_id as id, " + ', '.join(mapping.values()) + \
+                     " FROM " + tables + \
+                     " WHERE account_id IN %s " \
+                     + filters + \
+                     " GROUP BY account_id"
+            params = (tuple(accounts._ids),) + tuple(where_params)
+            self.env.cr.execute(request, params)
+            for row in self.env.cr.dictfetchall():
+                res[row['id']] = row
         return res
 
     def _get_options(self, previous_options=None):
         """Get the options for the report"""
         self.ensure_one()
-        options = super(AccountFinancialReport, self)._get_options(previous_options=previous_options) or {}
+        options = previous_options or {}
         options.setdefault('multi_company', True)
         return options
 
     def _get_domain(self, options):
         """Get the domain for the report"""
-        domain = super(AccountFinancialReport, self)._get_domain(options) or []
+        domain = []
         if not options.get('multi_company', False):
             domain += [('company_id', '=', self.env.company.id)]
         return domain
 
     @api.model
+    def _get_company_domain(self):
+        """Get the company domain for the report"""
+        return [('company_id', 'in', self.env.companies.ids)]
+
     def _get_report_values(self, docids, data=None):
         if not data.get('form'):
             raise UserError(_("Form content is missing, this report cannot be printed."))
@@ -148,38 +185,6 @@ class AccountFinancialReport(models.Model):
                 for key, value in res2.items():
                     for field in fields:
                         res[report.id][field] += value[field]
-        return res
-
-    def _compute_account_balance(self, accounts):
-        """ compute the balance, debit and credit for the provided accounts
-        """
-        mapping = {
-            'balance': "COALESCE(SUM(debit),0) - COALESCE(SUM(credit), 0) as balance",
-            'debit': "COALESCE(SUM(debit), 0) as debit",
-            'credit': "COALESCE(SUM(credit), 0) as credit",
-        }
-
-        res = {}
-        for account in accounts:
-            res[account.id] = dict((fn, 0.0) for fn in mapping.keys())
-        if accounts:
-            options = self._get_options()
-            domain = self._get_domain(options)
-            tables, where_clause, where_params = self.env['account.move.line']._query_get(domain=domain)
-            tables = tables.replace('"', '') if tables else "account_move_line"
-            wheres = [""]
-            if where_clause.strip():
-                wheres.append(where_clause.strip())
-            filters = " AND ".join(wheres)
-            request = "SELECT account_id as id, " + ', '.join(mapping.values()) + \
-                     " FROM " + tables + \
-                     " WHERE account_id IN %s " \
-                     + filters + \
-                     " GROUP BY account_id"
-            params = (tuple(accounts._ids),) + tuple(where_params)
-            self.env.cr.execute(request, params)
-            for row in self.env.cr.dictfetchall():
-                res[row['id']] = row
         return res
 
     def _get_report_name(self):
@@ -618,13 +623,13 @@ class AccountFinancialReport(models.Model):
             
         # Début du traitement
         return _process_report(self)
-        
+
     def _get_flat_lines(self, data):
         """Génère les lignes de rapport en mode plat"""
         lines = self._get_hierarchical_lines(data)
         # En mode plat, on ne garde que les lignes de type 'account'
         return [line for line in lines if line['type'] == 'account']
-        
+
     def _add_partner_details(self, lines, data):
         """Ajoute les détails des partenaires aux lignes"""
         if not data.get('form', {}).get('show_partner', False):
