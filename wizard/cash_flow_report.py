@@ -32,8 +32,8 @@ class AccountingReport(models.TransientModel):
     account_report_id = fields.Many2one('account.financial.report',
                                          string='Account Reports',
                                          required=True)
-    date_from_cmp = fields.Date(string='Start Date')
-    date_to_cmp = fields.Date(string='End Date')
+    date_from_cmp = fields.Date(string='Comparison Start Date')
+    date_to_cmp = fields.Date(string='Comparison End Date')
     filter_cmp = fields.Selection([('filter_no', 'No Filters'),
                                    ('filter_date', 'Date')], string='Filter by',
                                   required=True, default='filter_date')

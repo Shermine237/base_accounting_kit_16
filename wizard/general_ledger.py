@@ -34,7 +34,7 @@ class AccountReportGeneralLedger(models.TransientModel):
     sortby = fields.Selection(
         [('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')],
         string='Sort by', required=True, default='sort_date')
-    journal_ids = fields.Many2many('account.journal', 'account_report_general_ledger_journal_rel', 'account_id',
+    journal_ids = fields.Many2many('account.journal', 'account_report_general_ledger_journal_rel', 'report_id',
                                    'journal_id', string='Journals', required=True)
     account_ids = fields.Many2many('account.account',
                                    'account_report_general_ledger_account_rel',
