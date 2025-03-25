@@ -28,6 +28,24 @@ class AccountTaxReport(models.TransientModel):
     _name = 'kit.account.tax.report'
     _description = 'Tax Report'
 
+    def _build_contexts(self, data):
+        """
+        Construction du contexte pour le rapport Tax
+        """
+        result = {}
+        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
+        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
+        result['date_from'] = data['form']['date_from'] or False
+        result['date_to'] = data['form']['date_to'] or False
+        result['strict_range'] = True if result['date_from'] else False
+        return result
+
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        return data
+
     def _print_report(self, data):
         return self.env.ref(
             'base_accounting_kit_16.action_report_account_tax').report_action(

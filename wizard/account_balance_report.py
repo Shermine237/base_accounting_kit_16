@@ -47,6 +47,13 @@ class AccountBalanceReport(models.TransientModel):
         result['display_account'] = data['form']['display_account'] or 'all'
         return result
 
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        data['form'].update(self.read(['display_account'])[0])
+        return data
+
     def _print_report(self, data):
         data = self.pre_print_report(data)
         records = self.env[data['model']].browse(data.get('ids', []))

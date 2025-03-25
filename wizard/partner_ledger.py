@@ -25,13 +25,33 @@ from odoo import fields, models
 
 class AccountPartnerLedger(models.TransientModel):
     _name = "account.report.partner.ledger"
-    _inherit = ["account.common.report", "account.common.partner.report"]
     _description = "Account Partner Ledger"
+    _inherit = "account.common.partner.report"
 
     amount_currency = fields.Boolean("With Currency",
                                      help="It adds the currency column on report if the "
                                           "currency differs from the company currency.")
     reconciled = fields.Boolean('Reconciled Entries')
+
+    def _build_contexts(self, data):
+        """
+        Construction du contexte pour le rapport Partner Ledger
+        """
+        result = {}
+        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
+        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
+        result['date_from'] = data['form']['date_from'] or False
+        result['date_to'] = data['form']['date_to'] or False
+        result['strict_range'] = True if result['date_from'] else False
+        result['result_selection'] = 'result_selection' in data['form'] and data['form']['result_selection'] or False
+        return result
+
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        data['form'].update(self.read(['reconciled', 'amount_currency'])[0])
+        return data
 
     def _print_report(self, data):
         data = self.pre_print_report(data)

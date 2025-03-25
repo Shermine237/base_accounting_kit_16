@@ -20,47 +20,30 @@
 #
 #############################################################################
 
-from odoo import fields, models, _
+from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 
 
 class AccountReportGeneralLedger(models.TransientModel):
-    _inherit = "account.common.account.report"
     _name = "account.report.general.ledger"
     _description = "General Ledger Report"
+    _inherit = "account.common.report"
 
     initial_balance = fields.Boolean(string='Include Initial Balances',
-                                   help='If you selected date, this field '
-                                        'allow you to add a row to display '
-                                        'the amount of debit/credit/balance '
-                                        'that precedes the filter you\'ve '
-                                        'set.')
+                                     help='If you selected date, this field allow you to add a row to display the amount of debit/credit/balance that precedes the filter you\'ve set.')
     sortby = fields.Selection(
         [('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')],
         string='Sort by', required=True, default='sort_date')
-    journal_ids = fields.Many2many('account.journal',
-                                 'account_report_general_ledger_journal_rel',
-                                 'report_id', 'journal_id',  
-                                 string='Journals', required=True)
-    
-    # Redéfinition du champ analytic_account_ids avec une nouvelle table relation
+    journal_ids = fields.Many2many('account.journal', 'account_report_general_ledger_journal_rel', 'account_id',
+                                   'journal_id', string='Journals', required=True)
+    account_ids = fields.Many2many('account.account',
+                                   'account_report_general_ledger_account_rel',
+                                   'report_id', 'account_id',
+                                   string='Accounts')
     analytic_account_ids = fields.Many2many(
         'account.analytic.account',
-        'account_report_gl_analytic_rel',  
-        'report_id', 'analytic_id',  
         string='Analytic Accounts'
     )
-
-    def _print_report(self, data):
-        data = self.pre_print_report(data)
-        data['form'].update(self.read(['initial_balance', 'sortby'])[0])
-        if data['form'].get('initial_balance') and not data['form'].get(
-                'date_from'):
-            raise UserError(_("You must define a Start Date"))
-        records = self.env[data['model']].browse(data.get('ids', []))
-        return self.env.ref(
-            'base_accounting_kit_16.action_report_general_ledger').with_context(
-            landscape=True).report_action(records, data=data)
 
     def _build_contexts(self, data):
         """
@@ -78,6 +61,24 @@ class AccountReportGeneralLedger(models.TransientModel):
         result['sortby'] = 'sortby' in data['form'] and data['form']['sortby'] or False
         return result
 
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        data['form'].update(self.read(['initial_balance', 'sortby', 'account_ids', 'analytic_account_ids'])[0])
+        return data
+
+    def _print_report(self, data):
+        data = self.pre_print_report(data)
+        data['form'].update(self.read(['initial_balance', 'sortby'])[0])
+        if data['form'].get('initial_balance') and not data['form'].get(
+                'date_from'):
+            raise UserError(_("You must define a Start Date"))
+        records = self.env[data['model']].browse(data.get('ids', []))
+        return self.env.ref(
+            'base_accounting_kit_16.action_report_general_ledger').with_context(
+            landscape=True).report_action(records, data=data)
+
     def check_report(self):
         """
         Surcharge de la méthode check_report pour générer le rapport General Ledger
@@ -86,7 +87,7 @@ class AccountReportGeneralLedger(models.TransientModel):
         data = {}
         data['ids'] = self.env.context.get('active_ids', [])
         data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'display_account', 'account_ids', 'sortby', 'initial_balance', 'analytic_account_ids'])[0]
+        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'account_ids', 'analytic_account_ids', 'initial_balance', 'sortby'])[0]
         used_context = self._build_contexts(data)
         data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
         return self._print_report(data)

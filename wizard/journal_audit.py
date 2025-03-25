@@ -24,18 +24,34 @@ from odoo import fields, models
 
 
 class AccountPrintJournal(models.TransientModel):
-    _inherit = "account.common.journal.report"
     _name = "account.print.journal"
     _description = "Account Print Journal"
+    _inherit = "account.common.report"
 
-    sort_selection = fields.Selection(
-        [('date', 'Date'), ('move_name', 'Journal Entry Number')],
-        'Entries Sorted by', required=True, default='move_name')
-    journal_ids = fields.Many2many('account.journal', string='Journals',
-                                   required=True,
-                                   default=lambda self: self.env[
-                                       'account.journal'].search(
-                                       [('type', 'in', ['sale', 'purchase'])]))
+    sort_selection = fields.Selection([('date', 'Date'), ('move_name', 'Journal Entry Number')], 'Entries Sorted by',
+                                      required=True, default='move_name')
+    journal_ids = fields.Many2many('account.journal', string='Journals', required=True,
+                                   default=lambda self: self.env['account.journal'].search([]))
+
+    def _build_contexts(self, data):
+        """
+        Construction du contexte pour le rapport Journal Audit
+        """
+        result = {}
+        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
+        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
+        result['date_from'] = data['form']['date_from'] or False
+        result['date_to'] = data['form']['date_to'] or False
+        result['strict_range'] = True if result['date_from'] else False
+        result['sort_selection'] = data['form']['sort_selection'] or 'move_name'
+        return result
+
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        data['form'].update(self.read(['sort_selection'])[0])
+        return data
 
     def _print_report(self, data):
         data = self.pre_print_report(data)

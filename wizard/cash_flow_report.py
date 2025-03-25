@@ -20,27 +20,23 @@
 #
 #############################################################################
 
-from odoo import api, fields, models
+from odoo import fields, models
+from odoo.tools.translate import _
 
 
 class AccountingReport(models.TransientModel):
     _name = "cash.flow.report"
-    _inherit = "account.common.report"
     _description = "Cash Flow Report"
+    _inherit = "account.common.report"
 
-    # Options du rapport
-    show_debit_credit = fields.Boolean('Display Debit/Credit Columns', default=True)
-    enable_filter = fields.Boolean(string='Enable Comparison')
-    account_report_id = fields.Many2one('account.financial.report', string='Account Reports', required=True)
-    label_filter = fields.Char(string='Column Label', help="This label will be displayed on report to show the balance computed for the given comparison filter.")
-    filter_cmp = fields.Selection([('filter_no', 'No Filters'), ('filter_date', 'Date')], string='Filter by', required=True, default='filter_no')
-    date_from_cmp = fields.Date(string='Comparison Start Date')
-    date_to_cmp = fields.Date(string='Comparison End Date')
-
-    @api.model
-    def _get_account_report(self):
-        reports = self.env['account.financial.report'].search([('name', 'ilike', 'Cash Flow Statement')])
-        return reports and reports[0] or False
+    account_report_id = fields.Many2one('account.financial.report',
+                                         string='Account Reports',
+                                         required=True)
+    date_from_cmp = fields.Date(string='Start Date')
+    date_to_cmp = fields.Date(string='End Date')
+    filter_cmp = fields.Selection([('filter_no', 'No Filters'),
+                                   ('filter_date', 'Date')], string='Filter by',
+                                  required=True, default='filter_date')
 
     def _build_comparison_context(self, data):
         result = {}
@@ -61,6 +57,23 @@ class AccountingReport(models.TransientModel):
         result['strict_range'] = True if result['date_from'] else False
         return result
 
+    def pre_print_report(self, data):
+        """
+        Préparation des données avant l'impression du rapport
+        """
+        data['form'].update(self.read(['account_report_id'])[0])
+        return data
+
+    def _print_report(self, data):
+        data['form'].update(self.read(['date_from_cmp', 'date_to_cmp',
+                                        'journal_ids', 'filter_cmp',
+                                        'account_report_id', 'target_move'])[0])
+        comparison_context = self._build_comparison_context(data)
+        data['form']['comparison_context'] = comparison_context
+        return self.env.ref(
+            'base_accounting_kit_16.action_report_cash_flow').report_action(
+            self, data=data, config=False)
+
     def check_report(self):
         """
         Surcharge de la méthode check_report pour générer le rapport Cash Flow
@@ -76,7 +89,3 @@ class AccountingReport(models.TransientModel):
         comparison_context = self._build_comparison_context(data)
         data['form']['comparison_context'] = comparison_context
         return self._print_report(data)
-
-    def _print_report(self, data):
-        data['form'].update(self.read(['date_from_cmp', 'show_debit_credit', 'date_to_cmp', 'filter_cmp', 'account_report_id', 'enable_filter', 'label_filter', 'target_move'])[0])
-        return self.env.ref('base_accounting_kit_16.action_report_cash_flow').report_action(self, data=data)
