@@ -78,7 +78,8 @@ class BankBookWizard(models.TransientModel):
                 [('type', '=', 'bank')])
             accounts = []
             for journal in journals:
-                accounts.append(journal.payment_credit_account_id.id)
+                if journal.default_account_id:
+                    accounts.append(journal.default_account_id.id)
             domain = {'account_ids': [('id', 'in', accounts)]}
             return {'domain': domain}
 
