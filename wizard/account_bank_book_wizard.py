@@ -54,7 +54,9 @@ class BankBookWizard(models.TransientModel):
         journals = self.env['account.journal'].search([('type', '=', 'bank')])
         accounts = []
         for journal in journals:
-            accounts.append(journal.payment_credit_account_id.id)
+            # Dans Odoo 16, utiliser default_account_id au lieu de payment_credit_account_id
+            if journal.default_account_id:
+                accounts.append(journal.default_account_id.id)
         return accounts
 
     account_ids = fields.Many2many('account.account',
