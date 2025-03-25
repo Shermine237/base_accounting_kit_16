@@ -1,9 +1,9 @@
-odoo.define('base_accounting_kit.ReconciliationClientAction', function (require) {
+odoo.define('base_accounting_kit_16.ReconciliationClientAction', function (require) {
 "use strict";
 
 var AbstractAction = require('web.AbstractAction');
-var ReconciliationModel = require('base_accounting_kit.ReconciliationModel');
-var ReconciliationRenderer = require('base_accounting_kit.ReconciliationRenderer');
+var ReconciliationModel = require('base_accounting_kit_16.ReconciliationModel');
+var ReconciliationRenderer = require('base_accounting_kit_16.ReconciliationRenderer');
 var core = require('web.core');
 var QWeb = core.qweb;
 

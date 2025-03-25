@@ -26,8 +26,8 @@ from odoo import models, api, _
 from odoo.exceptions import UserError
 
 
-class DayBookPdfReport(models.AbstractModel):
-    _name = 'report.base_accounting_kit.day_book_report_template'
+class ReportDayBook(models.AbstractModel):
+    _name = 'report.base_accounting_kit_16.day_book_report_template'
     _description = 'Day Book Report'
 
     def _get_account_move_entry(self, accounts, form_data, pass_date):

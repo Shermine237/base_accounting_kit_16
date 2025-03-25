@@ -30,5 +30,5 @@ class AccountTaxReport(models.TransientModel):
 
     def _print_report(self, data):
         return self.env.ref(
-            'base_accounting_kit.action_report_account_tax').report_action(
+            'base_accounting_kit_16.action_report_account_tax').report_action(
             self, data=data)

@@ -27,7 +27,7 @@ from odoo.exceptions import UserError
 
 
 class ReportTax(models.AbstractModel):
-    _name = 'report.base_accounting_kit.report_tax'
+    _name = 'report.base_accounting_kit_16.report_tax'
     _description = 'Tax Report'
 
     @api.model

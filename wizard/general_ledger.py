@@ -59,5 +59,5 @@ class AccountReportGeneralLedger(models.TransientModel):
             raise UserError(_("You must define a Start Date"))
         records = self.env[data['model']].browse(data.get('ids', []))
         return self.env.ref(
-            'base_accounting_kit.action_report_general_ledger').with_context(
+            'base_accounting_kit_16.action_report_general_ledger').with_context(
             landscape=True).report_action(records, data=data)

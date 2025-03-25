@@ -1,4 +1,4 @@
-odoo.define('base_accounting_kit.account_asset', function(require) {
+odoo.define('base_accounting_kit_16.account_asset', function(require) {
 "use strict";
 
 /**

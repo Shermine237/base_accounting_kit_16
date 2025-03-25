@@ -26,8 +26,8 @@ from odoo import api, models, _
 from odoo.exceptions import UserError
 
 
-class ReportFinancial(models.AbstractModel):
-    _name = 'report.base_accounting_kit.report_cash_flow'
+class ReportCashFlow(models.AbstractModel):
+    _name = 'report.base_accounting_kit_16.report_cash_flow'
     _description = 'Cash Flow Report'
 
     def _compute_account_balance(self, accounts):
@@ -73,17 +73,17 @@ class ReportFinancial(models.AbstractModel):
                 res2 = self._compute_report_balance(report.parent_id)
                 for key, value in res2.items():
                     cash_in_operation = self.env.ref(
-                        'base_accounting_kit.cash_in_from_operation0')
+                        'base_accounting_kit_16.cash_in_from_operation0')
                     cash_out_operation = self.env.ref(
-                        'base_accounting_kit.cash_out_operation1')
+                        'base_accounting_kit_16.cash_out_operation1')
                     cash_in_financial = self.env.ref(
-                        'base_accounting_kit.cash_in_financial0')
+                        'base_accounting_kit_16.cash_in_financial0')
                     cash_out_financial = self.env.ref(
-                        'base_accounting_kit.cash_out_financial1')
+                        'base_accounting_kit_16.cash_out_financial1')
                     cash_in_investing = self.env.ref(
-                        'base_accounting_kit.cash_in_investing0')
+                        'base_accounting_kit_16.cash_in_investing0')
                     cash_out_investing = self.env.ref(
-                        'base_accounting_kit.cash_out_investing1')
+                        'base_accounting_kit_16.cash_out_investing1')
                     if report == cash_in_operation or report == cash_in_financial or report == cash_in_investing:
                         res[report.id]['debit'] += value['debit']
                         res[report.id]['balance'] += value['debit']

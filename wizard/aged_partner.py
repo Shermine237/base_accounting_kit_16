@@ -65,5 +65,5 @@ class AccountAgedTrialBalance(models.TransientModel):
             start = stop - relativedelta(days=1)
         data['form'].update(res)
         return self.env.ref(
-            'base_accounting_kit.action_report_aged_partner_balance').with_context(
+            'base_accounting_kit_16.action_report_aged_partner_balance').with_context(
             landscape=True).report_action(self, data=data)

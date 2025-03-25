@@ -381,10 +381,10 @@
 
     <template id="multiple_invoice_layout">
         <t t-if="mi.layout_id.name == 'modern'">
-            <t t-call="base_accounting_kit.modern"><t t-raw="0"/></t>
+            <t t-call="base_accounting_kit_16.modern"><t t-raw="0"/></t>
         </t>
         <t t-elif="mi.layout_id.name == 'classic'">
-            <t t-call="base_accounting_kit.classic"><t t-raw="0"/></t>
+            <t t-call="base_accounting_kit_16.classic"><t t-raw="0"/></t>
         </t>
         <t t-else="else">
             <t t-call="standard"><t t-raw="0"/></t>

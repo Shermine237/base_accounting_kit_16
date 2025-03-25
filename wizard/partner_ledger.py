@@ -40,5 +40,5 @@ class AccountPartnerLedger(models.TransientModel):
             'amount_currency': self.amount_currency
         })
         return self.env.ref(
-            'base_accounting_kit.action_report_partnerledger').report_action(
+            'base_accounting_kit_16.action_report_partnerledger').report_action(
             self, data=data)
