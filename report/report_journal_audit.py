@@ -106,14 +106,12 @@ class ReportJournalAudit(models.AbstractModel):
 
         query_get_clause = self._get_query_get_clause(data)
         params = [tuple(move_state), journal_id] + query_get_clause[1]
-        query = '''
+
+        # Requête pour obtenir les montants de taxe
+        tax_query = '''
             SELECT 
                 COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0) as balance,
-                COALESCE(SUM(debit), 0) as debit,
-                COALESCE(SUM(credit), 0) as credit,
-                tax.id,
-                tax.name,
-                tax.tax_group_id
+                tax.id
             FROM ''' + query_get_clause[0] + ''',
                 account_move am,
                 account_tax tax
@@ -122,22 +120,40 @@ class ReportJournalAudit(models.AbstractModel):
                 AND "account_move_line".journal_id = %s
                 AND ''' + query_get_clause[2] + '''
                 AND "account_move_line".tax_line_id = tax.id
-            GROUP BY tax.id, tax.name, tax.tax_group_id
+            GROUP BY tax.id
         '''
 
-        self.env.cr.execute(query, params)
-        ids = {}
-        for row in self.env.cr.dictfetchall():
-            tax = self.env['account.tax'].browse(row['id'])
-            ids[row['id']] = {
-                'id': row['id'],
-                'name': tax.name,
-                'tax_group': tax.tax_group_id.name,
-                'balance': row['balance'],
-                'debit': row['debit'],
-                'credit': row['credit'],
+        # Requête pour obtenir les montants de base
+        base_query = '''
+            SELECT 
+                COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0) as base_amount,
+                "account_move_line".tax_ids[1] as tax_id
+            FROM ''' + query_get_clause[0] + ''',
+                account_move am
+            WHERE "account_move_line".move_id = am.id
+                AND am.state IN %s
+                AND "account_move_line".journal_id = %s
+                AND ''' + query_get_clause[2] + '''
+                AND "account_move_line".tax_ids IS NOT NULL
+            GROUP BY "account_move_line".tax_ids[1]
+        '''
+
+        # Exécuter les requêtes
+        self.env.cr.execute(tax_query, params)
+        tax_results = {row['id']: row['balance'] for row in self.env.cr.dictfetchall()}
+
+        self.env.cr.execute(base_query, params)
+        base_results = {row['tax_id']: row['base_amount'] for row in self.env.cr.dictfetchall()}
+
+        # Combiner les résultats
+        result = {}
+        for tax_id, tax_amount in tax_results.items():
+            tax = self.env['account.tax'].browse(tax_id)
+            result[tax] = {
+                'base_amount': abs(base_results.get(tax_id, 0.0)),
+                'tax_amount': tax_amount
             }
-        return ids
+        return result
 
     def _get_tax_amount(self, journal_id, data, tax_id):
         move_state = ['draft', 'posted']
