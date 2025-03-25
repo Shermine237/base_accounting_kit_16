@@ -211,6 +211,9 @@ class ReportCashFlow(models.AbstractModel):
 
     @api.model
     def _get_report_values(self, docids, data=None):
+        """
+        Prépare les valeurs pour le rapport Cash Flow
+        """
         if not data.get('form') or not self.env.context.get(
                 'active_model') or not self.env.context.get('active_id'):
             raise UserError(
@@ -219,10 +222,14 @@ class ReportCashFlow(models.AbstractModel):
         model = self.env.context.get('active_model')
         docs = self.env[model].browse(self.env.context.get('active_id'))
         report_lines = self.get_account_lines(data.get('form'))
+        
+        # S'assurer que toutes les clés nécessaires sont présentes dans les données
+        form_data = data.get('form', {})
+        
         return {
             'doc_ids': self.ids,
             'doc_model': model,
-            'data': data['form'],
+            'data': form_data,
             'docs': docs,
             'time': time,
             'get_account_lines': report_lines,
