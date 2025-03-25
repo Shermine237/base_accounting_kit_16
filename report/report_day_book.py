@@ -98,9 +98,13 @@ class ReportDayBook(models.AbstractModel):
             raise UserError(_(
                 "Form content is missing, this report cannot be printed."))
         
-        # Assurez-vous que target_move est présent dans data
+        # Assurez-vous que les clés nécessaires sont présentes dans data
         if 'target_move' not in data:
             data['target_move'] = data.get('form', {}).get('target_move', 'posted')
+        if 'date_from' not in data:
+            data['date_from'] = data.get('form', {}).get('date_from')
+        if 'date_to' not in data:
+            data['date_to'] = data.get('form', {}).get('date_to')
             
         model = self.env.context.get('active_model')
         docs = self.env[model].browse(self.env.context.get('active_ids', []))
