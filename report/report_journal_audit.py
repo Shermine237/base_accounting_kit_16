@@ -111,7 +111,9 @@ class ReportJournalAudit(models.AbstractModel):
                 COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0) as balance,
                 COALESCE(SUM(debit), 0) as debit,
                 COALESCE(SUM(credit), 0) as credit,
-                tax.id
+                tax.id,
+                tax.name,
+                tax.tax_group_id
             FROM ''' + query_get_clause[0] + ''',
                 account_move am,
                 account_tax tax
@@ -120,14 +122,17 @@ class ReportJournalAudit(models.AbstractModel):
                 AND "account_move_line".journal_id = %s
                 AND ''' + query_get_clause[2] + '''
                 AND "account_move_line".tax_line_id = tax.id
-            GROUP BY tax.id
+            GROUP BY tax.id, tax.name, tax.tax_group_id
         '''
 
         self.env.cr.execute(query, params)
         ids = {}
         for row in self.env.cr.dictfetchall():
+            tax = self.env['account.tax'].browse(row['id'])
             ids[row['id']] = {
                 'id': row['id'],
+                'name': tax.name,
+                'tax_group': tax.tax_group_id.name,
                 'balance': row['balance'],
                 'debit': row['debit'],
                 'credit': row['credit'],
