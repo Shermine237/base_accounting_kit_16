@@ -34,6 +34,10 @@ class AccountReportGeneralLedger(models.TransientModel):
     sortby = fields.Selection(
         [('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')],
         string='Sort by', required=True, default='sort_date')
+    display_account = fields.Selection(
+        [('all', 'All'), ('movement', 'With movements'),
+         ('not_zero', 'With balance is not equal to 0')],
+        string='Display Accounts', required=True, default='movement')
     journal_ids = fields.Many2many('account.journal', 'account_report_general_ledger_journal_rel', 'report_id',
                                    'journal_id', string='Journals', required=True)
     account_ids = fields.Many2many('account.account',
@@ -59,18 +63,19 @@ class AccountReportGeneralLedger(models.TransientModel):
         result['analytic_account_ids'] = 'analytic_account_ids' in data['form'] and data['form']['analytic_account_ids'] or False
         result['initial_balance'] = 'initial_balance' in data['form'] and data['form']['initial_balance'] or False
         result['sortby'] = 'sortby' in data['form'] and data['form']['sortby'] or False
+        result['display_account'] = 'display_account' in data['form'] and data['form']['display_account'] or False
         return result
 
     def pre_print_report(self, data):
         """
         Préparation des données avant l'impression du rapport
         """
-        data['form'].update(self.read(['initial_balance', 'sortby', 'account_ids', 'analytic_account_ids'])[0])
+        data['form'].update(self.read(['initial_balance', 'sortby', 'display_account', 'account_ids', 'analytic_account_ids'])[0])
         return data
 
     def _print_report(self, data):
         data = self.pre_print_report(data)
-        data['form'].update(self.read(['initial_balance', 'sortby'])[0])
+        data['form'].update(self.read(['initial_balance', 'sortby', 'display_account'])[0])
         if data['form'].get('initial_balance') and not data['form'].get(
                 'date_from'):
             raise UserError(_("You must define a Start Date"))
@@ -87,7 +92,7 @@ class AccountReportGeneralLedger(models.TransientModel):
         data = {}
         data['ids'] = self.env.context.get('active_ids', [])
         data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'account_ids', 'analytic_account_ids', 'initial_balance', 'sortby'])[0]
+        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'account_ids', 'analytic_account_ids', 'initial_balance', 'sortby', 'display_account'])[0]
         used_context = self._build_contexts(data)
         data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
         return self._print_report(data)
