@@ -159,7 +159,7 @@ class ReportPartnerLedger(models.AbstractModel):
 
         query = """
             SELECT DISTINCT "account_move_line".partner_id
-            FROM """ + query_get_data[0] + """, account_account AS account, account_move AS am
+            FROM account_move_line, account_account AS account, account_move AS am
             WHERE "account_move_line".partner_id IS NOT NULL
                 AND "account_move_line".account_id = account.id
                 AND am.id = "account_move_line".move_id
