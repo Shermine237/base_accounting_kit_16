@@ -16,6 +16,16 @@ class AccountCommonReport(models.TransientModel):
     target_move = fields.Selection([('posted', 'All Posted Entries'),
                                     ('all', 'All Entries'),
                                     ], string='Target Moves', required=True, default='posted')
+    
+    # Ajout des champs de comparaison dans le modèle parent
+    date_from_cmp = fields.Date(string='Comparison Start Date')
+    date_to_cmp = fields.Date(string='Comparison End Date')
+    filter_cmp = fields.Selection([('filter_no', 'No Filters'),
+                                ('filter_date', 'Date')], string='Filter by',
+                                required=False, default='filter_no')
+    enable_filter = fields.Boolean(string='Enable Comparison')
+    label_filter = fields.Char(string='Column Label',
+                            help="This label will be displayed on report to show the balance computed for the given comparison filter.")
 
     def check_report(self):
         """
