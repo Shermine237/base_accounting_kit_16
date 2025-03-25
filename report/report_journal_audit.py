@@ -105,22 +105,23 @@ class ReportJournalAudit(models.AbstractModel):
             journal_id = journal_id.id
 
         query_get_clause = self._get_query_get_clause(data)
-        params = [tuple(move_state), (journal_id,)] + query_get_clause[1]
-        query = 'SELECT COALESCE(SUM("account_move_line".debit-' \
-                '"account_move_line".credit), 0) as balance, ' \
-                'COALESCE(SUM(debit),0) as debit, ' \
-                'COALESCE(SUM(credit), 0) as credit, tax.id ' \
-                'FROM ' + query_get_clause[0] + \
-                ', account_move am, ' \
-                'account_tax tax, account_tax_account_tag tag ' \
-                'WHERE "account_move_line".move_id=am.id ' \
-                'AND am.state IN %s ' \
-                'AND "account_move_line".journal_id = %s ' \
-                'AND ' + query_get_clause[2] + ' ' \
-                'AND tax.id = tag.account_tax_id ' \
-                'AND tag.account_account_tag_id IN ' \
-                '("account_move_line".tax_tag_ids) ' \
-                'GROUP BY tax.id'
+        params = [tuple(move_state), journal_id] + query_get_clause[1]
+        query = '''
+            SELECT 
+                COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0) as balance,
+                COALESCE(SUM(debit), 0) as debit,
+                COALESCE(SUM(credit), 0) as credit,
+                tax.id
+            FROM ''' + query_get_clause[0] + ''',
+                account_move am,
+                account_tax tax
+            WHERE "account_move_line".move_id = am.id
+                AND am.state IN %s
+                AND "account_move_line".journal_id = %s
+                AND ''' + query_get_clause[2] + '''
+                AND "account_move_line".tax_line_id = tax.id
+            GROUP BY tax.id
+        '''
 
         self.env.cr.execute(query, params)
         ids = {}
