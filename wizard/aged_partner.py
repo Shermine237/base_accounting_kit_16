@@ -32,11 +32,17 @@ class AccountAgedTrialBalance(models.TransientModel):
     _description = 'Account Aged Trial balance Report'
     _inherit = 'account.common.partner.report'
 
+    # Ajout explicite du champ company_id pour résoudre le problème de compatibilité avec la vue XML
+    company_id = fields.Many2one('res.company', string='Company', readonly=True,
+                                default=lambda self: self.env.company)
+    date_from = fields.Date(default=lambda *a: time.strftime('%Y-%m-%d'))
     period_length = fields.Integer(string='Period Length (days)', required=True,
                                    default=30)
     journal_ids = fields.Many2many('account.journal', string='Journals',
                                    required=True)
-    date_from = fields.Date(default=lambda *a: time.strftime('%Y-%m-%d'))
+    target_move = fields.Selection([('posted', 'All Posted Entries'),
+                                   ('all', 'All Entries'),
+                                   ], string='Target Moves', required=True, default='posted')
 
     def _build_contexts(self, data):
         """

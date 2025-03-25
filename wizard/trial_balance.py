@@ -28,11 +28,23 @@ class AccountBalanceReport(models.TransientModel):
     _name = 'account.balance.report'
     _description = 'Trial Balance Report'
 
+    # Ajout explicite des champs nécessaires pour résoudre les problèmes de compatibilité avec la vue XML
+    company_id = fields.Many2one('res.company', string='Company', readonly=True,
+                                default=lambda self: self.env.company)
+    date_from = fields.Date(string='Start Date')
+    date_to = fields.Date(string='End Date')
+    target_move = fields.Selection([('posted', 'All Posted Entries'),
+                                   ('all', 'All Entries'),
+                                   ], string='Target Moves', required=True, default='posted')
     journal_ids = fields.Many2many('account.journal',
                                    'account_balance_report_journal_rel',
                                    'account_id', 'journal_id',
                                    string='Journals', required=True,
                                    default=[])
+    display_account = fields.Selection(
+        [('all', 'All'), ('movement', 'With movements'),
+         ('not_zero', 'With balance is not equal to 0')],
+        string='Display Accounts', required=True, default='movement')
 
     def _print_report(self, data):
         data = self.pre_print_report(data)
