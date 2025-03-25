@@ -8,9 +8,9 @@
             <data>
                 <xpath expr="//field[@name='target_move']" position="after">
                     <field name="display_account" widget="radio"/>
-                    <field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/>
                     <newline/>
                 </xpath>
+                <!-- Suppression de la duplication du champ journal_ids -->
             </data>
         </field>
     </record>
