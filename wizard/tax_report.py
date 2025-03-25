@@ -32,3 +32,16 @@ class AccountTaxReport(models.TransientModel):
         return self.env.ref(
             'base_accounting_kit_16.action_report_account_tax').report_action(
             self, data=data)
+
+    def check_report(self):
+        """
+        Surcharge de la méthode check_report pour générer le rapport Tax
+        """
+        self.ensure_one()
+        data = {}
+        data['ids'] = self.env.context.get('active_ids', [])
+        data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
+        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move'])[0]
+        used_context = self._build_contexts(data)
+        data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
+        return self._print_report(data)
