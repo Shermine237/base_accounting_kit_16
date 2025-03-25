@@ -118,15 +118,24 @@ class ReportCashFlow(models.AbstractModel):
         return res
 
     def get_account_lines(self, data):
+        """
+        Récupère les lignes de compte pour le rapport de flux de trésorerie
+        """
         lines = []
         account_report = self.env['account.financial.report'].search(
             [('id', '=', data['account_report_id'][0])])
         child_reports = account_report._get_children_by_order()
-        res = self.with_context(
-            data.get('used_context'))._compute_report_balance(child_reports)
-        if data['enable_filter']:
-            comparison_res = self.with_context(
-                data.get('comparison_context'))._compute_report_balance(
+        
+        # S'assurer que used_context est un dictionnaire
+        used_context = data.get('used_context') or {}
+        
+        res = self.with_context(used_context)._compute_report_balance(child_reports)
+        
+        if data.get('enable_filter'):
+            # S'assurer que comparison_context est un dictionnaire
+            comparison_context = data.get('comparison_context') or {}
+            
+            comparison_res = self.with_context(comparison_context)._compute_report_balance(
                 child_reports)
             for report_id, value in comparison_res.items():
                 res[report_id]['comp_bal'] = value['balance']
