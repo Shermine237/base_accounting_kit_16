@@ -127,15 +127,16 @@ class ReportJournalAudit(models.AbstractModel):
         base_query = '''
             SELECT 
                 COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0) as base_amount,
-                "account_move_line".tax_ids[1] as tax_id
+                tax_rel.account_tax_id as tax_id
             FROM ''' + query_get_clause[0] + ''',
-                account_move am
+                account_move am,
+                account_move_line_account_tax_rel tax_rel
             WHERE "account_move_line".move_id = am.id
                 AND am.state IN %s
                 AND "account_move_line".journal_id = %s
                 AND ''' + query_get_clause[2] + '''
-                AND "account_move_line".tax_ids IS NOT NULL
-            GROUP BY "account_move_line".tax_ids[1]
+                AND tax_rel.account_move_line_id = "account_move_line".id
+            GROUP BY tax_rel.account_tax_id
         '''
 
         # Exécuter les requêtes
@@ -170,7 +171,7 @@ class ReportJournalAudit(models.AbstractModel):
                 'FROM ' + query_get_clause[0] + \
                 ', account_move am, ' \
                 'account_tax tax, account_tax_account_tag tag ' \
-                'WHERE "account_move_line".move_id=am.id ' \
+                'WHERE "account_move_line".move_id = am.id ' \
                 'AND am.state IN %s ' \
                 'AND "account_move_line".journal_id IN %s ' \
                 'AND tax.id = %s ' \
@@ -202,7 +203,7 @@ class ReportJournalAudit(models.AbstractModel):
                 'FROM ' + query_get_clause[0] + \
                 ', account_move am, ' \
                 'account_tax tax, account_tax_repartition_line arl ' \
-                'WHERE "account_move_line".move_id=am.id ' \
+                'WHERE "account_move_line".move_id = am.id ' \
                 'AND am.state IN %s ' \
                 'AND "account_move_line".journal_id IN %s ' \
                 'AND tax.id = %s ' \
