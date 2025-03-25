@@ -34,39 +34,48 @@ class ReportPartnerLedger(models.AbstractModel):
         full_account = []
         currency = self.env['res.currency']
         
-        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
-        domain = []
-        context = data['form'].get('used_context', {})
+        # Préparation des paramètres pour la requête SQL
+        move_state = tuple(data['computed']['move_state'])
+        account_ids = tuple(data['computed']['account_ids'])
         
-        if context.get('date_from'):
-            domain.append(('date', '>=', context['date_from']))
-        if context.get('date_to'):
-            domain.append(('date', '<=', context['date_to']))
-        if context.get('journal_ids'):
-            domain.append(('journal_id', 'in', context['journal_ids']))
-        if context.get('company_id'):
-            domain.append(('company_id', '=', context['company_id']))
-        if context.get('state') == 'posted':
-            domain.append(('parent_state', '=', 'posted'))
-        
-        # Construction de la requête SQL
-        query = self.env['account.move.line']._where_calc(domain)
-        tables, where_clause, where_params = query.get_sql()
-        
-        reconcile_clause = "" if data['form']['reconciled'] else ' AND "account_move_line".full_reconcile_id IS NULL '
-        params = [partner.id, tuple(data['computed']['move_state']),
-                  tuple(data['computed']['account_ids'])] + where_params
+        # Construction de la requête SQL pour trouver les lignes de compte
         query = """
             SELECT "account_move_line".id, "account_move_line".date, j.code, acc.code as a_code, acc.name as a_name, "account_move_line".ref, m.name as move_name, "account_move_line".name, "account_move_line".debit, "account_move_line".credit, "account_move_line".amount_currency,"account_move_line".currency_id, c.symbol AS currency_code
-            FROM """ + tables + """
-            LEFT JOIN account_journal j ON ("account_move_line".journal_id = j.id)
-            LEFT JOIN account_account acc ON ("account_move_line".account_id = acc.id)
-            LEFT JOIN res_currency c ON ("account_move_line".currency_id=c.id)
-            LEFT JOIN account_move m ON (m.id="account_move_line".move_id)
+            FROM account_move_line, account_journal j, account_account acc, account_move m, res_currency c
             WHERE "account_move_line".partner_id = %s
+                AND "account_move_line".journal_id = j.id
+                AND "account_move_line".account_id = acc.id
+                AND m.id = "account_move_line".move_id
+                AND "account_move_line".currency_id = c.id
                 AND m.state IN %s
-                AND "account_move_line".account_id IN %s AND """ + where_clause + reconcile_clause + """
-                ORDER BY "account_move_line".date"""
+                AND "account_move_line".account_id IN %s"""
+                
+        # Ajout des conditions de filtrage supplémentaires
+        params = [partner.id, move_state, account_ids]
+        
+        # Ajout des conditions de journal, date et état si présentes
+        if data['form'].get('journal_ids', []):
+            query += " AND \"account_move_line\".journal_id in %s"
+            params.append(tuple(data['form']['journal_ids']))
+            
+        if data['form'].get('target_move') == 'posted':
+            query += " AND \"account_move_line\".parent_state = %s"
+            params.append('posted')
+            
+        if data['form'].get('date_from'):
+            query += " AND \"account_move_line\".date >= %s"
+            params.append(data['form']['date_from'])
+            
+        if data['form'].get('date_to'):
+            query += " AND \"account_move_line\".date <= %s"
+            params.append(data['form']['date_to'])
+            
+        # Clause de réconciliation
+        if not data['form']['reconciled']:
+            query += " AND \"account_move_line\".full_reconcile_id IS NULL"
+            
+        query += " ORDER BY \"account_move_line\".date"
+        
         self.env.cr.execute(query, params)
         res = self.env.cr.dictfetchall()
         sum = 0.0
@@ -88,37 +97,44 @@ class ReportPartnerLedger(models.AbstractModel):
             return
         result = 0.0
         
-        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
-        domain = []
-        context = data['form'].get('used_context', {})
+        # Préparation des paramètres pour la requête SQL
+        move_state = tuple(data['computed']['move_state'])
+        account_ids = tuple(data['computed']['account_ids'])
         
-        if context.get('date_from'):
-            domain.append(('date', '>=', context['date_from']))
-        if context.get('date_to'):
-            domain.append(('date', '<=', context['date_to']))
-        if context.get('journal_ids'):
-            domain.append(('journal_id', 'in', context['journal_ids']))
-        if context.get('company_id'):
-            domain.append(('company_id', '=', context['company_id']))
-        if context.get('state') == 'posted':
-            domain.append(('parent_state', '=', 'posted'))
+        # Construction de la requête SQL pour trouver les sommes
+        query = """
+            SELECT sum(""" + field + """)
+            FROM account_move_line, account_account AS account, account_move AS am
+            WHERE "account_move_line".partner_id = %s
+                AND "account_move_line".account_id = account.id
+                AND am.id = "account_move_line".move_id
+                AND am.state IN %s
+                AND "account_move_line".account_id IN %s"""
+                
+        # Ajout des conditions de filtrage supplémentaires
+        params = [partner.id, move_state, account_ids]
         
-        # Construction de la requête SQL
-        query = self.env['account.move.line']._where_calc(domain)
-        tables, where_clause, where_params = query.get_sql()
-        
-        reconcile_clause = "" if data['form'][
-            'reconciled'] else ' AND "account_move_line".full_reconcile_id IS NULL '
-
-        params = [partner.id, tuple(data['computed']['move_state']),
-                  tuple(data['computed']['account_ids'])] + where_params
-        query = """SELECT sum(""" + field + """)
-                FROM """ + tables + """
-                LEFT JOIN account_move m ON (m.id="account_move_line".move_id)
-                WHERE "account_move_line".partner_id = %s
-                    AND m.state IN %s
-                    AND "account_move_line".account_id IN %s
-                    AND """ + where_clause + reconcile_clause
+        # Ajout des conditions de journal, date et état si présentes
+        if data['form'].get('journal_ids', []):
+            query += " AND \"account_move_line\".journal_id in %s"
+            params.append(tuple(data['form']['journal_ids']))
+            
+        if data['form'].get('target_move') == 'posted':
+            query += " AND \"account_move_line\".parent_state = %s"
+            params.append('posted')
+            
+        if data['form'].get('date_from'):
+            query += " AND \"account_move_line\".date >= %s"
+            params.append(data['form']['date_from'])
+            
+        if data['form'].get('date_to'):
+            query += " AND \"account_move_line\".date <= %s"
+            params.append(data['form']['date_to'])
+            
+        # Clause de réconciliation
+        if not data['form']['reconciled']:
+            query += " AND \"account_move_line\".full_reconcile_id IS NULL"
+            
         self.env.cr.execute(query, params)
         res = self.env.cr.fetchone()
         if res and res[0]:
@@ -130,33 +146,16 @@ class ReportPartnerLedger(models.AbstractModel):
         if not data.get('form'):
             raise UserError(
                 _("Form content is missing, this report cannot be printed."))
-
+        
         data['computed'] = {}
-
+        
         obj_partner = self.env['res.partner']
-        query_get_data = self._get_query_data(data['form'])
-        data['computed']['move_state'] = ['draft', 'posted']
-        if data['form'].get('target_move') == 'posted':
-            data['computed']['move_state'] = ['posted']
-        result_selection = data['form'].get('result_selection')
-        if result_selection == 'customer':
-            data['computed']['account_ids'] = query_get_data[1]
-        elif result_selection == 'supplier':
-            data['computed']['account_ids'] = query_get_data[2]
-        else:
-            data['computed']['account_ids'] = query_get_data[0]
-
-        self.env.cr.execute(
-            """SELECT a.id
-               FROM account_account a
-               WHERE a.account_type IN ('asset_receivable', 'liability_payable')
-               AND NOT a.deprecated""")
-        data['computed']['account_ids'] = [a for (a,) in
-                                           self.env.cr.fetchall()]
-        params = [tuple(data['computed']['account_ids'])] + query_get_data[3]
-        reconcile_clause = "" if data['form'][
-            'reconciled'] else ' AND "account_move_line".full_reconcile_id IS NULL '
-
+        
+        # Préparation des paramètres pour la requête SQL
+        move_state = tuple(data['computed']['move_state'])
+        account_ids = tuple(data['computed']['account_ids'])
+        
+        # Construction de la requête SQL pour trouver les partenaires
         query = """
             SELECT DISTINCT "account_move_line".partner_id
             FROM account_move_line, account_account AS account, account_move AS am
@@ -165,14 +164,63 @@ class ReportPartnerLedger(models.AbstractModel):
                 AND am.id = "account_move_line".move_id
                 AND am.state IN %s
                 AND "account_move_line".account_id IN %s
-                AND NOT account.deprecated
-                AND """ + query_get_data[4] + reconcile_clause
+                AND NOT account.deprecated"""
+                
+        # Ajout des conditions de filtrage supplémentaires
+        params = [move_state, account_ids]
+        
+        # Ajout des conditions de journal, date et état si présentes
+        if data['form'].get('journal_ids', []):
+            query += " AND \"account_move_line\".journal_id in %s"
+            params.append(tuple(data['form']['journal_ids']))
+            
+        if data['form'].get('target_move') == 'posted':
+            query += " AND \"account_move_line\".parent_state = %s"
+            params.append('posted')
+            
+        if data['form'].get('date_from'):
+            query += " AND \"account_move_line\".date >= %s"
+            params.append(data['form']['date_from'])
+            
+        if data['form'].get('date_to'):
+            query += " AND \"account_move_line\".date <= %s"
+            params.append(data['form']['date_to'])
+            
+        # Clause de réconciliation
+        if not data['form']['reconciled']:
+            query += " AND \"account_move_line\".full_reconcile_id IS NULL"
+            
         self.env.cr.execute(query, params)
-        partner_ids = [res['partner_id'] for res in
-                       self.env.cr.dictfetchall()]
+        partner_ids = [res['partner_id'] for res in self.env.cr.dictfetchall()]
         partners = obj_partner.browse(partner_ids)
         partners = sorted(partners, key=lambda x: x.name)
-
+        
+        data['computed']['move_state'] = ['draft', 'posted']
+        if data['form'].get('target_move') == 'posted':
+            data['computed']['move_state'] = ['posted']
+        result_selection = data['form'].get('result_selection')
+        if result_selection == 'customer':
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type = 'asset_receivable'
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+        elif result_selection == 'supplier':
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type = 'liability_payable'
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+        else:
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type IN ('asset_receivable', 'liability_payable')
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+        
         return {
             'doc_ids': partner_ids,
             'doc_model': self.env['res.partner'],
@@ -182,47 +230,3 @@ class ReportPartnerLedger(models.AbstractModel):
             'lines': self._lines,
             'sum_partner': self._sum_partner,
         }
-        
-    def _get_query_data(self, form):
-        """
-        Méthode auxiliaire pour construire les requêtes SQL
-        """
-        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
-        domain = []
-        context = form.get('used_context', {})
-        
-        if context.get('date_from'):
-            domain.append(('date', '>=', context['date_from']))
-        if context.get('date_to'):
-            domain.append(('date', '<=', context['date_to']))
-        if context.get('journal_ids'):
-            domain.append(('journal_id', 'in', context['journal_ids']))
-        if context.get('company_id'):
-            domain.append(('company_id', '=', context['company_id']))
-        if context.get('state') == 'posted':
-            domain.append(('parent_state', '=', 'posted'))
-        
-        # Construction de la requête SQL
-        query = self.env['account.move.line']._where_calc(domain)
-        tables, where_clause, where_params = query.get_sql()
-        
-        # Comptes clients (receivable) - Dans Odoo 16, account_type remplace internal_type
-        self.env.cr.execute("""
-            SELECT a.id
-            FROM account_account a
-            WHERE a.account_type = 'asset_receivable'
-            AND NOT a.deprecated""")
-        customer_accounts = [a for (a,) in self.env.cr.fetchall()]
-        
-        # Comptes fournisseurs (payable) - Dans Odoo 16, account_type remplace internal_type
-        self.env.cr.execute("""
-            SELECT a.id
-            FROM account_account a
-            WHERE a.account_type = 'liability_payable'
-            AND NOT a.deprecated""")
-        supplier_accounts = [a for (a,) in self.env.cr.fetchall()]
-        
-        # Tous les comptes (receivable + payable)
-        all_accounts = customer_accounts + supplier_accounts
-        
-        return tables, customer_accounts, supplier_accounts, where_params, where_clause
