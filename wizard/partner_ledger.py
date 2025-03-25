@@ -28,6 +28,16 @@ class AccountPartnerLedger(models.TransientModel):
     _description = "Account Partner Ledger"
     _inherit = "account.common.partner.report"
 
+    # Ajout explicite du champ company_id pour résoudre le problème de compatibilité avec la vue XML
+    company_id = fields.Many2one('res.company', string='Company', readonly=True,
+                                default=lambda self: self.env.company)
+    date_from = fields.Date(string='Start Date')
+    date_to = fields.Date(string='End Date')
+    target_move = fields.Selection([('posted', 'All Posted Entries'),
+                                   ('all', 'All Entries'),
+                                   ], string='Target Moves', required=True, default='posted')
+    journal_ids = fields.Many2many('account.journal', string='Journals', required=True,
+                                  default=lambda self: self.env['account.journal'].search([]))
     amount_currency = fields.Boolean("With Currency",
                                      help="It adds the currency column on report if the "
                                           "currency differs from the company currency.")
