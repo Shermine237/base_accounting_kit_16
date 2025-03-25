@@ -45,8 +45,26 @@ class ReportTrialBalance(models.AbstractModel):
 
         account_result = {}
         # Prepare sql query base on selected parameters from wizard
-        tables, where_clause, where_params = self.env[
-            'account.move.line']._query_get()
+        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+        domain = []
+        
+        # Récupération des filtres du contexte
+        context = self.env.context
+        if context.get('date_from'):
+            domain.append(('date', '>=', context['date_from']))
+        if context.get('date_to'):
+            domain.append(('date', '<=', context['date_to']))
+        if context.get('journal_ids'):
+            domain.append(('journal_id', 'in', context['journal_ids']))
+        if context.get('company_id'):
+            domain.append(('company_id', '=', context['company_id']))
+        if context.get('state') == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        
+        # Construction de la requête SQL
+        query = self.env['account.move.line']._where_calc(domain)
+        tables, where_clause, where_params = query.get_sql()
+        
         tables = tables.replace('"', '')
         if not tables:
             tables = 'account_move_line'
@@ -54,6 +72,7 @@ class ReportTrialBalance(models.AbstractModel):
         if where_clause.strip():
             wheres.append(where_clause.strip())
         filters = " AND ".join(wheres)
+        
         # compute the balance, debit and credit for the provided accounts
         request = (
                     "SELECT account_id AS id, SUM(debit) AS debit, SUM(credit) AS credit, (SUM(debit) - SUM(credit)) AS balance" + \
@@ -100,7 +119,7 @@ class ReportTrialBalance(models.AbstractModel):
             data['form'].get('used_context'))._get_accounts(accounts,
                                                             display_account)
         return {
-            'doc_ids': self.ids,
+            'doc_ids': docids,
             'doc_model': model,
             'data': data['form'],
             'docs': docs,

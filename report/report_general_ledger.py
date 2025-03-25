@@ -55,9 +55,23 @@ class ReportGeneralLedger(models.AbstractModel):
 
         # Prepare initial sql query and Get the initial move lines
         if init_balance:
-            init_tables, init_where_clause, init_where_params = MoveLine.with_context(
-                date_from=self.env.context.get('date_from'), date_to=False,
-                initial_bal=True)._query_get()
+            # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+            domain = []
+            
+            # Récupération des filtres du contexte
+            if self.env.context.get('date_from'):
+                domain.append(('date', '<', self.env.context['date_from']))
+            if self.env.context.get('state') == 'posted':
+                domain.append(('parent_state', '=', 'posted'))
+            if self.env.context.get('company_id'):
+                domain.append(('company_id', '=', self.env.context['company_id']))
+            if self.env.context.get('journal_ids'):
+                domain.append(('journal_id', 'in', self.env.context['journal_ids']))
+            
+            # Construction de la requête SQL
+            query = MoveLine._where_calc(domain)
+            init_tables, init_where_clause, init_where_params = query.get_sql()
+            
             init_wheres = [""]
             if init_where_clause.strip():
                 init_wheres.append(init_where_clause.strip())
@@ -87,7 +101,25 @@ class ReportGeneralLedger(models.AbstractModel):
             sql_sort = 'j.code, p.name, l.move_id'
 
         # Prepare sql query base on selected parameters from wizard
-        tables, where_clause, where_params = MoveLine._query_get()
+        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+        domain = []
+        
+        # Récupération des filtres du contexte
+        if self.env.context.get('date_from'):
+            domain.append(('date', '>=', self.env.context['date_from']))
+        if self.env.context.get('date_to'):
+            domain.append(('date', '<=', self.env.context['date_to']))
+        if self.env.context.get('state') == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        if self.env.context.get('company_id'):
+            domain.append(('company_id', '=', self.env.context['company_id']))
+        if self.env.context.get('journal_ids'):
+            domain.append(('journal_id', 'in', self.env.context['journal_ids']))
+        
+        # Construction de la requête SQL
+        query = MoveLine._where_calc(domain)
+        tables, where_clause, where_params = query.get_sql()
+        
         wheres = [""]
         if where_clause.strip():
             wheres.append(where_clause.strip())
@@ -113,7 +145,7 @@ class ReportGeneralLedger(models.AbstractModel):
             for line in move_lines.get(row['account_id']):
                 balance += line['debit'] - line['credit']
             row['balance'] += balance
-            move_lines[row.pop('account_id')].append(row)
+            move_lines[row['account_id']].append(row)
 
         # Calculate the debit, credit and balance for Accounts
         account_res = []
@@ -144,8 +176,7 @@ class ReportGeneralLedger(models.AbstractModel):
                 _("Form content is missing, this report cannot be printed."))
 
         model = self.env.context.get('active_model')
-        docs = self.env[model].browse(
-            self.env.context.get('active_ids', []))
+        docs = self.env[model].browse(self.env.context.get('active_ids', []))
 
         init_balance = data['form'].get('initial_balance', True)
         sortby = data['form'].get('sortby', 'sort_date')

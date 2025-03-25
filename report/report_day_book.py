@@ -33,7 +33,26 @@ class ReportDayBook(models.AbstractModel):
     def _get_account_move_entry(self, accounts, form_data, pass_date):
         cr = self.env.cr
         move_line = self.env['account.move.line']
-        tables, where_clause, where_params = move_line._query_get()
+        
+        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+        domain = []
+        
+        # Récupération des filtres du contexte
+        if form_data.get('date_from'):
+            domain.append(('date', '>=', form_data['date_from']))
+        if form_data.get('date_to'):
+            domain.append(('date', '<=', form_data['date_to']))
+        if form_data.get('journal_ids'):
+            domain.append(('journal_id', 'in', form_data['journal_ids']))
+        if form_data.get('company_id'):
+            domain.append(('company_id', '=', form_data['company_id']))
+        if form_data.get('target_move') == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        
+        # Construction de la requête SQL
+        query = move_line._where_calc(domain)
+        tables, where_clause, where_params = query.get_sql()
+        
         wheres = [""]
         if where_clause.strip():
             wheres.append(where_clause.strip())
@@ -76,12 +95,10 @@ class ReportDayBook(models.AbstractModel):
     @api.model
     def _get_report_values(self, docids, data=None):
         if not data.get('form') or not self.env.context.get('active_model'):
-            raise UserError(
-                _("Form content is missing, this report cannot be printed."))
-
+            raise UserError(_(
+                "Form content is missing, this report cannot be printed."))
         model = self.env.context.get('active_model')
-        docs = self.env[model].browse(
-            self.env.context.get('active_ids', []))
+        docs = self.env[model].browse(self.env.context.get('active_ids', []))
         form_data = data['form']
         codes = []
         if data['form'].get('journal_ids', False):
@@ -117,7 +134,7 @@ class ReportDayBook(models.AbstractModel):
         return {
             'doc_ids': docids,
             'doc_model': model,
-            'data': data['form'],
+            'data': data,
             'docs': docs,
             'time': time,
             'Accounts': record,

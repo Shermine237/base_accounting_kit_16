@@ -20,7 +20,7 @@
 #
 #############################################################################
 
-from _datetime import datetime
+import time
 
 from odoo import api, models, _
 from odoo.exceptions import UserError
@@ -42,8 +42,8 @@ class ReportTax(models.AbstractModel):
 
     def _sql_from_amls_one(self):
         sql = """SELECT "account_move_line".tax_line_id, COALESCE(SUM("account_move_line".debit-"account_move_line".credit), 0)
-                    FROM %s
-                    WHERE %s AND "account_move_line".tax_exigible GROUP BY "account_move_line".tax_line_id"""
+                 FROM %s
+                 WHERE %s AND "account_move_line".tax_exigible GROUP BY "account_move_line".tax_line_id"""
         return sql
 
     def _sql_from_amls_two(self):
@@ -55,10 +55,27 @@ class ReportTax(models.AbstractModel):
         return sql
 
     def _compute_from_amls(self, options, taxes):
+        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+        domain = []
+        
+        # Récupération des filtres du contexte
+        if options.get('date_from'):
+            domain.append(('date', '>=', options['date_from']))
+        if options.get('date_to'):
+            domain.append(('date', '<=', options['date_to']))
+        if options.get('journal_ids'):
+            domain.append(('journal_id', 'in', options['journal_ids']))
+        if options.get('company_id'):
+            domain.append(('company_id', '=', options['company_id']))
+        if options.get('state') == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        
+        # Construction de la requête SQL
+        query = self.env['account.move.line']._where_calc(domain)
+        tables, where_clause, where_params = query.get_sql()
+        
         # compute the tax amount
         sql = self._sql_from_amls_one()
-        tables, where_clause, where_params = self.env[
-            'account.move.line']._query_get()
         query = sql % (tables, where_clause)
         self.env.cr.execute(query, where_params)
         results = self.env.cr.fetchall()
@@ -78,8 +95,7 @@ class ReportTax(models.AbstractModel):
     @api.model
     def get_lines(self, options):
         taxes = {}
-        for tax in self.env['account.tax'].search(
-                [('type_tax_use', '!=', 'none')]):
+        for tax in self.env['account.tax'].search([('type_tax_use', '!=', 'none')]):
             if tax.children_tax_ids:
                 for child in tax.children_tax_ids:
                     if child.type_tax_use != 'none':
@@ -89,25 +105,7 @@ class ReportTax(models.AbstractModel):
             else:
                 taxes[tax.id] = {'tax': 0, 'net': 0, 'name': tax.name,
                                  'type': tax.type_tax_use}
-        if options['date_from'] and not options['date_to']:
-            self.with_context(date_from=options['date_from'],
-                              strict_range=True)._compute_from_amls(options,
-                                                                    taxes)
-        elif options['date_to'] and not options['date_from']:
-            self.with_context(date_to=options['date_to'],
-                              strict_range=True)._compute_from_amls(options,
-                                                                    taxes)
-        elif options['date_from'] and options['date_to']:
-            self.with_context(date_from=options['date_from'],
-                              date_to=options['date_to'],
-                              strict_range=True)._compute_from_amls(options,
-                                                                    taxes)
-        else:
-            date_to = str(datetime.today().date())
-            self.with_context(date_to=date_to,
-                              strict_range=True)._compute_from_amls(options,
-                                                                    taxes)
-
+        self._compute_from_amls(options, taxes)
         groups = dict((tp, []) for tp in ['sale', 'purchase'])
         for tax in taxes.values():
             if tax['tax']:

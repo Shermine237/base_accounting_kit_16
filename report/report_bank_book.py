@@ -19,7 +19,7 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
-from datetime import time
+import time
 
 from odoo import models, api, _
 from odoo.exceptions import UserError
@@ -37,9 +37,23 @@ class ReportBankBook(models.AbstractModel):
 
         # Prepare initial sql query and Get the initial move lines
         if init_balance:
-            init_tables, init_where_clause, init_where_params = move_line.with_context(
-                date_from=self.env.context.get('date_from'), date_to=False,
-                initial_bal=True)._query_get()
+            # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+            domain = []
+            
+            # Récupération des filtres du contexte pour le solde initial
+            if self.env.context.get('date_from'):
+                domain.append(('date', '<', self.env.context['date_from']))
+            if self.env.context.get('state') == 'posted':
+                domain.append(('parent_state', '=', 'posted'))
+            if self.env.context.get('company_id'):
+                domain.append(('company_id', '=', self.env.context['company_id']))
+            if self.env.context.get('journal_ids'):
+                domain.append(('journal_id', 'in', self.env.context['journal_ids']))
+            
+            # Construction de la requête SQL
+            query = move_line._where_calc(domain)
+            init_tables, init_where_clause, init_where_params = query.get_sql()
+            
             init_wheres = [""]
             if init_where_clause.strip():
                 init_wheres.append(init_where_clause.strip())
@@ -53,27 +67,45 @@ class ReportBankBook(models.AbstractModel):
             COALESCE(SUM(l.debit),0.0) AS debit, \
             COALESCE(SUM(l.credit),0.0) AS credit, \
             COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance, \
-            '' AS lpartner_id,\
-            '' AS move_name, '' AS mmove_id, '' AS currency_code,\
-            NULL AS currency_id,\
-            '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,\
-            '' AS partner_name\
-            FROM account_move_line l\
-            LEFT JOIN account_move m ON (l.move_id=m.id)\
-            LEFT JOIN res_currency c ON (l.currency_id=c.id)\
-            LEFT JOIN res_partner p ON (l.partner_id=p.id)\
-            JOIN account_journal j ON (l.journal_id=j.id)\
+            '' AS lpartner_id, '' AS move_name, '' AS mmove_id, '' \
+            AS currency_code, NULL AS currency_id, '' AS invoice_id, \
+            '' AS invoice_type, '' AS invoice_number, '' \
+            AS partner_name FROM account_move_line l \
+            LEFT JOIN account_move m ON (l.move_id=m.id) \
+            LEFT JOIN res_currency c ON (l.currency_id=c.id) \
+            LEFT JOIN res_partner p ON (l.partner_id=p.id) \
+            LEFT JOIN account_move inv ON (m.id=inv.id) \
+            JOIN account_journal j ON (l.journal_id=j.id) \
             WHERE l.account_id IN %s""" + filters + ' GROUP BY l.account_id')
             params = (tuple(accounts.ids),) + tuple(init_where_params)
             cr.execute(sql, params)
             for row in cr.dictfetchall():
                 move_lines[row.pop('account_id')].append(row)
+
         sql_sort = 'l.date, l.move_id'
         if sortby == 'sort_journal_partner':
             sql_sort = 'j.code, p.name, l.move_id'
 
         # Prepare sql query base on selected parameters from wizard
-        tables, where_clause, where_params = move_line._query_get()
+        # Adaptation pour Odoo 16 qui n'utilise plus _query_get
+        domain = []
+        
+        # Récupération des filtres du contexte
+        if self.env.context.get('date_from'):
+            domain.append(('date', '>=', self.env.context['date_from']))
+        if self.env.context.get('date_to'):
+            domain.append(('date', '<=', self.env.context['date_to']))
+        if self.env.context.get('state') == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        if self.env.context.get('company_id'):
+            domain.append(('company_id', '=', self.env.context['company_id']))
+        if self.env.context.get('journal_ids'):
+            domain.append(('journal_id', 'in', self.env.context['journal_ids']))
+        
+        # Construction de la requête SQL
+        query = move_line._where_calc(domain)
+        tables, where_clause, where_params = query.get_sql()
+        
         wheres = [""]
         if where_clause.strip():
             wheres.append(where_clause.strip())
@@ -99,8 +131,8 @@ class ReportBankBook(models.AbstractModel):
                 JOIN account_account acc ON (l.account_id = acc.id) \
                 WHERE l.account_id IN %s ''' + filters + ''' GROUP BY \
                 l.id, l.account_id, l.date, j.code, l.currency_id, \
-                l.amount_currency, l.ref, l.name, m.name, \
-                c.symbol, p.name ORDER BY ''' + sql_sort)
+                l.amount_currency, l.ref, l.name, m.name, c.symbol, \
+                p.name ORDER BY ''' + sql_sort)
         params = (tuple(accounts.ids),) + tuple(where_params)
         cr.execute(sql, params)
 
@@ -109,13 +141,12 @@ class ReportBankBook(models.AbstractModel):
             for line in move_lines.get(row['account_id']):
                 balance += line['debit'] - line['credit']
             row['balance'] += balance
-            move_lines[row.pop('account_id')].append(row)
+            move_lines[row['account_id']].append(row)
 
         # Calculate the debit, credit and balance for Accounts
         account_res = []
         for account in accounts:
-            currency = account.currency_id and \
-                       account.currency_id or account.company_id.currency_id
+            currency = account.currency_id and account.currency_id or account.company_id.currency_id
             res = dict((fn, 0.0) for fn in ['credit', 'debit', 'balance'])
             res['code'] = account.code
             res['name'] = account.name
@@ -144,12 +175,13 @@ class ReportBankBook(models.AbstractModel):
         docs = self.env[model].browse(self.env.context.get('active_ids', []))
         init_balance = data['form'].get('initial_balance', True)
         sortby = data['form'].get('sortby', 'sort_date')
-        display_account = 'movement'
+        display_account = data['form']['display_account']
         codes = []
         if data['form'].get('journal_ids', False):
             codes = [journal.code for journal in
                      self.env['account.journal'].search(
                          [('id', 'in', data['form']['journal_ids'])])]
+
         account_ids = data['form']['account_ids']
         accounts = self.env['account.account'].search(
             [('id', 'in', account_ids)])
@@ -160,11 +192,9 @@ class ReportBankBook(models.AbstractModel):
                 accounts.append(journal.payment_credit_account_id.id)
             accounts = self.env['account.account'].search([('id', 'in', accounts)])
 
-        accounts_res = self.with_context(data['form'].get('used_context', {}))._get_account_move_entry(
-            accounts,
-            init_balance,
-            sortby,
-            display_account)
+        accounts_res = self.with_context(
+            data['form'].get('used_context', {}))._get_account_move_entry(
+            accounts, init_balance, sortby, display_account)
         return {
             'doc_ids': docids,
             'doc_model': model,
