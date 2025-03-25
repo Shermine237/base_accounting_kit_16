@@ -237,6 +237,5 @@ class ReportJournalAudit(models.AbstractModel):
             'sum_credit': self._sum_credit,
             'sum_debit': self._sum_debit,
             'get_taxes': self._get_taxes,
-            'company_id': self.env['res.company'].browse(
-                data['form']['company_id'][0]),
+            'company_id': self.env.company,
         }
