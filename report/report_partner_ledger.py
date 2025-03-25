@@ -206,19 +206,19 @@ class ReportPartnerLedger(models.AbstractModel):
         query = self.env['account.move.line']._where_calc(domain)
         tables, where_clause, where_params = query.get_sql()
         
-        # Comptes clients (receivable)
+        # Comptes clients (receivable) - Dans Odoo 16, account_type remplace internal_type
         self.env.cr.execute("""
             SELECT a.id
             FROM account_account a
-            WHERE a.internal_type = 'receivable'
+            WHERE a.account_type = 'asset_receivable'
             AND NOT a.deprecated""")
         customer_accounts = [a for (a,) in self.env.cr.fetchall()]
         
-        # Comptes fournisseurs (payable)
+        # Comptes fournisseurs (payable) - Dans Odoo 16, account_type remplace internal_type
         self.env.cr.execute("""
             SELECT a.id
             FROM account_account a
-            WHERE a.internal_type = 'payable'
+            WHERE a.account_type = 'liability_payable'
             AND NOT a.deprecated""")
         supplier_accounts = [a for (a,) in self.env.cr.fetchall()]
         
