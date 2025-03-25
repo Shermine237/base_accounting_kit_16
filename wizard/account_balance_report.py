@@ -34,6 +34,19 @@ class AccountBalanceReport(models.TransientModel):
         ('not_zero', 'With balance not equal to 0')],
         string='Display Accounts', required=True, default='movement')
 
+    def _build_contexts(self, data):
+        """
+        Construction du contexte pour le rapport Trial Balance
+        """
+        result = {}
+        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
+        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
+        result['date_from'] = data['form']['date_from'] or False
+        result['date_to'] = data['form']['date_to'] or False
+        result['strict_range'] = True if result['date_from'] else False
+        result['display_account'] = data['form']['display_account'] or 'all'
+        return result
+
     def _print_report(self, data):
         data = self.pre_print_report(data)
         records = self.env[data['model']].browse(data.get('ids', []))

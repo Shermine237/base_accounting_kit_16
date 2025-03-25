@@ -62,6 +62,22 @@ class AccountReportGeneralLedger(models.TransientModel):
             'base_accounting_kit_16.action_report_general_ledger').with_context(
             landscape=True).report_action(records, data=data)
 
+    def _build_contexts(self, data):
+        """
+        Construction du contexte pour le rapport General Ledger
+        """
+        result = {}
+        result['journal_ids'] = 'journal_ids' in data['form'] and data['form']['journal_ids'] or False
+        result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
+        result['date_from'] = data['form']['date_from'] or False
+        result['date_to'] = data['form']['date_to'] or False
+        result['strict_range'] = True if result['date_from'] else False
+        result['account_ids'] = 'account_ids' in data['form'] and data['form']['account_ids'] or False
+        result['analytic_account_ids'] = 'analytic_account_ids' in data['form'] and data['form']['analytic_account_ids'] or False
+        result['initial_balance'] = 'initial_balance' in data['form'] and data['form']['initial_balance'] or False
+        result['sortby'] = 'sortby' in data['form'] and data['form']['sortby'] or False
+        return result
+
     def check_report(self):
         """
         Surcharge de la méthode check_report pour générer le rapport General Ledger
