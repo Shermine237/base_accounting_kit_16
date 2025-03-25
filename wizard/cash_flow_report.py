@@ -50,19 +50,20 @@ class AccountingReport(models.TransientModel):
         return result
 
     def check_report(self):
-        res = super(AccountingReport, self).check_report()
+        """
+        Surcharge de la méthode check_report pour générer le rapport Cash Flow
+        """
+        self.ensure_one()
         data = {}
+        data['ids'] = self.env.context.get('active_ids', [])
+        data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
         data['form'] = self.read(['account_report_id', 'date_from_cmp', 'date_to_cmp', 'journal_ids', 'filter_cmp', 'target_move'])[0]
         for field in ['account_report_id']:
             if isinstance(data['form'][field], tuple):
                 data['form'][field] = data['form'][field][0]
         comparison_context = self._build_comparison_context(data)
-        if 'data' not in res:
-            res['data'] = {}
-        if 'form' not in res['data']:
-            res['data']['form'] = {}
-        res['data']['form']['comparison_context'] = comparison_context
-        return res
+        data['form']['comparison_context'] = comparison_context
+        return self._print_report(data)
 
     def _print_report(self, data):
         data['form'].update(self.read(['date_from_cmp', 'show_debit_credit', 'date_to_cmp', 'filter_cmp', 'account_report_id', 'enable_filter', 'label_filter', 'target_move'])[0])
