@@ -37,6 +37,9 @@ class AccountingReport(models.TransientModel):
     filter_cmp = fields.Selection([('filter_no', 'No Filters'),
                                    ('filter_date', 'Date')], string='Filter by',
                                   required=True, default='filter_date')
+    enable_filter = fields.Boolean(string='Enable Comparison')
+    show_debit_credit = fields.Boolean(string='Display Debit/Credit Columns', default=True)
+    label_filter = fields.Char(string='Column Label', help="This label will be displayed on report to show the balance computed for the given comparison filter.")
 
     def _build_comparison_context(self, data):
         result = {}
@@ -61,13 +64,14 @@ class AccountingReport(models.TransientModel):
         """
         Préparation des données avant l'impression du rapport
         """
-        data['form'].update(self.read(['account_report_id'])[0])
+        data['form'].update(self.read(['account_report_id', 'enable_filter', 'show_debit_credit', 'label_filter'])[0])
         return data
 
     def _print_report(self, data):
         data['form'].update(self.read(['date_from_cmp', 'date_to_cmp',
                                         'journal_ids', 'filter_cmp',
-                                        'account_report_id', 'target_move'])[0])
+                                        'account_report_id', 'target_move',
+                                        'enable_filter', 'show_debit_credit', 'label_filter'])[0])
         comparison_context = self._build_comparison_context(data)
         data['form']['comparison_context'] = comparison_context
         return self.env.ref(
@@ -82,7 +86,9 @@ class AccountingReport(models.TransientModel):
         data = {}
         data['ids'] = self.env.context.get('active_ids', [])
         data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['account_report_id', 'date_from_cmp', 'date_to_cmp', 'journal_ids', 'filter_cmp', 'target_move'])[0]
+        data['form'] = self.read(['account_report_id', 'date_from_cmp', 'date_to_cmp', 
+                                  'journal_ids', 'filter_cmp', 'target_move', 
+                                  'enable_filter', 'show_debit_credit', 'label_filter'])[0]
         for field in ['account_report_id']:
             if isinstance(data['form'][field], tuple):
                 data['form'][field] = data['form'][field][0]
