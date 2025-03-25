@@ -100,8 +100,12 @@ class ReportJournalAudit(models.AbstractModel):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = ['posted']
 
+        # Convertir journal_id en ID numérique si c'est un objet journal
+        if isinstance(journal_id, models.Model):
+            journal_id = journal_id.id
+
         query_get_clause = self._get_query_get_clause(data)
-        params = [tuple(move_state), tuple(journal_id)] + query_get_clause[1]
+        params = [tuple(move_state), (journal_id,)] + query_get_clause[1]
         query = 'SELECT COALESCE(SUM("account_move_line".debit-' \
                 '"account_move_line".credit), 0) as balance, ' \
                 'COALESCE(SUM(debit),0) as debit, ' \
@@ -111,7 +115,7 @@ class ReportJournalAudit(models.AbstractModel):
                 'account_tax tax, account_tax_account_tag tag ' \
                 'WHERE "account_move_line".move_id=am.id ' \
                 'AND am.state IN %s ' \
-                'AND "account_move_line".journal_id IN %s ' \
+                'AND "account_move_line".journal_id = %s ' \
                 'AND ' + query_get_clause[2] + ' ' \
                 'AND tax.id = tag.account_tax_id ' \
                 'AND tag.account_account_tag_id IN ' \
