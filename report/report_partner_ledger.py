@@ -149,7 +149,7 @@ class ReportPartnerLedger(models.AbstractModel):
         self.env.cr.execute(
             """SELECT a.id
                FROM account_account a
-               WHERE a.internal_type IN ('receivable', 'payable')
+               WHERE a.account_type IN ('asset_receivable', 'liability_payable')
                AND NOT a.deprecated""")
         data['computed']['account_ids'] = [a for (a,) in
                                            self.env.cr.fetchall()]
