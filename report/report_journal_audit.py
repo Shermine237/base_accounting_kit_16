@@ -60,8 +60,12 @@ class ReportJournalAudit(models.AbstractModel):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = ['posted']
 
+        # Convertir journal_id en ID numérique si c'est un objet journal
+        if isinstance(journal_id, models.Model):
+            journal_id = journal_id.id
+
         query_get_clause = self._get_query_get_clause(data)
-        params = [tuple(move_state), tuple(journal_id)] + query_get_clause[1]
+        params = [tuple(move_state), (journal_id,)] + query_get_clause[1]
         query = 'SELECT SUM(debit) FROM ' + query_get_clause[0] + \
                 ', account_move am ' \
                 'WHERE "account_move_line".move_id=am.id AND am.state IN %s ' \
@@ -76,8 +80,12 @@ class ReportJournalAudit(models.AbstractModel):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = ['posted']
 
+        # Convertir journal_id en ID numérique si c'est un objet journal
+        if isinstance(journal_id, models.Model):
+            journal_id = journal_id.id
+
         query_get_clause = self._get_query_get_clause(data)
-        params = [tuple(move_state), tuple(journal_id)] + query_get_clause[1]
+        params = [tuple(move_state), (journal_id,)] + query_get_clause[1]
         query = 'SELECT SUM(credit) FROM ' + query_get_clause[0] + \
                 ', account_move am ' \
                 'WHERE "account_move_line".move_id=am.id AND am.state IN %s ' \
