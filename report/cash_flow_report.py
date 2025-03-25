@@ -155,11 +155,13 @@ class ReportCashFlow(models.AbstractModel):
                 'account_type': report.type or False,
                 # used to underline the financial report balances
             }
-            if data['debit_credit']:
+            
+            # Utiliser show_debit_credit au lieu de debit_credit
+            if data.get('show_debit_credit', False):
                 vals['debit'] = res[report.id]['debit']
                 vals['credit'] = res[report.id]['credit']
 
-            if data['enable_filter']:
+            if data.get('enable_filter', False):
                 vals['balance_cmp'] = res[report.id]['comp_bal'] * int(
                     report.sign)
 
@@ -184,7 +186,7 @@ class ReportCashFlow(models.AbstractModel):
                         'level': report.display_detail == 'detail_with_hierarchy' and 4,
                         'account_type': account.internal_type,
                     }
-                    if data['debit_credit']:
+                    if data.get('show_debit_credit', False):
                         vals['debit'] = value['debit']
                         vals['credit'] = value['credit']
                         if not account.company_id.currency_id.is_zero(
@@ -195,7 +197,7 @@ class ReportCashFlow(models.AbstractModel):
                     if not account.company_id.currency_id.is_zero(
                             vals['balance']):
                         flag = True
-                    if data['enable_filter']:
+                    if data.get('enable_filter', False):
                         vals['balance_cmp'] = value['comp_bal'] * int(
                             report.sign)
                         if not account.company_id.currency_id.is_zero(
