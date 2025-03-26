@@ -1,6 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_financial_report_wizard_user,financial.report.wizard.user,model_account_financial_report_wizard,account.group_account_user,1,1,1,0
-access_financial_report_wizard_manager,financial.report.wizard.manager,model_account_financial_report_wizard,account.group_account_manager,1,1,1,1
+access_financial_report_wizard_user,financial.report.wizard.user,model_account_financial_report_wizard,account.group_account_user,0,0,0,0
+access_financial_report_wizard_manager,financial.report.wizard.manager,model_account_financial_report_wizard,account.group_account_manager,0,0,0,0
 access_generate_recurring_entries,generate.recurring.entries.user,model_account_recurring_payments,account.group_account_user,1,1,1,1
 
 access_account_asset_profile,account.asset.profile,model_account_asset_profile,account.group_account_user,1,0,0,0
