@@ -148,11 +148,52 @@ class ReportPartnerLedger(models.AbstractModel):
                 _("Form content is missing, this report cannot be printed."))
         
         data['computed'] = {}
-        
         obj_partner = self.env['res.partner']
         
+        # Initialisation des états de mouvement
+        data['computed']['move_state'] = ['draft', 'posted']
+        if data['form'].get('target_move') == 'posted':
+            data['computed']['move_state'] = ['posted']
+            
         # Préparation des paramètres pour la requête SQL
         move_state = tuple(data['computed']['move_state'])
+        
+        # Détermination des comptes en fonction de la sélection
+        result_selection = data['form'].get('result_selection')
+        if result_selection == 'customer':
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type = 'asset_receivable'
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+        elif result_selection == 'supplier':
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type = 'liability_payable'
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+        else:
+            self.env.cr.execute("""
+                SELECT a.id
+                FROM account_account a
+                WHERE a.account_type IN ('asset_receivable', 'liability_payable')
+                AND NOT a.deprecated""")
+            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
+            
+        # S'assurer que account_ids n'est pas vide
+        if not data['computed']['account_ids']:
+            return {
+                'doc_ids': [],
+                'doc_model': self.env['res.partner'],
+                'data': data,
+                'docs': [],
+                'time': time,
+                'lines': self._lines,
+                'sum_partner': self._sum_partner,
+            }
+            
         account_ids = tuple(data['computed']['account_ids'])
         
         # Construction de la requête SQL pour trouver les partenaires
@@ -187,39 +228,13 @@ class ReportPartnerLedger(models.AbstractModel):
             params.append(data['form']['date_to'])
             
         # Clause de réconciliation
-        if not data['form']['reconciled']:
+        if not data['form'].get('reconciled', False):
             query += " AND \"account_move_line\".full_reconcile_id IS NULL"
             
         self.env.cr.execute(query, params)
         partner_ids = [res['partner_id'] for res in self.env.cr.dictfetchall()]
         partners = obj_partner.browse(partner_ids)
         partners = sorted(partners, key=lambda x: x.name)
-        
-        data['computed']['move_state'] = ['draft', 'posted']
-        if data['form'].get('target_move') == 'posted':
-            data['computed']['move_state'] = ['posted']
-        result_selection = data['form'].get('result_selection')
-        if result_selection == 'customer':
-            self.env.cr.execute("""
-                SELECT a.id
-                FROM account_account a
-                WHERE a.account_type = 'asset_receivable'
-                AND NOT a.deprecated""")
-            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
-        elif result_selection == 'supplier':
-            self.env.cr.execute("""
-                SELECT a.id
-                FROM account_account a
-                WHERE a.account_type = 'liability_payable'
-                AND NOT a.deprecated""")
-            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
-        else:
-            self.env.cr.execute("""
-                SELECT a.id
-                FROM account_account a
-                WHERE a.account_type IN ('asset_receivable', 'liability_payable')
-                AND NOT a.deprecated""")
-            data['computed']['account_ids'] = [a for (a,) in self.env.cr.fetchall()]
         
         return {
             'doc_ids': partner_ids,
