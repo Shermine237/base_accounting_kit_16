@@ -93,7 +93,7 @@ class ReportAgedPartnerBalance(models.AbstractModel):
             WHERE (l.account_id = account_account.id)
                 AND (l.move_id = am.id)
                 AND (am.state IN %s)
-                AND (account_account.internal_type IN %s)
+                AND (account_account.account_type IN %s)
                 AND ''' + reconciliation_clause + '''
                 AND (l.date <= %s)
                 AND l.company_id IN %s
@@ -119,7 +119,7 @@ class ReportAgedPartnerBalance(models.AbstractModel):
                 FROM account_move_line AS l, account_account, account_move am
                 WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
                     AND (am.state IN %s)
-                    AND (account_account.internal_type IN %s)
+                    AND (account_account.account_type IN %s)
                     AND (COALESCE(l.date_maturity,l.date) >= %s)\
                     AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
                 AND (l.date <= %s)
@@ -179,7 +179,7 @@ class ReportAgedPartnerBalance(models.AbstractModel):
                     FROM account_move_line AS l, account_account, account_move am
                     WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
                         AND (am.state IN %s)
-                        AND (account_account.internal_type IN %s)
+                        AND (account_account.account_type IN %s)
                         AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
                         AND ''' + dates_query + '''
                     AND (l.date <= %s)
