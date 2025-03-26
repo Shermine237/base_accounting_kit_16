@@ -18,6 +18,23 @@
             </field>
         </record>
 
+        <!-- Actions -->
+        <record id="action_account_report_bs" model="ir.actions.act_window">
+            <field name="name">Balance Sheet</field>
+            <field name="res_model">account.financial.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','bs')]</field>
+            <field name="context">{'default_type': 'bs'}</field>
+        </record>
+
+        <record id="action_account_report_pl" model="ir.actions.act_window">
+            <field name="name">Profit and Loss</field>
+            <field name="res_model">account.financial.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','pl')]</field>
+            <field name="context">{'default_type': 'pl'}</field>
+        </record>
+
         <!-- Menu principal des rapports financiers -->
         <menuitem id="menu_financial_reports" 
                   name="Financial Reports"
@@ -64,22 +81,5 @@
                   parent="menu_financial_reports"
                   action="action_account_report_pl"
                   sequence="70"/>
-
-        <!-- Actions -->
-        <record id="action_account_report_bs" model="ir.actions.act_window">
-            <field name="name">Balance Sheet</field>
-            <field name="res_model">account.financial.report</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('type','=','bs')]</field>
-            <field name="context">{'default_type': 'bs'}</field>
-        </record>
-
-        <record id="action_account_report_pl" model="ir.actions.act_window">
-            <field name="name">Profit and Loss</field>
-            <field name="res_model">account.financial.report</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('type','=','pl')]</field>
-            <field name="context">{'default_type': 'pl'}</field>
-        </record>
     </data>
 </odoo>
