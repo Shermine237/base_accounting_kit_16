@@ -160,20 +160,4 @@
         <field name="binding_type">report</field>
     </record>
 
-    <!-- Action pour le rapport Excel -->
-    <record id="action_report_financial_xlsx" model="ir.actions.report">
-        <field name="name">Financial Report (Excel)</field>
-        <field name="model">account.financial.report</field>
-        <field name="report_type">xlsx</field>
-        <field name="report_name">base_accounting_kit_16.report_financial_xlsx</field>
-        <field name="report_file">base_accounting_kit_16.report_financial_xlsx</field>
-        <field name="binding_type">report</field>
-    </record>
-
-    <!-- Menu pour le rapport Excel -->
-    <menuitem id="menu_financial_reports_excel"
-              name="Financial Report (Excel)"
-              parent="menu_financial_reports"
-              action="action_report_financial_xlsx"
-              sequence="2"/>
 </odoo>
