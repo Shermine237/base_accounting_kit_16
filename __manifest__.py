@@ -25,7 +25,6 @@
         'data/recurring_entry_cron.xml',
         
         # Views
-        'views/account_report_views.xml',
         'views/account_move_views.xml',
         'views/account_payment_view.xml',
         'views/accounting_menu.xml',
