@@ -3,6 +3,13 @@
 import calendar
 import datetime
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from odoo import models, fields, api, _
+from odoo.http import request
+
+import calendar
+import datetime
+from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
@@ -1835,3 +1842,26 @@ class DashBoard(models.Model):
 
         }
         return records
+
+    @api.model
+    def get_current_company_value(self):
+        """Get the current company ID(s) for the dashboard"""
+        if not request:
+            return [self.env.company.id]
+
+        company_ids = []
+        if request.httprequest.cookies.get('cids'):
+            company_ids = [int(r) for r in request.httprequest.cookies.get('cids').split(",")]
+        else:
+            company_ids = [request.env.company.id]
+
+        # Filter out companies that the user doesn't have access to
+        company_ids = [cid for cid in company_ids if cid in request.env.user.company_ids.ids]
+
+        if not company_ids:
+            company_ids = [request.env.company.id]
+
+        if len(company_ids) == 1:
+            company_ids.append(0)
+
+        return company_ids
