@@ -16,6 +16,9 @@
         'security/security.xml',
         'security/ir.model.access.csv',
         
+        # Python files
+        'wizard/account_profit_loss.py',
+        
         # Data
         'data/account_financial_report_data.xml',
         'data/cash_flow_data.xml',
@@ -43,7 +46,6 @@
         'views/recurring_payments_view.xml',
         
         # Wizards
-        'wizard/account_profit_loss.py',
         'wizard/account_common_report_view.xml',
         'wizard/account_report_common_partner_view.xml',
         'wizard/trial_balance.xml',
