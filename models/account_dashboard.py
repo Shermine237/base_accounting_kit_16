@@ -1340,6 +1340,7 @@ class DashBoard(models.Model):
 
     @api.model
     def month_income_this_month(self, *post):
+
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1619,3 +1620,115 @@ class DashBoard(models.Model):
 
         }
         return records
+
+    @api.model
+    def get_income_this_month(self, *post):
+        company_id = self.get_current_company_value()
+        states_arg = ""
+        if post != ('posted',):
+            states_arg = """ parent_state in ('posted', 'draft')"""
+        else:
+            states_arg = """ parent_state = 'posted'"""
+
+        day_list = []
+        now = datetime.now()
+        day = calendar.monthrange(now.year, now.month)[1]
+        for x in range(1, day + 1):
+            day_list.append(x)
+
+        # Requête pour les revenus avec conversion de devise
+        self._cr.execute(('''
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.debit - aml.credit)
+                    END
+                ), 0.0) as income,
+                cast(to_char(aml.date, 'DD') as int) as date,
+                aa.internal_group 
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            WHERE Extract(month FROM aml.date) = Extract(month FROM DATE(NOW()))
+            AND Extract(YEAR FROM aml.date) = Extract(YEAR FROM DATE(NOW()))
+            AND %s
+            AND aml.company_id IN %s
+            AND aa.internal_group = 'income'
+            GROUP BY aa.internal_group, date
+        ''') % (states_arg, str(tuple(company_id))))
+
+        record = self._cr.dictfetchall()
+
+        # Requête pour les dépenses avec conversion de devise
+        self._cr.execute(('''
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.debit - aml.credit)
+                    END
+                ), 0.0) as expense,
+                cast(to_char(aml.date, 'DD') as int) as date,
+                aa.internal_group 
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            WHERE Extract(month FROM aml.date) = Extract(month FROM DATE(NOW()))
+            AND Extract(YEAR FROM aml.date) = Extract(YEAR FROM DATE(NOW()))
+            AND %s
+            AND aml.company_id IN %s
+            AND aa.internal_group = 'expense'
+            GROUP BY aa.internal_group, date
+        ''') % (states_arg, str(tuple(company_id))))
+
+        result = self._cr.dictfetchall()
+        records = []
+        for date in day_list:
+            last_month_inc = list(filter(lambda m: m['date'] == date, record))
+            last_month_exp = list(filter(lambda m: m['date'] == date, result))
+            if not last_month_inc and not last_month_exp:
+                records.append({
+                    'date': date,
+                    'income': 0.0,
+                    'expense': 0.0,
+                    'profit': 0.0
+                })
+            elif (not last_month_inc) and last_month_exp:
+                records.append({
+                    'date': date,
+                    'income': 0.0,
+                    'expense': abs(last_month_exp[0]['expense']),
+                    'profit': -abs(last_month_exp[0]['expense'])
+                })
+            elif (not last_month_exp) and last_month_inc:
+                records.append({
+                    'date': date,
+                    'income': abs(last_month_inc[0]['income']),
+                    'expense': 0.0,
+                    'profit': abs(last_month_inc[0]['income'])
+                })
+            else:
+                income = abs(last_month_inc[0]['income'])
+                expense = abs(last_month_exp[0]['expense'])
+                records.append({
+                    'date': date,
+                    'income': income,
+                    'expense': expense,
+                    'profit': income - expense
+                })
+        income = []
+        expense = []
+        date = []
+        profit = []
+        for rec in records:
+            income.append(rec['income'])
+            expense.append(rec['expense'])
+            date.append(rec['date'])
+            profit.append(rec['profit'])
+        return {
+            'income': income,
+            'expense': expense,
+            'date': date,
+            'profit': profit
+        }

@@ -1855,8 +1855,9 @@ odoo.define('AccountingDashboard.AccountingDashboard', function(require) {
             if (typeof(amount) != 'number') {
                 amount = parseFloat(amount);
             }
-            var formatted_value = (parseInt(amount)).toLocaleString(currency.language, {
-                minimumFractionDigits: 2
+            var formatted_value = amount.toLocaleString(currency.language, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             })
             if (currency.position === "after") {
                 return formatted_value += ' ' + currency.symbol;
