@@ -49,6 +49,8 @@
         'wizard/account_bank_book_wizard_view.xml',
         'wizard/account_cash_book_wizard_view.xml',
         'wizard/account_day_book_wizard_view.xml',
+        'wizard/account_balance_view.xml',
+        'wizard/account_profit_loss_view.xml',
         'wizard/financial_report.xml',
         'wizard/cash_flow_report.xml',
         'wizard/general_ledger.xml',

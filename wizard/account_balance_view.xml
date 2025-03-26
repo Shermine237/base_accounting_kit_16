@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="account_balance_view" model="ir.ui.view">
+        <field name="name">Balance Sheet</field>
+        <field name="model">account.balance.report</field>
+        <field name="inherit_id" ref="base_accounting_kit_16.account_common_report_view"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='target_move']" position="after">
+                    <field name="display_account" widget="radio"/>
+                    <newline/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <record id="action_account_balance_menu" model="ir.actions.act_window">
+        <field name="name">Balance Sheet</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">account.balance.report</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="account_balance_view"/>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_account_balance"
+              name="Balance Sheet"
+              sequence="2"
+              action="action_account_balance_menu"
+              parent="base_accounting_kit_16.account_reports_audit"/>
+</odoo>
