@@ -334,7 +334,7 @@ class DashBoard(models.Model):
         self._cr.execute(('''select sum(debit)-sum(credit) as income ,cast(to_char(account_move_line.date, 'DD')as int)
                             as date , internal_group from account_move_line , account_account
                             where   Extract(month FROM account_move_line.date) = Extract(month FROM DATE(NOW()))  
-                            AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW()))  
+                            AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW()))     
                             AND %s
                             AND account_move_line.company_id in ''' + str(tuple(company_id)) + ''' 
                             AND account_move_line.account_id=account_account.id AND internal_group='income'
@@ -346,7 +346,7 @@ class DashBoard(models.Model):
         self._cr.execute(('''select sum(debit)-sum(credit) as expense ,cast(to_char(account_move_line.date, 'DD')as int)
                             as date , internal_group from account_move_line , account_account where  
                             Extract(month FROM account_move_line.date) = Extract(month FROM DATE(NOW()))  
-                            AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW()))  
+                            AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW()))     
                             AND %s
                             AND account_move_line.company_id in ''' + str(tuple(company_id)) + ''' 
                             AND account_move_line.account_id=account_account.id AND internal_group='expense'
@@ -521,9 +521,9 @@ class DashBoard(models.Model):
             self._cr.execute((''' 
                                select to_char(account_move.date, 'Month') as month, res_partner.name as due_partner, account_move.partner_id as parent,
                                sum(account_move.amount_total) as amount from account_move, res_partner where account_move.partner_id = res_partner.id
-                               AND account_move.move_type = 'out_invoice'
-                               AND payment_state = 'not_paid'
-                               AND %s 
+                               AND account_move.move_type = 'out_invoice' AND
+                               payment_state = 'not_paid' AND 
+                               %s 
                                AND Extract(month FROM account_move.invoice_date_due) = Extract(month FROM DATE(NOW()))
                                AND Extract(YEAR FROM account_move.invoice_date_due) = Extract(YEAR FROM DATE(NOW()))
                                AND account_move.partner_id = res_partner.commercial_partner_id
@@ -1000,7 +1000,7 @@ class DashBoard(models.Model):
 
         self._cr.execute(('''  select count(*) FROM account_move_line l,account_account a
                                   where Extract(year FROM l.date) = Extract(year FROM DATE(NOW())) AND
-                                  l.account_id=a.id AND l.full_reconcile_id IS NULL AND 
+                                  L.account_id=a.id AND l.full_reconcile_id IS NULL AND 
                                   l.balance != 0 AND a.reconcile IS TRUE  
                                   AND l.%s
                                   AND  l.company_id in ''' + str(tuple(company_id)) + '''       
@@ -1340,7 +1340,6 @@ class DashBoard(models.Model):
 
     @api.model
     def month_income_this_month(self, *post):
-
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1349,20 +1348,40 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute(('''select sum(debit) as debit, sum(credit) as credit from account_account, account_move_line where
-                            account_move_line.account_id = account_account.id AND account_account.internal_group = 'income'
-                           AND %s
-                           AND Extract(month FROM account_move_line.date) = Extract(month FROM DATE(NOW())) 
-                           AND Extract(year FROM account_move_line.date) = Extract(year FROM DATE(NOW())) 
-                           AND account_move_line.company_id in ''' + str(tuple(company_id)) + ''' 
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.credit - aml.debit)
+                    END
+                ) * cr.rate, 0.0) as total_income
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group = 'income'
+            AND Extract(month FROM aml.date) = Extract(month FROM DATE(NOW()))
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
 
-                                 ''') % (states_arg))
         record = self._cr.dictfetchall()
         return record
 
     @api.model
     def profit_income_this_month(self, *post):
-
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1371,46 +1390,54 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute(('''select sum(debit) - sum(credit) as profit, account_account.internal_group from  account_account, account_move_line where 
-                                  
-                                    account_move_line.account_id = account_account.id AND
-                                    %s AND
-                                    (account_account.internal_group = 'income' or    
-                                    account_account.internal_group = 'expense' ) 
-                                    AND Extract(month FROM account_move_line.date) = Extract(month FROM DATE(NOW())) 
-                                    AND Extract(year FROM account_move_line.date) = Extract(year FROM DATE(NOW()))   
-                                    AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''        
-                                    group by internal_group 
-                                     ''') % (states_arg))
-        income = self._cr.dictfetchall()
-        profit = [item['profit'] for item in income]
-        internal_group = [item['internal_group'] for item in income]
-        net_profit = True
-        loss = True
-        if profit and profit == 0:
-            if (-profit[1]) > (profit[0]):
-                net_profit = -profit[1] - profit[0]
-            elif (profit[1]) > (profit[0]):
-                net_profit = -profit[1] - profit[0]
-            else:
-                net_profit = -profit[1] - profit[0]
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.credit - aml.debit)
+                    END
+                ) * cr.rate, 0.0) as profit,
+                aa.internal_group
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group IN ('income', 'expense')
+            AND Extract(month FROM aml.date) = Extract(month FROM DATE(NOW()))
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+            GROUP BY aa.internal_group
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
 
-        return profit
-
-    def get_current_company_value(self):
-
-        cookies_cids = [int(r) for r in request.httprequest.cookies.get('cids').split(",")] \
-            if request.httprequest.cookies.get('cids') \
-            else [request.env.user.company_id.id]
-
-        for company_id in cookies_cids:
-            if company_id not in self.env.user.company_ids.ids:
-                cookies_cids.remove(company_id)
-        if not cookies_cids:
-            cookies_cids = [self.env.company.id]
-        if len(cookies_cids) == 1:
-            cookies_cids.append(0)
-        return cookies_cids
+        result = self._cr.dictfetchall()
+        
+        # Initialiser les valeurs par défaut
+        income_amount = 0.0
+        expense_amount = 0.0
+        
+        # Calculer les totaux pour chaque groupe
+        for row in result:
+            if row['internal_group'] == 'income':
+                income_amount = row['profit']
+            elif row['internal_group'] == 'expense':
+                expense_amount = row['profit']
+        
+        # Calculer le profit net (revenus - dépenses)
+        net_profit = income_amount - expense_amount
+        
+        return net_profit
 
     @api.model
     def profit_income_this_year(self, *post):
@@ -1421,31 +1448,53 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute(('''select sum(debit) - sum(credit) as profit, account_account.internal_group from  account_account, account_move_line where 
-                                        
-                                         account_move_line.account_id = account_account.id AND
-                                         %s AND
-                                        (account_account.internal_group = 'income' or    
-                                        account_account.internal_group = 'expense' )                                       
-                                        AND Extract(year FROM account_move_line.date) = Extract(year FROM DATE(NOW()))  
-                                        AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''           
-                                        group by internal_group 
-                                         ''') % (states_arg))
-        income = self._cr.dictfetchall()
-        profit = [item['profit'] for item in income]
-        internal_group = [item['internal_group'] for item in income]
-        net_profit = True
-        loss = True
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.credit - aml.debit)
+                    END
+                ) * cr.rate, 0.0) as profit,
+                aa.internal_group
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group IN ('income', 'expense')
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+            GROUP BY aa.internal_group
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
 
-        if profit and profit == 0:
-            if (-profit[1]) > (profit[0]):
-                net_profit = -profit[1] - profit[0]
-            elif (profit[1]) > (profit[0]):
-                net_profit = -profit[1] - profit[0]
-            else:
-                net_profit = -profit[1] - profit[0]
-
-        return profit
+        result = self._cr.dictfetchall()
+        
+        # Initialiser les valeurs par défaut
+        income_amount = 0.0
+        expense_amount = 0.0
+        
+        # Calculer les totaux pour chaque groupe
+        for row in result:
+            if row['internal_group'] == 'income':
+                income_amount = row['profit']
+            elif row['internal_group'] == 'expense':
+                expense_amount = row['profit']
+        
+        # Calculer le profit net (revenus - dépenses)
+        net_profit = income_amount - expense_amount
+        
+        return net_profit
 
     # function to get total income last month
 
@@ -1471,7 +1520,6 @@ class DashBoard(models.Model):
 
     @api.model
     def month_income_this_year(self, *post):
-
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1480,12 +1528,34 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute((''' select sum(debit) as debit, sum(credit) as credit from account_account, account_move_line where                           
-                             account_move_line.account_id = account_account.id AND account_account.internal_group = 'income'
-                             AND %s
-                          AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW())) 
-                          AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''
-                        ''') % (states_arg))
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.credit - aml.debit)
+                    END
+                ) * cr.rate, 0.0) as total_income
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group = 'income'
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
+
         record = self._cr.dictfetchall()
         return record
 
@@ -1536,7 +1606,6 @@ class DashBoard(models.Model):
 
     @api.model
     def month_expense_this_month(self, *post):
-
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1545,16 +1614,35 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute((''' select sum(debit) as debit, sum(credit) as credit from  account_account, account_move_line where 
-                        
-                            account_move_line.account_id = account_account.id AND account_account.internal_group = 'expense' AND  
-                            %s                
-                            AND Extract(month FROM account_move_line.date) = Extract(month FROM DATE(NOW()))
-                            AND Extract(year FROM account_move_line.date) = Extract(year FROM DATE(NOW())) 
-                            AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.debit - aml.credit)
+                    END
+                ) * cr.rate, 0.0) as total_expense
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group = 'expense'
+            AND Extract(month FROM aml.date) = Extract(month FROM DATE(NOW()))
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
 
-
-                                 ''') % (states_arg))
         record = self._cr.dictfetchall()
         return record
 
@@ -1562,7 +1650,6 @@ class DashBoard(models.Model):
 
     @api.model
     def month_expense_this_year(self, *post):
-
         company_id = self.get_current_company_value()
 
         states_arg = ""
@@ -1571,55 +1658,36 @@ class DashBoard(models.Model):
         else:
             states_arg = """ parent_state = 'posted'"""
 
-        self._cr.execute((''' select sum(debit) as debit, sum(credit) as credit from  account_account, account_move_line where
-                        
-                            account_move_line.account_id = account_account.id AND account_account.internal_group = 'expense' AND  
-                            %s                         
-                            AND Extract(YEAR FROM account_move_line.date) = Extract(YEAR FROM DATE(NOW())) 
-                            AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''
+        self._cr.execute(('''
+            WITH currency_rate AS (
+                SELECT c.id AS company_id,
+                    COALESCE(r.rate, 1.0) AS rate
+                FROM res_company c
+                LEFT JOIN res_currency_rate r ON (r.currency_id = c.currency_id)
+                WHERE c.id IN %s
+                AND r.name <= CURRENT_DATE
+                ORDER BY r.name DESC
+                LIMIT 1
+            )
+            SELECT 
+                COALESCE(SUM(
+                    CASE
+                        WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
+                        THEN aml.amount_currency
+                        ELSE (aml.debit - aml.credit)
+                    END
+                ) * cr.rate, 0.0) as total_expense
+            FROM account_move_line aml
+            JOIN account_account aa ON aml.account_id = aa.id
+            JOIN currency_rate cr ON aml.company_id = cr.company_id
+            WHERE %s
+            AND aa.internal_group = 'expense'
+            AND Extract(year FROM aml.date) = Extract(year FROM DATE(NOW()))
+            AND aml.company_id IN %s
+        ''') % (str(tuple(company_id)), states_arg, str(tuple(company_id))))
 
-
-
-                            ''') % (states_arg))
         record = self._cr.dictfetchall()
         return record
-
-    @api.model
-    def bank_balance(self, *post):
-
-        company_id = self.get_current_company_value()
-
-        states_arg = ""
-        if post != ('posted',):
-            states_arg = """ parent_state = 'posted'"""
-        else:
-            states_arg = """ parent_state in ('posted', 'draft')"""
-
-        self._cr.execute((''' select account_account.name as name, sum(balance) as balance,
-                            min(account_account.id) as id from account_move_line left join
-                            account_account on account_account.id = account_move_line.account_id 
-                            where account_account.account_type = 'asset_cash'
-                            AND %s
-                            AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''
-                            group by account_account.name
-                                                   
-                            ''') % (states_arg))
-
-        record = self._cr.dictfetchall()
-
-        banks = [item['name'] for item in record]
-
-        banking = [item['balance'] for item in record]
-
-        bank_ids = [item['id'] for item in record]
-
-        records = {
-            'banks': banks,
-            'banking': banking,
-            'bank_ids': bank_ids
-
-        }
-        return records
 
     @api.model
     def get_income_this_month(self, *post):
@@ -1637,8 +1705,7 @@ class DashBoard(models.Model):
             day_list.append(x)
 
         # Requête pour les revenus avec conversion de devise
-        self._cr.execute(('''
-            SELECT 
+        self._cr.execute((''' SELECT 
                 COALESCE(SUM(
                     CASE
                         WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
@@ -1661,8 +1728,7 @@ class DashBoard(models.Model):
         record = self._cr.dictfetchall()
 
         # Requête pour les dépenses avec conversion de devise
-        self._cr.execute(('''
-            SELECT 
+        self._cr.execute((''' SELECT 
                 COALESCE(SUM(
                     CASE
                         WHEN aml.company_currency_id != aml.currency_id AND aml.amount_currency IS NOT NULL
@@ -1732,3 +1798,40 @@ class DashBoard(models.Model):
             'date': date,
             'profit': profit
         }
+
+    @api.model
+    def bank_balance(self, *post):
+
+        company_id = self.get_current_company_value()
+
+        states_arg = ""
+        if post != ('posted',):
+            states_arg = """ parent_state = 'posted'"""
+        else:
+            states_arg = """ parent_state in ('posted', 'draft')"""
+
+        self._cr.execute((''' select account_account.name as name, sum(balance) as balance,
+                            min(account_account.id) as id from account_move_line left join
+                            account_account on account_account.id = account_move_line.account_id 
+                            where account_account.account_type = 'asset_cash'
+                            AND %s
+                            AND account_move_line.company_id in ''' + str(tuple(company_id)) + '''
+                            group by account_account.name
+                                                   
+                            ''') % (states_arg))
+
+        record = self._cr.dictfetchall()
+
+        banks = [item['name'] for item in record]
+
+        banking = [item['balance'] for item in record]
+
+        bank_ids = [item['id'] for item in record]
+
+        records = {
+            'banks': banks,
+            'banking': banking,
+            'bank_ids': bank_ids
+
+        }
+        return records
