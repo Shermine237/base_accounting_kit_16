@@ -8,21 +8,27 @@
             <data>
                 <xpath expr="//field[@name='company_id']" position="replace"/>
                 <xpath expr="//field[@name='target_move']" position="before">
-                    <field name="account_report_id" domain="[('parent_id','=',False)]" readonly="1"/>
-                    <field name="enable_filter"/>
+                    <group>
+                        <field name="account_report_id" domain="[('parent_id','=',False)]" readonly="1"/>
+                        <field name="enable_filter"/>
+                    </group>
                 </xpath>
                 <xpath expr="//field[@name='target_move']" position="after">
-                    <field name="show_debit_credit"/>
                     <group>
-                        <field name="company_id"/>
-                    </group>
-                    <group attrs="{'invisible': [('enable_filter','=',False)]}">
-                        <field name="label_filter" string="Column Label"/>
-                        <field name="filter_cmp" string="Filter By"/>
-                    </group>
-                    <group attrs="{'invisible': [('filter_cmp', '!=', 'filter_date')]}">
-                        <field name="date_from_cmp" string="Comparison Start Date"/>
-                        <field name="date_to_cmp" string="Comparison End Date"/>
+                        <group>
+                            <field name="show_debit_credit"/>
+                        </group>
+                        <group>
+                            <field name="company_id"/>
+                        </group>
+                        <group attrs="{'invisible': [('enable_filter','=',False)]}">
+                            <field name="label_filter" string="Column Label"/>
+                            <field name="filter_cmp" string="Filter By"/>
+                        </group>
+                        <group attrs="{'invisible': [('filter_cmp', '!=', 'filter_date')]}">
+                            <field name="date_from_cmp" string="Comparison Start Date"/>
+                            <field name="date_to_cmp" string="Comparison End Date"/>
+                        </group>
                     </group>
                 </xpath>
             </data>
