@@ -3,38 +3,33 @@
     <!-- Template principal -->
     <template id="report_financial">
         <t t-call="web.html_container">
-            <t t-call="web.internal_layout">
+            <t t-call="web.external_layout">
                 <div class="page">
                     <h2><span t-esc="data['name']"/></h2>
 
-                    <div class="row mb32">
-                        <div class="col-4">
+                    <!-- En-tête du rapport -->
+                    <div class="row mt32 mb32">
+                        <div class="col-3">
+                            <strong>Company:</strong>
+                            <p t-esc="res_company.name"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Date Range:</strong>
+                            <p>
+                                <span t-esc="data['date_from']"/> - 
+                                <span t-esc="data['date_to']"/>
+                            </p>
+                        </div>
+                        <div class="col-3">
                             <strong>Target Moves:</strong>
                             <p t-if="data['target_move'] == 'all'">All Entries</p>
                             <p t-if="data['target_move'] == 'posted'">All Posted Entries</p>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3" t-if="data.get('enable_filter')">
+                            <strong>Comparison:</strong>
                             <p>
-                                <strong>Date from :</strong>
-                                <span t-esc="data['date_from']"/>
-                            </p>
-                            <p>
-                                <strong>Date to :</strong>
-                                <span t-esc="data['date_to']"/>
-                            </p>
-                        </div>
-                        <div class="col-4" t-if="data.get('enable_filter')">
-                            <p>
-                                <strong>Comparison Date from :</strong>
-                                <span t-esc="data['date_from_cmp']"/>
-                            </p>
-                            <p>
-                                <strong>Comparison Date to :</strong>
+                                <span t-esc="data['date_from_cmp']"/> - 
                                 <span t-esc="data['date_to_cmp']"/>
-                            </p>
-                            <p>
-                                <strong>Comparison Label :</strong>
-                                <span t-esc="data['label_filter']"/>
                             </p>
                         </div>
                     </div>
