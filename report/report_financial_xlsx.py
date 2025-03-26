@@ -9,9 +9,9 @@ class ReportFinancialXlsx(models.AbstractModel):
     _description = 'Financial Report Excel'
 
     def generate_xlsx_report(self, workbook, data, objects):
-        # Dans Odoo 16, le modèle account.financial.report.wizard est utilisé pour générer les rapports
-        report_wizard = self.env['account.financial.report.wizard'].browse(data.get('wizard_id', False))
-        if not report_wizard:
+        # Dans Odoo 16, le modèle account.financial.report est utilisé pour générer les rapports
+        report = self.env['account.financial.report'].browse(data.get('report_id', False))
+        if not report:
             return
             
         # Format pour les en-têtes
@@ -80,13 +80,8 @@ class ReportFinancialXlsx(models.AbstractModel):
 
         # Récupération des données du rapport
         try:
-            # Utilisation de la nouvelle API pour obtenir les lignes de rapport
-            report_id = account_report_id and account_report_id[0]
-            if not report_id:
-                return
-                
             # Obtenir le modèle de rapport financier
-            report_model = self.env['account.financial.report'].browse(report_id)
+            report_model = report
             
             # Préparer le contexte pour le rapport
             context = {

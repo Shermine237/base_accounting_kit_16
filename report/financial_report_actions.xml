@@ -4,30 +4,28 @@
     <record id="action_report_financial" model="ir.actions.client">
         <field name="name">Financial Report</field>
         <field name="tag">account_report</field>
-        <field name="context" eval="{'model': 'account.financial.report.wizard'}"/>
+        <field name="context" eval="{'model': 'account.financial.report'}"/>
     </record>
 
     <!-- Action pour le rapport PDF -->
     <record id="action_report_financial_pdf" model="ir.actions.report">
         <field name="name">Financial Report PDF</field>
-        <field name="model">account.financial.report.wizard</field>
+        <field name="model">account.financial.report</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">base_accounting_kit_16.report_financial</field>
         <field name="report_file">base_accounting_kit_16.report_financial</field>
         <field name="print_report_name">'Financial Report - %s' % (object.name)</field>
-        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
         <field name="binding_type">report</field>
     </record>
 
     <!-- Action pour le rapport Excel -->
     <record id="action_report_financial_xlsx" model="ir.actions.report">
         <field name="name">Financial Report Excel</field>
-        <field name="model">account.financial.report.wizard</field>
+        <field name="model">account.financial.report</field>
         <field name="report_type">xlsx</field>
         <field name="report_name">base_accounting_kit_16.report_financial_xlsx</field>
         <field name="report_file">base_accounting_kit_16.report_financial_xlsx</field>
         <field name="print_report_name">'Financial Report - %s.xlsx' % (object.name)</field>
-        <field name="binding_model_id" ref="model_account_financial_report_wizard"/>
         <field name="binding_type">report</field>
     </record>
 </odoo>
