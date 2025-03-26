@@ -25,7 +25,7 @@ from . import account_common_report
 
 # Wizards de rapports financiers
 from . import general_ledger
-from . import general_ledger_xlsx
+from . import general_ledger_patch
 from . import partner_ledger
 from . import tax_report
 

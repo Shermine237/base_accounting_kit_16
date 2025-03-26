@@ -29,7 +29,7 @@ from . import report_common_partner
 from . import report_financial
 from . import report_financial_xlsx
 from . import report_general_ledger
-from . import general_ledger_xlsx
+from . import report_general_ledger_xlsx
 from . import report_partner_ledger
 from . import report_trial_balance
 from . import report_tax
