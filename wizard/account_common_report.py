@@ -73,28 +73,3 @@ class AccountCommonReport(models.TransientModel):
         :param data: Report data
         """
         raise NotImplementedError()
-
-    def export_excel(self):
-        """
-        Méthode appelée lors du clic sur le bouton Export Excel
-        À surcharger dans les classes enfants pour spécifier le rapport Excel approprié
-        """
-        self.ensure_one()
-        data = {}
-        data['ids'] = self.env.context.get('active_ids', [])
-        data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move',
-                                'date_from_cmp', 'date_to_cmp', 'filter_cmp',
-                                'enable_filter', 'label_filter'])[0]
-        used_context = self._build_contexts(data)
-        data['form']['used_context'] = dict(used_context, lang=self.env.context.get('lang') or 'en_US')
-        comparison_context = self._build_comparison_context(data)
-        data['form']['comparison_context'] = comparison_context
-        return self._export_excel_report(data)
-    
-    def _export_excel_report(self, data):
-        """
-        À implémenter par chaque rapport pour spécifier le rapport Excel approprié
-        :param data: Données du rapport
-        """
-        raise NotImplementedError("Chaque rapport doit implémenter sa propre méthode _export_excel_report")
